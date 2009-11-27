@@ -13,7 +13,10 @@
 #ifndef _CONFIGFILE_H_
 #define _CONFIGFILE_H_
 
-#define DEFAULTCONFIGFILENAME "encoder.cfg"
+// Zoltan: promijenio ja u encoder_baseline
+// za nase potrebe
+#define DEFAULTCONFIGFILENAME "encoder_baseline.cfg"
+//#define DEFAULTCONFIGFILENAME "encoder.cfg"
 
 #define PROFILE_IDC     88
 #define LEVEL_IDC       21
