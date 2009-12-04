@@ -1,0 +1,5 @@
+Main je u fajlu lencod.c (za projekt lencod).
+
+Projekt se može normalno bildat u visualstudiju, samo ne znam gdje treba postaviti one .cfg fajlove (koji su inaèe u .bin folderu) da bi ih program mogao èitati.
+
+Pokrenite si program i koristite breakpointse ili step into/over da vidite malo šta se tu dogaða.
