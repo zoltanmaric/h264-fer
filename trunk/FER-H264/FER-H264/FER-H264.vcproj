@@ -193,14 +193,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\mbMode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\mbPredictionMode.h"
-				>
-			</File>
-			<File
 				RelativePath=".\nal.h"
 				>
 			</File>
