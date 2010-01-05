@@ -27,22 +27,8 @@ void testNAL(FILE *stream)
 	printf("\n");
 }
 
-void testIntra()
+void testIntra(frame &f)
 {
-	frame f;
-	// Full HD, bitchezz!
-	f.Lwidth = 1920;
-	f.Lheight = 1080;
-	f.L = (unsigned char *)malloc(f.Lwidth*f.Lheight);
-
-	for (int i = 0; i < f.Lheight; i++)
-	{
-		for (int j = 0; j < f.Lwidth; j++)
-		{
-			f.L[i*f.Lwidth + j] = i*f.Lwidth + j;
-		}
-	}
-
 	mb_mode mb;
 	mb.MbPartPredMode[0] = Intra_4x4;
 	
@@ -54,7 +40,7 @@ void testIntra()
 	mpi.TbWidth = f.Lwidth / 4;
 	mpi.Intra4x4PredMode = (int *)malloc(mpi.TbHeight*mpi.TbWidth*sizeof(int));
 
-	intraPrediction(f, mpi, mb, 121);
+	intraPrediction(f, mpi, mb, 33);
 }
 
 int main(int argc, char *argv[])
@@ -62,9 +48,38 @@ int main(int argc, char *argv[])
 	FILE *stream;
 
 	stream = fopen("test.264", "rb");
+
+	FILE *input; 
+	input = fopen("lenna.ppm", "rb");	// otvori ulaznu datoteku
+	if(input == NULL)
+	{
+		fprintf(stderr, "Nema ulazne datoteke lenna.ppm!\n");
+		return 0;
+	}
+
+	frame f;
+
+	fscanf(input, "%*s");   // read 'magic number' (ignored)
+	fscanf(input, "%d %d", &f.Lwidth, &f.Lheight);	// read picture dimensions
+	fscanf(input, "%*d\n");	// read maximum value (ignored)
+
+	f.L = (unsigned char *) malloc (f.Lheight * f.Lwidth * sizeof(char));
+
+	unsigned char *rgb;
+	rgb = (unsigned char *) malloc (f.Lwidth * f.Lheight * 3 * sizeof(char));
+	fread(rgb, 1, f.Lwidth * f.Lheight * 3, input);	// TODO: doskok neuspjelom citanju
+	fclose(input);
+
+	for (int i = 0; i < f.Lwidth * f.Lheight; i++)
+	{
+		int r = rgb[3*i];
+		int g = rgb[3*i + 1];
+		int b = rgb[3*i + 2];
+		f.L[i] = 0.2990 * r + 0.5870 * g + 0.1140 * b - 128;
+	}
 	
 	//testNAL(stream);
-	testIntra();
+	testIntra(f);
 
 	system("pause");
 	return 0;
