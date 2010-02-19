@@ -34,6 +34,18 @@ int InverseRasterScan(int a, int b, int c, int d, int e)
 		return (a / (d/b)) * c;
 }
 
+// Defined in 5.7 Mathematical functions
+int Clip1Y(int x)
+{
+	// Clip3(0, 255, x); 255 == (1 << BitDepthY) - 1; BitDepthY == 8 when baseline
+	if (x < 0)
+		return 0;
+	if (x > 255)
+		return 255;
+
+	return x;
+}
+
 // Derivation process for neighbouring locations (6.4.11)
 void getNeighbourLocations(int xN, int yN, int *mbAddrN, int CurrMbAddr, int mbWidth, int *xW, int *yW)
 {
@@ -435,7 +447,7 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int CurrMbAddr, int mbWidth, fr
 		}
 		else
 		{
-			// the abosulte position of the upper-left sample in macroblock N
+			// the abosulte position of the upper-left sample in macroblock N (6.4.1)
 			int xM = InverseRasterScan(mbAddrN, 16, 16, f.Lwidth, 0);
 			int yM = InverseRasterScan(mbAddrN, 16, 16, f.Lwidth, 1);
 
@@ -477,15 +489,146 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int CurrMbAddr, int mbWidth, fr
 	}
 }
 
-void intraPrediction(frame &f, mode_pred_info &mpi, mb_mode mb, int CurrMbAddr)
+#undef p(x,y)
+
+#define p(x,y) (((x) == -1) ? p[(y) + 1] : p[(x) + 17])
+// (8.3.3.1)
+void Intra_16x16_Vertical(int *p, int *predL, int x, int y)
+{
+	predL[y*16 + x] = p(x,-1);
+}
+
+// (8.3.3.2)
+void Intra_16x16_Horizontal(int *p, int *predL, int x, int y)
+{
+	predL[y*16 + x] = p(-1,y);
+}
+
+// (8.3.3.3)
+void Intra_16x16_DC(int *p, int *predL, int x, int y)
+{
+	int sumXi = 0;		// = sum(p[x',-1]) | x € (0..15)
+	int sumYi = 0;		// = sum(p[-1,y']) | y € (0..15)
+	for (int i = 0; i < 16; i++)
+	{
+		sumXi += p(i,-1);
+		sumYi += p(-1,i);
+	}
+
+	// check availability of neighbouring samples:
+	bool allAvailable = true;
+	bool leftAvailable = true;
+	bool topAvailable = true;
+	for (int i = 0; i < 33; i++)
+	{
+		if (p[i] == -1)
+		{
+			allAvailable = false;
+			if ((i > 0) && (i < 17))
+				leftAvailable = false;
+			else if ((i >= 17) && (i < 33))
+				topAvailable = false;
+		}
+	}
+
+	if (allAvailable)
+	{
+		predL[y*16+x] = (sumXi + sumYi + 16) >> 5;
+	}
+	else if (topAvailable)
+	{
+		predL[y*16+x] = (sumYi + 8) >> 4;
+	}
+	else if (leftAvailable)
+	{
+		predL[y*16+x] = (sumXi + 8) >> 4;
+	}
+	else
+	{
+		predL[y*16+x] = 1 << 7;		// == 1 << (BitDepthY-1) (BitDepthY is always equal to 8 in the baseline profile)
+	}
+}
+
+// (8.3.3.4)
+void Intra_16x16_Plane(int *p, int *predL, int x, int y)
+{
+	int H = 0, V = 0;
+	for (int i = 0; i < 7; i++)
+	{
+		H += (i+1)*(p(8+i,-1) - p(6-i,-1));
+		V += (i+1)*(p(-1,8+1) - p(-1,6-i));
+	}
+
+	int a = 16 * (p(-1,15) + p(15,-1));
+	int b = (5*H + 32) >> 6;
+	int c = (5*V + 32) >> 6;
+
+	predL[y*16+x] = Clip1Y((a + b*(x-7) + c*(y-7) + 16) >> 5);
+}
+
+// (8.3.3)
+void Intra16x16SamplePrediction(int CurrMbAddr, int mbWidth, frame &f, int *predL, int Intra16x16PredMode)
+{
+	int p[33];
+	for (int i = 0; i < 33; i++)
+	{
+		int x, y;
+		if (i < 17)
+		{
+			x = -1;
+			y = i - 1;
+		}
+		else
+		{
+			x = i - 17;
+			y = -1;
+		}
+
+		int xW, yW, mbAddrN;
+		getNeighbourLocations(x, y, &mbAddrN, CurrMbAddr, mbWidth, &xW, &yW);
+
+		if (mbAddrN == -1)
+			p(x,y) = -1;	// not available for Intra_16x16 prediction
+
+		// inverse macroblock scanning process (6.4.1)
+		int xM = InverseRasterScan(mbAddrN, 16, 16, f.Lwidth, 0);
+		int yM = InverseRasterScan(mbAddrN, 16, 16, f.Lwidth, 1);
+
+		p(x,y) = f.L[xM+xW, yM+yW];
+
+		switch(Intra16x16PredMode)
+		{
+			case 0:
+				Intra_16x16_Vertical(p, predL, x, y);
+				break;
+			case 1:
+				Intra_16x16_Horizontal(p, predL, x, y);
+				break;
+			case 2:
+				Intra_16x16_DC(p, predL, x, y);
+				break;
+			case 3:
+				Intra_16x16_Plane(p, predL, x, y);
+				break;				
+		}
+	}
+}
+
+#undef p(x,y)
+
+// predL, predCr and predCb are the output prediction samples
+// with dimensions 16x16, 8x8 and 8x8 respectively
+void intraPrediction(frame &f, mode_pred_info &mpi, mb_mode mb, int CurrMbAddr, int *predL, int *predCr, int *predCb)
 {
 	bool prev_intra4x4_pred_mode_flag[16];
 	int rem_intra4x4_pred_mode[16];
-	
+
 	// mb_pred(mb_type) in the standard
 	if ((mb.MbPartPredMode[0] == Intra_4x4) ||
 		(mb.MbPartPredMode[0] == Intra_16x16))
 	{
+		// LUMA:
+
 		if (mb.MbPartPredMode[0] == Intra_4x4)
 		{
 			for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
@@ -502,12 +645,11 @@ void intraPrediction(frame &f, mode_pred_info &mpi, mb_mode mb, int CurrMbAddr)
 				int x0 = Intra4x4Scan[luma4x4BlkIdx][0];
 				int y0 = Intra4x4Scan[luma4x4BlkIdx][1];
 
-				int predL[16][16];
 				for (int y = 0; y < 4; y++)
 				{
 					for (int x = 0; x < 4; x++)
 					{
-						predL[x0 + x][y0 + y] = pred4x4L[y*4 + x];
+						predL[(y0 + y)*16 + (x0 + x)] = pred4x4L[y*4 + x];
 					}
 				}
 
@@ -518,8 +660,14 @@ void intraPrediction(frame &f, mode_pred_info &mpi, mb_mode mb, int CurrMbAddr)
 		}
 		else
 		{
-			// TODO: Intra_16x16 prediction
+			Intra16x16SamplePrediction(CurrMbAddr, mpi.MbWidth, f, predL, mb.Intra16x16PredMode);
 		}
+
+		// CHROMA:
+		IntraChromaSamplePrediction();
+
+
+
 
 		// TODO: ChromaArrayType handling (see mb_pred(mb_type))
 	}	
