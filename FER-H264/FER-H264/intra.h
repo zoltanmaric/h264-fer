@@ -34,7 +34,7 @@ typedef struct __frame {
   unsigned char *L, *C[2];
 } frame;
 
-void intraPrediction(frame &f, mode_pred_info &mpi, mb_mode mb, int CurrMbAddr);
+void intraPrediction(frame &f, mode_pred_info &mpi, mb_mode mb, int CurrMbAddr, int *predL, int *predCr, int *predCb, int intra_chroma_pred_mode);
 
 // macroblock types for I-slices
 #define I_NxN 0			// MbPartPredMode( mb_type, 0 ) equal to Intra_4x4 or Intra_8x8

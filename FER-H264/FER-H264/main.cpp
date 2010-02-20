@@ -40,7 +40,9 @@ void testIntra(frame &f)
 	mpi.TbWidth = f.Lwidth / 4;
 	mpi.Intra4x4PredMode = (int *)malloc(mpi.TbHeight*mpi.TbWidth*sizeof(int));
 
-	intraPrediction(f, mpi, mb, 33);
+	int *predL = NULL, *predCr = NULL, *predCb = NULL;
+	int intra_chroma_pred_mode = 0;
+	intraPrediction(f, mpi, mb, 33, predL, predCr, predCb, intra_chroma_pred_mode);
 }
 
 int main(int argc, char *argv[])
@@ -63,19 +65,36 @@ int main(int argc, char *argv[])
 	fscanf(input, "%d %d", &f.Lwidth, &f.Lheight);	// read picture dimensions
 	fscanf(input, "%*d\n");	// read maximum value (ignored)
 
-	f.L = (unsigned char *) malloc (f.Lheight * f.Lwidth * sizeof(char));
+	f.Cheight = f.Lheight / 2;
+	f.Cwidth = f.Lwidth / 2;
+
+	f.L = (unsigned char *) malloc (f.Lheight * f.Lwidth);
+	f.C[0] = (unsigned char *) malloc (f.Cheight * f.Cwidth);
+	f.C[1] = (unsigned char *) malloc (f.Cheight * f.Cwidth);
 
 	unsigned char *rgb;
 	rgb = (unsigned char *) malloc (f.Lwidth * f.Lheight * 3 * sizeof(char));
 	fread(rgb, 1, f.Lwidth * f.Lheight * 3, input);	// TODO: doskok neuspjelom citanju
 	fclose(input);
 
-	for (int i = 0; i < f.Lwidth * f.Lheight; i++)
+	int k = 0;
+	int l = 0;
+	for (int i = 0; i < f.Lheight; i++)
 	{
-		int r = rgb[3*i];
-		int g = rgb[3*i + 1];
-		int b = rgb[3*i + 2];
-		f.L[i] = 0.2990 * r + 0.5870 * g + 0.1140 * b - 128;
+		for (int j = 0; j < f.Lwidth; j++)
+		{
+			int r = rgb[3*k];
+			int g = rgb[3*k + 1];
+			int b = rgb[3*k + 2];
+			f.L[k] = 0.2990 * r + 0.5870 * g + 0.1140 * b - 128;
+			if ((i%2 == 0) && (j%2 == 0))
+			{
+				f.C[0][l] = -0.168736 * r - 0.331264 * g + 0.5 * b + 128;
+				f.C[1][l] = 0.5 * r - 0.418688 * g - 0.081312 * b + 128;
+				l++;
+			}
+			k++;
+		}
 	}
 	
 	//testNAL(stream);
