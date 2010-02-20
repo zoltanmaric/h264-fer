@@ -193,6 +193,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\intra_globals.h"
+				>
+			</File>
+			<File
 				RelativePath=".\nal.h"
 				>
 			</File>
