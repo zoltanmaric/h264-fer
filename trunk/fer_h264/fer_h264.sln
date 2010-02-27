@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fer_h264", "fer_h264\fer_h264.vcproj", "{882BF2BC-961E-4C6F-A786-923A2CDF074E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{882BF2BC-961E-4C6F-A786-923A2CDF074E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{882BF2BC-961E-4C6F-A786-923A2CDF074E}.Debug|Win32.Build.0 = Debug|Win32
+		{882BF2BC-961E-4C6F-A786-923A2CDF074E}.Release|Win32.ActiveCfg = Release|Win32
+		{882BF2BC-961E-4C6F-A786-923A2CDF074E}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
