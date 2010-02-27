@@ -30,7 +30,7 @@ void testNAL(FILE *stream)
 void testIntra(frame &f)
 {
 	mb_mode mb;
-	mb.MbPartPredMode[0] = Intra_4x4;
+	mb.MbPartPredMode[0] = Intra_16x16;
 	
 	mode_pred_info mpi;
 	mpi.MbHeight = f.Lheight / 16;

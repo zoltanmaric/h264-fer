@@ -175,11 +175,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\inttransform.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\main.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\nal.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\transforms.cpp"
 				>
 			</File>
 		</Filter>
@@ -197,7 +205,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\inttransform.h"
+				>
+			</File>
+			<File
 				RelativePath=".\nal.h"
+				>
+			</File>
+			<File
+				RelativePath=".\transforms.h"
 				>
 			</File>
 		</Filter>
