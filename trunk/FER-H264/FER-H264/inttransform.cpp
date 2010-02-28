@@ -13,6 +13,13 @@ void transformInverseScan(int list[16], int c[4][4])
 }
 
 // Haramustek
+// (8.5.10)
+void scaleAndTransformDCIntra_16x16(int bitDepth, int qP, int c[4][4], int dcY[4][4])
+{
+	
+}
+
+// Haramustek
 // (8.5.12.1 & 8.5.12.2)
 void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool luma)
 {
@@ -44,6 +51,7 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool luma, int *QPy_
 	{
 		int QpBdOffsetY = 0;	// Standard: = 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
 		QPy = ((*QPy_prev + mb_qp_delta + 52 + 2*QpBdOffsetY) % (52 + QpBdOffsetY)) - QpBdOffsetY;
+		*QPy_prev = QPy;	// TODO: provjeri qpy_prev
 		int QP_y = QPy + QpBdOffsetY;
 
 		qP = QP_y;
@@ -67,12 +75,142 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool luma, int *QPy_
 
 }
 
-// (8.5.1)
-void transformDecoding4x4Luma(int LumaLevel[16])
+// (8.5.14) partial
+void pictureConstruction4x4Luma(int u[4][4], int luma4x4BlkIdx, int CurrMbAddr)
 {
-	int c[4][4], r[4][4];
+	int xP = InverseRasterScan(CurrMbAddr, 16, 16, f.Lwidth, 0);
+	int yP = InverseRasterScan(CurrMbAddr, 16, 16, f.Lwidth, 1);
 
-	transformInverseScan(LumaLevel, c);
+	int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
+	int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
 
-	scaleAndTransform4x4Residual(c, r, true, 0);	
+	// Standard: MbAffFrameFlag == 0 in baseline
+
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			f.L[(yP+y0+i)*f.Lwidth + (xP+x0+j)] = u[i][j];
+		}
+	}
+}
+
+// (8.5.14) partial
+void pictureConstructionIntra_16x16Luma(int u[16][16], CurrMbAddr)
+{
+	int xP = InverseRasterScan(CurrMbAddr, 16, 16, f.Lwidth, 0);
+	int yP = InverseRasterScan(CurrMbAddr, 16, 16, f.Lwidth, 1);
+
+	int x0 = 0;
+	int y0 = 0;
+
+	// Standard: MbAffFrameFlag == 0 in baseline
+
+	for (int i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 16; j++)
+		{
+			f.L[(yP+y0+i)*f.Lwidth + (xP+x0+j)] = u[i][j];
+		}
+	}
+}
+
+// (8.5.1)
+// QPy_prev: the luma quantization parameter for the
+// previously transformed macroblock. At the start
+// of each slice, it is initialized to SliceQPY
+// derived in Equation 7-29
+void transformDecoding4x4LumaResidual(int LumaLevel[16][16], predL[16][16], int *QPy_prev, int CurrMbAddr)
+{
+	int c[4][4], r[4][4], u[4][4];
+
+	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+	{
+		transformInverseScan(LumaLevel[luma4x4BlkIdx], c);
+		scaleAndTransform4x4Residual(c, r, true, QPy_prev);
+
+		int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
+		int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
+
+		for (int i = 0; i < 4; i++)
+		{
+			for (j = 0; j < 4; j++)
+			{
+				u[i][j] = Clip1Y(predL[x0 + j][y0 + i] + r[i][j]);
+			}
+		}
+
+		// Standard: TransformBypassModeFlag == 0 in baseline
+
+		pictureConstruction4x4Luma(u, luma4x4BlkIdx, CurrMbAddr);
+	}
+}
+
+// (8.5.2)
+void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16ACLevel[16][16],int predL[16][16], int *QPy_prev, int CurrMbAddr)
+{
+	int c[4][4], dcY[4][4], rMb[16][16], r[4][4], u[16][16];
+
+	transformInverseScan(Intra16x16DCLevel, c);
+
+	int QpBdOffsetY = 0;	// Standard: = 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
+	int QPy = ((*QPy_prev + mb_qp_delta + 52 + 2*QpBdOffsetY) % (52 + QpBdOffsetY)) - QpBdOffsetY;
+	*QPy_prev = QPy;	// TODO: provjeri qpy_prev
+	int QP_y = QPy + QpBdOffsetY;
+
+	scaleAndTransformDCIntra_16x16(8, QP_y, c, dcY);
+
+	int lumaList[16];
+	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+	{
+		lumaList[0] = dcY[luma4x4BlkIdx/4][luma4x4BlkIdx%4];
+		for (int k = 1; k < 16; k++)
+		{
+			lumaList[k] = Intra16x16ACLevel[luma4x4BlkIdx][k-1];
+		}
+
+		transformInverseScan(lumaList, c);
+		scaleAndTransform4x4Residual(c, r, true, QPy_prev);
+		int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
+		int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
+
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				rMb[x0+j][y0+i] = r[i][j];
+			}
+		}
+	}
+
+	// Standard: TransformBypassModeFlag == 0 in baseline
+
+	for (int i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 16; j++)
+		{
+			u[i][j] = Clip1Y(predL[j][i] + rMb[j][i]);
+		}
+	}
+
+	pictureConstructionIntra_16x16Luma(u, CurrMbAddr);
+}
+
+// (8.5.4)
+// ChromaDCLevel corresponds to either ChromaDCLevel[0] or
+// ChromaDCLevel[1] depending on whether the process is
+// invoked for Cr or Cb. The same applies for ChromaACLevel.
+// This implies that this process is invoked once for each
+// chroma component.
+void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[16])
+{
+	int numChroma4x4Blks = 4;	// Standard: = (MbWidthC/4) * (MbHeightC/4);
+								// MbWidthC == MbHeightC == 8 in baseline.
+
+	// Standard: ChromaArrayType == 1 in baseline.
+	int c[2][2];
+	for (int i = 0; i < 4; i++)
+	{
+		c[i/2][i%2] = ChromaDCLevel[i];
+	}
 }

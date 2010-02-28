@@ -1,5 +1,11 @@
 #pragma once
 
+typedef struct __frame {
+  int Lwidth,Lheight,Lpitch;
+  int Cwidth,Cheight,Cpitch;
+  unsigned char *L, *C[2];
+} frame;
+
 // (Figure 8-9a)
 int ZigZagReordering[16][2] = 
 {
@@ -19,3 +25,4 @@ int qPiToQPc[52] = { 0,  1,  2,  3,  4,  5,  6,  7,
 // globalne varijable koje oèekujem od tebe, ljubo
 int mb_qp_delta;
 int chroma_qp_index_offset;
+frame f;
