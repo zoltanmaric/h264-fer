@@ -65,12 +65,10 @@ void forwardTransform4x4(int input[4][4], int output[4][4])
 }
 
 
-block inverseTransform4x4(block input)
+void inverseTransform4x4(int input[4][4], int output[4][4])
 {
 	int i, j, pom_1, pom_3;
-	int output_temp[4][4];
-	int output[4][4];
-	block output_block;
+	int output_temp[4][4];	
 
 	//multiply A*X
 	for (i = 0; i < 4; i++)
@@ -80,20 +78,20 @@ block inverseTransform4x4(block input)
 			switch (i)
 			{
 				case 0:
-					pom_3 = input.elements[3][j] >> 1;
-					output_temp[i][j] = input.elements[0][j] + input.elements[1][j] + input.elements[2][j] + pom_3;					
+					pom_3 = input[3][j] >> 1;
+					output_temp[i][j] = input[0][j] + input[1][j] + input[2][j] + pom_3;					
 					break;
 				case 1: 
-					pom_1 = input.elements[1][j] >> 1;					
-					output_temp[i][j] = input.elements[0][j] + pom_1 - input.elements[2][j] - input.elements[3][j];
+					pom_1 = input[1][j] >> 1;					
+					output_temp[i][j] = input[0][j] + pom_1 - input[2][j] - input[3][j];
 					break;
 				case 2:
-					pom_1 = input.elements[1][j] >> 1;					
-					output_temp[i][j] = input.elements[0][j] - pom_1 - input.elements[2][j] + input.elements[3][j];
+					pom_1 = input[1][j] >> 1;					
+					output_temp[i][j] = input[0][j] - pom_1 - input[2][j] + input[3][j];
 					break;
 				case 3:
-					pom_3 = input.elements[3][j] >> 1;
-					output_temp[i][j] = input.elements[0][j] - input.elements[1][j] + input.elements[2][j] - pom_3;
+					pom_3 = input[3][j] >> 1;
+					output_temp[i][j] = input[0][j] - input[1][j] + input[2][j] - pom_3;
 					break;
 			}
 		}
@@ -131,11 +129,9 @@ block inverseTransform4x4(block input)
 	{
 		for (j = 0; j < 4; j++)
 		{
-			output_block.elements[i][j] = (output[i][j] + 32) >> 6;
+			output[i][j] = (output[i][j] + 32) >> 6;
 		}
-	}
-
-	return output_block;
+	}	
 }
 
 
@@ -323,23 +319,34 @@ block quantizeForward(block input, int quantizer, int predMode) {
 }
 
 
-block quantizeInverse(int input[4][4], int quantizer, int dc)
-{
-	block output;
-	int qbits=quantizer/6;
-	int qp=quantizer%6;	
+
+//Scaling process for the residual 4x4 blocks (Chroma and Luma)
+block quantizeInverse(int input[4][4], int output, int quantizer, bool dc)
+{	
+	int qbits = quantizer/6;
+	int adjust = 0;
+	int qp=quantizer%6;
+
+	if (quantizer>=24)
+	{
+		qbits = qbits - 4;
+		adjust = 0;
+	}
+	else
+	{
+		adjust = 1 << (3 - qbits);
+		qbits = 4 - qbits;		
+	}
 
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			output.elements[i][j] = Sign((input[i][j]>>31), (abs(input[i][j])*factorsDQ[qp][i][j]) << qbits);
+			output[i][j] = Sign((input[i][j]>>31), (abs(input[i][j])*factorsDQ[qp][i][j] + adjust) << qbits);
 		}
 	}
 
-	if (!dc) output.elements[0][0] = input[0][0];
-
-	return output;
+	if (!dc) output[0][0] = input[0][0];	
 }
 
 
@@ -429,8 +436,17 @@ block ReorderElements (int *input)
 //---------------- PUBLIC FUNCTIONS -----------------//
 //---------------------------------------------------//
 
+void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool luma)
+{
+	int temp[4][4];
+
+	quantizeInverse(c, temp, qp, !luma);
+	inverseTransform4x4(temp, r);
+}
+/*
 void InverseResidualLuma (int *input, frame current, int x, int y, int quantizer, int dc)
 {
+	int c[][];
 	block temp;
 	int currentPosition;
 
@@ -471,7 +487,7 @@ void InverseResidualChroma (int *input, frame current, int x, int y, int quantiz
 			current.C[chromaComponent][currentPosition + i*4 + j] = temp.elements[i][j];
 		}
 	}
-}
+}*/
 
 
 void InverseDCLumaIntra (int *input, block output, int quantizer)
