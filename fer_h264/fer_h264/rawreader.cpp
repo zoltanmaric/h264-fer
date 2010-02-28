@@ -73,7 +73,7 @@ unsigned int getRawBits(int N)
 		}
 
 		//Classic bit by bit loading
-		returnValue=(returnValue<<1) + (RBSP_data[RBSP_current_byte]>>(7-RBSP_current_bit))&1;
+		returnValue=(returnValue<<1) + ((RBSP_data[RBSP_current_byte]>>(7-RBSP_current_bit))&1);
 		RBSP_current_bit++;
 		if (RBSP_current_bit==8)
 		{

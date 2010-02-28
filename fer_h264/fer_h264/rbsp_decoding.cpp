@@ -4,10 +4,16 @@
 #include "expgolomb.h"
 #include "h264_globals.h"
 #include "rawreader.h"
+#include "intra.h"
 #include <stdio.h>
 
 void RBSP_decode(NALunit nal_unit)
 {
+
+	static int nalBrojac=0;
+
+	printf("Ulaz u RBPS_decode broj %d",nalBrojac++);
+
 	initRawReader(nal_unit.rbsp_byte, nal_unit.NumBytesInRBSP);
 
 	//TYPE 7 = Sequence parameter set TODO: Provjera je li vec postoji SPS
@@ -39,6 +45,8 @@ void RBSP_decode(NALunit nal_unit)
 	//Read slice header
 	fill_shd(&nal_unit);
 
+	printf("Working on frame number %d...\n", shd.frame_num);
+
 	int MbCount=shd.PicSizeInMbs;
 
 	//Norm: firstMbAddr=first_mb_in_slice * ( 1 + MbaffFrameFlag );
@@ -55,9 +63,6 @@ void RBSP_decode(NALunit nal_unit)
 
 	//Used later on
 	int mb_skip_run;
-	
-	int mb_pos_x;
-	int mb_pos_y;
 
 	while (moreDataFlag && CurrMbAddr<MbCount)
 	{
@@ -100,21 +105,18 @@ void RBSP_decode(NALunit nal_unit)
 			{
 				moreDataFlag = more_rbsp_data();
 			}
-
-			if (moreDataFlag==true)
-			{
-				mb_type=expGolomb_UD();
-			}
 		}
 
-		if(CurrMbAddr>=MbCount)
+		//
+		/*if(CurrMbAddr>=MbCount)
 		{
 			return;
 		}
+		*/
 
 	if(moreDataFlag)
 	{ 
-		unsigned int mb_type = expGolomb_UD();
+		mb_type = expGolomb_UD();
 
 		//Current macroblock coordinates
 		mb_pos_x=CurrMbAddr%sps.PicWidthInMbs;
@@ -227,7 +229,7 @@ void RBSP_decode(NALunit nal_unit)
 
 			intra_chroma_pred_mode=expGolomb_UD();
 
-	}
+		}
 		else
 		{
 			for(int mbPartIdx=0; mbPartIdx<NumMbPart( mb_type ) ; ++mbPartIdx)
@@ -282,7 +284,7 @@ void RBSP_decode(NALunit nal_unit)
 
 		//Norm: mb_qp_delta
 
-		int mb_qp_delta=expGolomb_SD();
+		mb_qp_delta=expGolomb_SD();
 
 		//BEGIN Kvantizacijski paramteri
 		/*
@@ -306,8 +308,11 @@ void RBSP_decode(NALunit nal_unit)
 		//Norm: decode residual data.
 		//residual_block_cavlc( coeffLevel, startIdx, endIdx, maxNumCoeff )
 		//Additional parameter "nC" has been added.
+		
+		residual(0, 15);
 
-
+		//Old prediction code is currently commented out:
+		/*
 		if(MbPartPredMode(mb_type,0)==Intra_16x16)
 		{
 			residual_block(&coeffLevel_luma_DC[0],16,get_nC(mb_pos_x,mb_pos_y,LUMA));
@@ -349,12 +354,18 @@ void RBSP_decode(NALunit nal_unit)
 				}
 			}
 		}
+		*/
 
 
 	}
 
 
 	//Data ready for rendering
+
+	int predL[16][16], predCr[8][8], predCb[8][8];
+	intraPrediction(CurrMbAddr, predL, predCr, predCb);
+
+	
 
 	if(MbPartPredMode(mb_type,0)==Intra_4x4)
 	{

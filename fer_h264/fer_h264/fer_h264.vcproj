@@ -183,11 +183,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\h264_math.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\headers_and_parameter_sets.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\intra.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\inttransform.cpp"
 				>
 			</File>
 			<File
@@ -210,6 +218,10 @@
 				RelativePath=".\stdafx.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\transforms.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -225,11 +237,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\h264_math.h"
+				>
+			</File>
+			<File
 				RelativePath=".\headers_and_parameter_sets.h"
 				>
 			</File>
 			<File
 				RelativePath=".\intra.h"
+				>
+			</File>
+			<File
+				RelativePath=".\inttransform.h"
 				>
 			</File>
 			<File
@@ -250,6 +270,10 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\transforms.h"
 				>
 			</File>
 		</Filter>

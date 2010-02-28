@@ -11,7 +11,7 @@ unsigned int expGolomb_UD()
 	}
 
 	unsigned int broj=getRawBits(zeroCount);
-	return (1<<broj)-1+zeroCount;
+	return (1<<zeroCount)-1+broj;
 }
 
 signed int expGolomb_SD()

@@ -1,8 +1,20 @@
 #include "residual.h"
 #include "rawreader.h"
 #include "h264_globals.h"
+#include "headers_and_parameter_sets.h"
 
 //Coefficient levels
+
+int i16x16DClevel[16];
+int i16x16AClevel[16][16];
+int Intra16x16DCLevel[16];
+int Intra16x16ACLevel[16][16];
+int level[16][16], LumaLevel[16][16];
+
+int NumC8x8;
+
+int ChromaDCLevel[2][4];
+int ChromaACLevel[2][4][16];
 
 int coeffLevel_luma_DC[16];
 int coeffLevel_luma_AC[16][16];
@@ -287,7 +299,7 @@ int CoeffTokenCodes[4][64][3]={ {
 } };
 
 
-int CoeffTokenCodes_ChromaDC[15][4]={
+int CoeffTokenCodes_ChromaDC[15][3]={
   { 0x00000000,  7, COEFF_TOKEN(3, 4) },  // 0000 000
   { 0x02000000,  8, COEFF_TOKEN(2, 4) },  // 0000 0010
   { 0x03000000,  8, COEFF_TOKEN(1, 4) },  // 0000 0011
@@ -306,7 +318,7 @@ int CoeffTokenCodes_ChromaDC[15][4]={
 };
 
 
-int TotalZerosCodes_4x4[15][18][4]={ {
+int TotalZerosCodes_4x4[15][18][3]={ {
 ///// 1 /////
   { 0x00000000,  0, 0 },  // BOT
   { 0x00800000,  9, 15 },  // 0000 0000 1
@@ -490,7 +502,7 @@ int TotalZerosCodes_4x4[15][18][4]={ {
 } };
 
 
-int TotalZerosCodes_ChromaDC[3][5][4]={ {
+int TotalZerosCodes_ChromaDC[3][5][3]={ {
 ///// 1 /////
   { 0x00000000,  3, 3 },  // 000
   { 0x20000000,  3, 2 },  // 001
@@ -511,7 +523,7 @@ int TotalZerosCodes_ChromaDC[3][5][4]={ {
 } };
 
 
-int RunBeforeCodes[6][17][4]={ {
+int RunBeforeCodes[6][17][3]={ {
 ///// 1 /////
   { 0x00000000,  1, 1 },  // 0
   { 0x80000000,  1, 0 },  // 1
@@ -581,7 +593,17 @@ struct cavlc_table *init_cavlc_table(int *items)
   int count=0;
   for(pos=items; (*pos)!=0xFFFFFFFF; pos+=3) ++count;
 
+  pos=items;
+
   tableContent = new cavlc_table_item[count];
+  
+  for (int i=0;i<count;i++)
+  {
+	  tableContent[i].code=*(pos);
+	  tableContent[i].bits=*(pos+1);
+	  tableContent[i].data=*(pos+2);
+	  pos+=3;
+  }
 
   res->items=tableContent;
   res->count=count;
@@ -652,8 +674,300 @@ int get_nC(int x, int y, int luma_or_select_chroma)
 	}
 }
 
+//Residual decoding by the norm
+
+void residual(int startIdx, int endIdx)
+{
+	residual_luma(i16x16DClevel, i16x16AClevel, level, startIdx, endIdx);
+
+	for (int i=0;i<16;i++)
+	{
+		Intra16x16DCLevel[i]=i16x16DClevel[i];
+		for (int j=0;j<16;j++)
+		{
+			LumaLevel[i][j] = level[i][j];
+			Intra16x16ACLevel[i][j]=i16x16AClevel[i][j];
+		}
+	}
+
+
+
+	//if( ChromaArrayType = = 1 | | ChromaArrayType = = 2 )
+	//The only supported ChromaArrayType is 1
+
+	NumC8x8 = 4 / (SubWidthC * SubHeightC );
+	for (int iCbCr=0; iCbCr<2; iCbCr++)
+	{
+		//Chroma DC residual present
+		if ((CodedBlockPatternChroma & 3) && startIdx==0)
+		{
+			residual_block_cavlc(ChromaDCLevel[iCbCr],0,4*NumC8x8-1, 4*NumC8x8, CHROMA);
+		}
+		else
+		{
+			for (int i=0;i<4*NumC8x8;i++)
+			{
+				ChromaDCLevel[iCbCr][i]=0;
+			}
+		}
+	}
+
+	for (int iCbCr=0;iCbCr<2;iCbCr++)
+	{
+		for (int i8x8=0;i8x8<NumC8x8;i8x8++)
+		{
+			for (int i4x4=0; i4x4<4; i4x4++)
+			{
+				//Chroma AC residual present
+				if ((CodedBlockPatternChroma & 2) && endIdx>0)
+				{
+					residual_block_cavlc(ChromaACLevel[iCbCr][i8x8*4+i4x4],((startIdx-1)>0?(startIdx-1):0),endIdx-1,15,CHROMA);
+				}
+				else
+				{
+					for (int i=0;i<15;i++)
+					{
+						ChromaACLevel[iCbCr][i8x8*4+i4x4][i]=0;
+					}
+				}
+			}
+		}
+	}
+}
+
+void residual_luma(int i16x16DClevel[16], int i16x16AClevel[16][16], int level[16][16], int startIdx, int endIdx)
+{
+	if (startIdx == 0 && MbPartPredMode(mb_type, 0) == Intra_16x16)
+	{
+		residual_block_cavlc(i16x16DClevel, 0, 15, 16, LUMA);
+	}
+
+	for (int i8x8=0;i8x8<4;i8x8++)
+	{
+		for (int i4x4=0;i4x4<4;i4x4++)
+		{
+			if (CodedBlockPatternLuma & (1<<i8x8))
+			{
+				if (endIdx>0 && MbPartPredMode(mb_type, 0) == Intra_16x16)
+				{
+					residual_block_cavlc(i16x16AClevel[i8x8*4+i4x4],(((startIdx-1)>0)?(startIdx-1):0),endIdx-1,15,LUMA);
+				}
+				else
+				{
+					residual_block_cavlc(level[i8x8*4 + i4x4],startIdx,endIdx,16,LUMA);
+				}
+			}
+			else if (MbPartPredMode(mb_type, 0)==Intra_16x16)
+			{
+				for (int i=0;i<15;i++)
+				{
+					i16x16AClevel[i8x8*4 + i4x4][i] = 0;
+				}
+			}
+			else
+			{
+				for (int i=0;i<16;i++)
+				{
+					level[i8x8*4 + i4x4][i] = 0;
+				}
+			}
+		}
+	}
+}
+
+void residual_block_cavlc(int coeffLevel[16], int startIdx, int endIdx, int maxNumCoeff, int luma_or_chroma)
+{
+
+	int TotalCoeff, TrailingOnes, level_suffix, levelCode, zerosLeft;
+	int coeff_token,suffixLength, trailing_ones_sign_flag, level[16],run_before, run[16], coeffNum;
+
+	for (int i=0;i<maxNumCoeff;i++)
+	{
+		coeffLevel[i]=0;
+	}
+
+	int nC=get_nC(mb_pos_x,mb_pos_y,luma_or_chroma);
+
+	//nC Value as defined by the h264_vlc.pdf document:
+	/*
+		If blocks U and L are available (i.e. in the same coded slice), N = (Nu + NL)/2
+		If only block U is available, N=NU ; if only block L is available, N=NL ; if neither is available, N=0.
+	*/
+	//We are using nA and nB (symbols used in norm, page 240) for Nu and NL, and nC for N.
+	//The following code decodes the coeff_token symbol using CAVLC tables which were generated at the beginning of the program.
+
+	if (nC==-1)
+	{
+		coeff_token=cavlc_table_decode(CoeffTokenCodeTable_ChromaDC);
+	}
+	else if (nC==0 || nC==1)
+	{
+		coeff_token=cavlc_table_decode(CoeffTokenCodeTable[0]); 
+	}
+	else if (nC==2 || nC==3)
+	{
+		coeff_token=cavlc_table_decode(CoeffTokenCodeTable[1]);
+	}
+	else if (nC>3 && nC<8)
+	{
+		coeff_token=cavlc_table_decode(CoeffTokenCodeTable[2]);
+	}
+	else
+	{
+		coeff_token=cavlc_table_decode(CoeffTokenCodeTable[3]);
+	}
+
+	//Extracting TotalCoeff and TrailingOnes from coeff_token symbol.
+	//This operation is defined by the norm.
+	TotalCoeff=coeff_token/2;
+	TrailingOnes=coeff_token&3;
+
+	if (TotalCoeff>0)
+	{
+		if (TotalCoeff>10 && TrailingOnes<3)
+		{
+			suffixLength=1;
+		}
+		else
+		{
+			suffixLength=0;
+		}
+
+		for (int i=0;i<TotalCoeff;i++)
+		{
+			if (i<TrailingOnes)
+			{
+				trailing_ones_sign_flag=getRawBits(1);
+				level[i]=1-2*trailing_ones_sign_flag;
+			}
+			else
+			{
+				int level_prefix;
+				for(level_prefix=0; getRawBits(1)==0; ++level_prefix);
+				
+				int levelSuffixSize;
+
+				if (level_prefix==14 && suffixLength==0)
+				{
+					levelSuffixSize=4;
+				}
+				else if (level_prefix>=15)
+				{
+					levelSuffixSize=(level_prefix-3);
+				}
+				else
+				{
+					levelSuffixSize=suffixLength;
+				}
+
+				//3. Decoding level_suffix
+
+				if (levelSuffixSize>0)
+				{
+					level_suffix=getRawBits(levelSuffixSize);
+				}
+				else
+				{
+					level_suffix=0;
+				}
+
+				//4. Calculating levelCode
+				
+				levelCode=(((level_prefix<15)?level_prefix:15)<<suffixLength)+level_suffix;
+
+				//5. , 6. , 7. levelCode corrections
+
+				if (level_prefix>=15 && suffixLength==0)
+				{
+					levelCode=levelCode+15;
+				}
+
+				if (level_prefix>=16)
+				{
+					levelCode=levelCode+(1<<(level_prefix-3))-4096;
+				}
+
+				if (i==TrailingOnes && TrailingOnes<3)
+				{
+					levelCode=levelCode+2;
+				}
+
+				//8. Calculating level[i]
+
+				if ((levelCode%2)==0)
+				{
+					level[i]=(levelCode+2)>>1;
+				}
+				else
+				{
+					level[i]=(-levelCode-1)>>1;
+				}
+
+				//9. , 10. suffixLength corrections
+
+				if (suffixLength==0)
+				{
+					suffixLength=1;
+				}
+
+				if (ABS(level[i])>(3<<(suffixLength-1)) && suffixLength<6)
+				{
+					suffixLength=suffixLength+1;
+				}
+			}
+		}
+
+		if(TotalCoeff < (endIdx - startIdx + 1))
+		{
+			int total_zeros;
+			
+			if (luma_or_chroma==LUMA)
+			{
+				total_zeros=cavlc_table_decode(TotalZerosCodeTable_4x4[TotalCoeff-1]);
+			}
+			else
+			{
+				total_zeros=cavlc_table_decode(TotalZerosCodeTable_ChromaDC[TotalCoeff-1]);
+			}
+			zerosLeft=total_zeros;
+		}
+		else
+		{
+			zerosLeft=0;
+		}
+
+  for(int i=0; i<TotalCoeff-1; i++)
+  {
+	  if (zerosLeft>0)
+	  {
+		  run_before=cavlc_table_decode(RunBeforeCodeTable[zerosLeft-1]);
+		  run[i]=run_before;
+	  }
+	  else
+	  {
+		  run[i]=0;
+	  }
+
+	  zerosLeft=zerosLeft-run[i];
+  }
+
+  run[TotalCoeff-1]=zerosLeft;
+
+  coeffNum=-1;
+  for(int i=TotalCoeff-1; i>=0; i--)
+  {
+    coeffNum+=run[i]+1;
+    coeffLevel[startIdx + coeffNum]=level[i];
+  }
+}
+}
+
+
+//Obsolete residual decoding!
+
 //Actual residual decoding takes place here.
 //This part of the code strays heavily from the norm, TODO: explain the helper functions and macros
+/*
 
 int residual_block(int *coeffLevel, int maxNumCoeff, int nC)
 {
@@ -662,10 +976,10 @@ int residual_block(int *coeffLevel, int maxNumCoeff, int nC)
 	int level[16],run[16];
 
 	//nC Value as defined by the h264_vlc.pdf document:
-	/*
-		If blocks U and L are available (i.e. in the same coded slice), N = (Nu + NL)/2
-		If only block U is available, N=NU ; if only block L is available, N=NL ; if neither is available, N=0.
-	*/
+	//
+	//	If blocks U and L are available (i.e. in the same coded slice), N = (Nu + NL)/2
+	//	If only block U is available, N=NU ; if only block L is available, N=NL ; if neither is available, N=0.
+	//
 	//We are using nA and nB (symbols used in norm, page 240) for Nu and NL, and nC for N.
 	//The following code decodes the coeff_token symbol using CAVLC tables which were generated at the beginning of the program.
 
@@ -751,3 +1065,4 @@ int residual_block(int *coeffLevel, int maxNumCoeff, int nC)
 
   return TotalCoeff;
 }
+*/

@@ -4,6 +4,17 @@
 
 //Coefficient levels
 
+extern int i16x16DClevel[16];
+extern int i16x16AClevel[16][16];
+extern int Intra16x16DCLevel[16];
+extern int Intra16x16ACLevel[16][16];
+extern int level[16][16], LumaLevel[16][16];
+
+extern int ChromaDCLevel[2][4];
+extern int ChromaACLevel[2][4][16];
+
+extern int NumC8x8;
+
 extern int coeffLevel_luma_DC[16];
 extern int coeffLevel_luma_AC[16][16];
 extern int coeffLevel_chroma_DC[2][4];
@@ -37,10 +48,10 @@ extern struct cavlc_table *TotalZerosCodeTable_ChromaDC[3];
 extern struct cavlc_table *RunBeforeCodeTable[6];
 
 extern int CoeffTokenCodes[4][64][3];
-extern int CoeffTokenCodes_ChromaDC[15][4];
-extern int TotalZerosCodes_4x4[15][18][4];
-extern int TotalZerosCodes_ChromaDC[3][5][4];
-extern int RunBeforeCodes[6][17][4];
+extern int CoeffTokenCodes_ChromaDC[15][3];
+extern int TotalZerosCodes_4x4[15][18][3];
+extern int TotalZerosCodes_ChromaDC[3][5][3];
+extern int RunBeforeCodes[6][17][3];
 
 
 int get_nC(int x, int y, int luma_or_select_chroma);
@@ -49,4 +60,9 @@ void init_cavlc_tables();
 struct cavlc_table *init_cavlc_table(struct cavlc_table_item *items);
 int cavlc_table_decode(struct cavlc_table *table);
 
+//Obsolete!
 int residual_block(int *coeffLevel, int maxNumCoeff, int nC);
+
+void residual(int startIdx, int endIdx);
+void residual_luma(int i16x16DClevel[16], int i16x16AClevel[16][16], int level[16][16], int startIdx, int endIdx);
+void residual_block_cavlc(int ChromaDCLevel[16], int, int, int, int);
