@@ -1,4 +1,5 @@
 #include "intra.h"
+#include "h264_math.h"
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
 
@@ -14,41 +15,6 @@ bool get_prev_intra4x4_pred_mode_flag(int luma4x4BlkIdx)
 int get_rem_intra4x4_pred_mode(int luma4x4BlkIdx)
 {
 	return 5;
-}
-
-// This is a helper function used for various purposes
-// throughout the decoder. It is defined in subclause
-// 5.7 Mathematical functions
-int InverseRasterScan(int a, int b, int c, int d, int e)
-{
-	if (e == 0)
-		return (a % (d/b)) * b;
-	else
-		return (a / (d/b)) * c;
-}
-
-// Defined in 5.7 Mathematical functions
-int Clip1Y(int x)
-{
-	// Clip3(0, 255, x); 255 == (1 << BitDepthY) - 1; BitDepthY == 8 when baseline
-	if (x < 0)
-		return 0;
-	if (x > 255)
-		return 255;
-
-	return x;
-}
-
-// Defined in 5.7 Mathematical functions
-int Clip1C(int x)
-{
-	// Clip3(0, 255, x); 255 == (1 << BitDepthC) - 1; BitDepthC == 8 when baseline
-	if (x < 0)
-		return 0;
-	if (x > 255)
-		return 255;
-
-	return x;
 }
 
 // Derivation process for neighbouring locations (6.4.11)
@@ -500,31 +466,31 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int CurrMbAddr, int intra4x4Pre
 
 #define p(x,y) (((x) == -1) ? p[(y) + 1] : p[(x) + 17])
 // (8.3.3.1)
-void Intra_16x16_Vertical(int *p, int *predL)
+void Intra_16x16_Vertical(int *p, int predL[16][16])
 {
 	for (int y = 0; y < 16; y++)
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			predL[y*16 + x] = p(x,-1);
+			predL[x][y] = p(x,-1);
 		}
 	}
 }
 
 // (8.3.3.2)
-void Intra_16x16_Horizontal(int *p, int *predL)
+void Intra_16x16_Horizontal(int *p, int predL[16][16])
 {
 	for (int y = 0; y < 16; y++)
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			predL[y*16 + x] = p(-1,y);
+			predL[x][y] = p(-1,y);
 		}
 	}
 }
 
 // (8.3.3.3)
-void Intra_16x16_DC(int *p, int *predL)
+void Intra_16x16_DC(int *p, int predL[16][16])
 {
 	int sumXi = 0;		// = sum(p[x',-1]) | x € (0..15)
 	int sumYi = 0;		// = sum(p[-1,y']) | y € (0..15)
@@ -556,26 +522,26 @@ void Intra_16x16_DC(int *p, int *predL)
 		{
 			if (allAvailable)
 			{
-				predL[y*16+x] = (sumXi + sumYi + 16) >> 5;
+				predL[x][y] = (sumXi + sumYi + 16) >> 5;
 			}
 			else if (topAvailable)
 			{
-				predL[y*16+x] = (sumYi + 8) >> 4;
+				predL[x][y] = (sumYi + 8) >> 4;
 			}
 			else if (leftAvailable)
 			{
-				predL[y*16+x] = (sumXi + 8) >> 4;
+				predL[x][y] = (sumXi + 8) >> 4;
 			}
 			else
 			{
-				predL[y*16+x] = 1 << 7;		// == 1 << (BitDepthY-1) (BitDepthY is always equal to 8 in the baseline profile)
+				predL[x][y] = 1 << 7;		// == 1 << (BitDepthY-1) (BitDepthY is always equal to 8 in the baseline profile)
 			}
 		}
 	}
 }
 
 // (8.3.3.4)
-void Intra_16x16_Plane(int *p, int *predL)
+void Intra_16x16_Plane(int *p, int predL[16][16])
 {
 	int H = 0, V = 0;
 	for (int i = 0; i < 7; i++)
@@ -592,13 +558,13 @@ void Intra_16x16_Plane(int *p, int *predL)
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			predL[y*16+x] = Clip1Y((a + b*(x-7) + c*(y-7) + 16) >> 5);
+			predL[x][y] = Clip1Y((a + b*(x-7) + c*(y-7) + 16) >> 5);
 		}
 	}
 }
 
 // (8.3.3)
-void Intra16x16SamplePrediction(int CurrMbAddr, int *predL)
+void Intra16x16SamplePrediction(int CurrMbAddr, int predL[16][16])
 {
 	int p[33];
 	for (int i = 0; i < 33; i++)
@@ -651,7 +617,7 @@ void Intra16x16SamplePrediction(int CurrMbAddr, int *predL)
 #define pCr(x,y) (((x) == -1) ? pCr[(y) + 1] : pCr[(x) + 9])
 #define pCb(x,y) (((x) == -1) ? pCb[(y) + 1] : pCb[(x) + 9])
 // (8.3.4.1)
-void Intra_Chroma_DC(int *p, int *predC, int MbWidthC)
+void Intra_Chroma_DC(int *p, int predC[8][8], int MbWidthC)
 {
 	// chroma4x4BlkIdx € [0..(1<<ChromaArrayType+1)) - 1]; ChromaArrayType == 1 in baseline
 	for (int chroma4x4BlkIdx = 0; chroma4x4BlkIdx < 4; chroma4x4BlkIdx++)
@@ -692,13 +658,13 @@ void Intra_Chroma_DC(int *p, int *predC, int MbWidthC)
 				for (int x = 0; x < 4; x++)
 				{
 					if (allAvailable)
-						predC[(y+y0)*MbWidthC + (x+x0)] = (sumXi + sumYi + 4) >> 3;
+						predC[x+x0][y+y0] = (sumXi + sumYi + 4) >> 3;
 					else if (leftAvailable)
-						predC[(y+y0)*MbWidthC + (x+x0)] = (sumYi + 2) >> 2;
+						predC[x+x0][y+y0] = (sumYi + 2) >> 2;
 					else if (topAvailable)
-						predC[(y+y0)*MbWidthC + (x+x0)] = (sumXi + 2) >> 2;
+						predC[x+x0][y+y0] = (sumXi + 2) >> 2;
 					else
-						predC[(y+y0)*MbWidthC + (x+x0)] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
+						predC[x+x0][y+y0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
 				}
 			}
 		}
@@ -709,11 +675,11 @@ void Intra_Chroma_DC(int *p, int *predC, int MbWidthC)
 				for (int x = 0; x < 4; x++)
 				{
 					if (topAvailable)
-						predC[(y+y0)*MbWidthC + (x+x0)] = (sumXi + 2) >> 2;
+						predC[x+x0][y+y0] = (sumXi + 2) >> 2;
 					else if (leftAvailable)
-						predC[(y+y0)*MbWidthC + (x+x0)] = (sumYi + 2) >> 2;
+						predC[x+x0][y+y0] = (sumYi + 2) >> 2;
 					else
-						predC[(y+y0)*MbWidthC + (x+x0)] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
+						predC[x+x0][y+y0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
 				}
 			}
 		}
@@ -724,11 +690,11 @@ void Intra_Chroma_DC(int *p, int *predC, int MbWidthC)
 				for (int x = 0; x < 4; x++)
 				{
 					if (leftAvailable)
-						predC[(y+y0)*MbWidthC + (x+x0)] = (sumYi + 2) >> 2;
+						predC[x+x0][y+y0] = (sumYi + 2) >> 2;
 					else if (topAvailable)
-						predC[(y+y0)*MbWidthC + (x+x0)] = (sumXi + 2) >> 2;
+						predC[x+x0][y+y0] = (sumXi + 2) >> 2;
 					else
-						predC[(y+y0)*MbWidthC + (x+x0)] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
+						predC[x+x0][y+y0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
 				}
 			}
 		}
@@ -736,31 +702,31 @@ void Intra_Chroma_DC(int *p, int *predC, int MbWidthC)
 }
 
 // (8.3.4.2)
-void Intra_Chroma_Horizontal(int *p, int *predC, int MbWidthC, int MbHeightC)
+void Intra_Chroma_Horizontal(int *p, int predC[8][8], int MbWidthC, int MbHeightC)
 {
 	for (int y = 0; y < MbHeightC; y++)
 	{
 		for (int x = 0; x < MbWidthC; x++)
 		{
-			predC[y*MbWidthC + x] = p(-1,y);
+			predC[x][y] = p(-1,y);
 		}
 	}
 }
 
 // (8.3.4.3)
-void Intra_Chroma_Vertical(int *p, int *predC, int MbWidthC, int MbHeightC)
+void Intra_Chroma_Vertical(int *p, int predC[8][8], int MbWidthC, int MbHeightC)
 {
 	for (int y = 0; y < MbHeightC; y++)
 	{
 		for (int x = 0; x < MbWidthC; x++)
 		{
-			predC[y*MbWidthC + x] = p(x,-1);
+			predC[x][y] = p(x,-1);
 		}
 	}
 }
 
 // (8.3.4.4)
-void Intra_Chroma_Plane(int *p, int *predC, int MbWidthC, int MbHeightC)
+void Intra_Chroma_Plane(int *p, int predC[8][8], int MbWidthC, int MbHeightC)
 {
 	int xCF = 0;	// xCF = (ChromaArrayType == 3) ? 4 : 0; ChromaArrayType == 1 when baseline
 	int yCF = 0;	// yCF = (ChromaArrayType != 1) ? 4 : 0; ChromaArrayType == 1 when baseline
@@ -779,13 +745,13 @@ void Intra_Chroma_Plane(int *p, int *predC, int MbWidthC, int MbHeightC)
 	{
 		for (int x = 0; x < MbWidthC; x++)
 		{
-			predC[y*MbWidthC + x] = Clip1C((a + b*(x-3-xCF) + c*(y-3-yCF) + 16) >> 5);
+			predC[x][y] = Clip1C((a + b*(x-3-xCF) + c*(y-3-yCF) + 16) >> 5);
 		}
 	}
 }
 
 // (8.3.4)
-void IntraChromaSamplePrediction(int CurrMbAddr, int *predCr, int *predCb)
+void IntraChromaSamplePrediction(int CurrMbAddr, int predCr[8][8], int predCb[8][8])
 {
 	const int MbWidthC = 8, MbHeightC = 8;
 	int pCr[17], pCb[17];
@@ -849,12 +815,8 @@ void IntraChromaSamplePrediction(int CurrMbAddr, int *predCr, int *predCb)
 
 // predL, predCr and predCb are the output prediction samples
 // with dimensions 16x16, 8x8 and 8x8 respectively
-void intraPrediction(int CurrMbAddr, int *predL, int *predCr, int *predCb)
+void intraPrediction(int CurrMbAddr, int predL[16][16], int predCr[8][8], int predCb[8][8])
 {
-	predL = new int[256];
-	predCr = new int[64];
-	predCb = new int[64];
-
 	// mb_pred(mb_type) in the standard
 	if ((MbPartPredMode(mb_type , 0) == Intra_4x4) || (MbPartPredMode(mb_type , 0) == Intra_16x16))
 	{
@@ -880,7 +842,7 @@ void intraPrediction(int CurrMbAddr, int *predL, int *predCr, int *predCb)
 				{
 					for (int x = 0; x < 4; x++)
 					{
-						predL[(y0 + y)*16 + (x0 + x)] = pred4x4L[y*4 + x];
+						predL[x0+x][y0+y] = pred4x4L[y*4 + x];
 					}
 				}
 

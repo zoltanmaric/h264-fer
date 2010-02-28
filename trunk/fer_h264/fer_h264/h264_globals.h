@@ -4,6 +4,9 @@
 #define LUMA 0
 #define CHROMA 1
 
+#define SubWidthC 2
+#define SubHeightC 2
+
 //TODO:
 
 #define NA				-1
@@ -140,3 +143,8 @@ extern frame_type frame;
 
 //frame/4 dimenzije
 extern int *Intra4x4PredMode;
+
+extern	int mb_pos_x;
+extern	int mb_pos_y;
+
+extern int mb_qp_delta;

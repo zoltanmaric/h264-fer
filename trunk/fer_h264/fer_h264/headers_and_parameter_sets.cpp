@@ -15,8 +15,15 @@ struct SH_data shd;
 void fill_shd(NALunit *nal_unit)
 {
   shd.first_mb_in_slice			=expGolomb_UD();
-  shd.slice_type				=expGolomb_UD()%5;
+  shd.slice_type				=expGolomb_UD();
   shd.pic_parameter_set_id		=expGolomb_UD();
+
+  //From the norm:
+  /*
+  frame_num is used as an identifier for pictures and shall be represented by log2_max_frame_num_minus4 + 4 bits in
+  the bitstream.
+  */
+
   shd.frame_num					=getRawBits(sps.log2_max_frame_num);
   
   shd.PicHeightInMbs=sps.FrameHeightInMbs;
@@ -31,6 +38,10 @@ void fill_shd(NALunit *nal_unit)
   if((shd.slice_type%5)==P_SLICE || (shd.slice_type%5)==B_SLICE || (shd.slice_type%5)==SP_SLICE)
   {
     shd.num_ref_idx_active_override_flag=getRawBits(1);
+	if (shd.num_ref_idx_active_override_flag==1)
+	{
+		shd.num_ref_idx_l0_active_minus1	=expGolomb_UD();
+	}
   }
 
   if((shd.slice_type%5)!=I_SLICE && (shd.slice_type%5)!=SI_SLICE)
@@ -55,14 +66,16 @@ void fill_shd(NALunit *nal_unit)
   shd.slice_qp_delta						=expGolomb_SD();
   shd.SliceQPy=pps.pic_init_qp+shd.slice_qp_delta;
 
-  if((shd.slice_type%5)==SP_SLICE || (shd.slice_type%5)==SI_SLICE)
-  {
-    if((shd.slice_type%5)==SP_SLICE)
+  if(pps.deblocking_filter_control_present_flag==1)
 	{
-      shd.sp_for_switch_flag				=getRawBits(1);
+		shd.disable_deblocking_filter_idc	= expGolomb_UD();
+		if (shd.disable_deblocking_filter_idc != 1)
+		{
+			shd.slice_alpha_c0_offset_div2	= expGolomb_SD();
+			shd.slice_beta_offset_div2		= expGolomb_SD();
+		}
 	}
-    shd.slice_qs_delta						=expGolomb_SD();
-  }
+
 }
 
 
@@ -98,7 +111,7 @@ void fill_sps(NALunit *nal_unit)
 	sps.MaxFrameNum=1<<sps.log2_max_frame_num;
 
 	//Unsigned expGolomb
-	sps.bottom_field_pic_order_in_frame=expGolomb_UD();
+	sps.pic_order_cnt_type=expGolomb_UD();
 
 	//Unsigned expGolomb+derived from maximal picture order count
 	if(sps.pic_order_cnt_type==0)
@@ -124,9 +137,13 @@ void fill_sps(NALunit *nal_unit)
 	sps.gaps_in_frame_num_value_allowed_flag=getRawBits(1);
 	sps.PicWidthInMbs=expGolomb_UD()+1;
 	sps.PicWidthInSamples=sps.PicWidthInMbs*16;
+
 	sps.PicHeightInMapUnits=expGolomb_UD()+1;
+
 	sps.PicSizeInMapUnits=sps.PicWidthInMbs*sps.PicHeightInMapUnits;
+	
 	sps.frame_mbs_only_flag=getRawBits(1);
+	
 	sps.FrameHeightInMbs=(2-sps.frame_mbs_only_flag)*sps.PicHeightInMapUnits;
 	sps.FrameHeightInSamples=16*sps.FrameHeightInMbs;
 	if(!sps.frame_mbs_only_flag)
@@ -134,6 +151,11 @@ void fill_sps(NALunit *nal_unit)
 	sps.direct_8x8_inference_flag=getRawBits(1);
 	sps.frame_cropping_flag=getRawBits(1);
 	sps.vui_parameters_present_flag=getRawBits(1);
+
+	if (sps.vui_parameters_present_flag==1)
+	{
+		printf("SPS decoding -> VUI is present but ignored.\n");
+	}
 }
 
 /////////////////////////////////////////////////

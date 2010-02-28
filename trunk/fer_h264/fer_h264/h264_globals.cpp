@@ -183,7 +183,24 @@ int init_h264_structures()
 
 	init_cavlc_tables();
 
+
 	//TODO: init frame
+
+	frame.Lheight=sps.FrameHeightInMbs*16;
+	frame.Lwidth=sps.PicWidthInMbs*16;
+
+	frame.L=new unsigned char[frame.Lheight*frame.Lwidth];
+
+	frame.Cheight=sps.FrameHeightInMbs*8;
+	frame.Cwidth=sps.PicWidthInMbs*8;
+
+	frame.C[0]=new unsigned char[frame.Cheight*frame.Cwidth];
+	frame.C[1]=new unsigned char[frame.Cheight*frame.Cwidth];
+
+	PicWidthInMbs=sps.PicWidthInMbs;
+	PicHeightInMbs=sps.FrameHeightInMbs;
+
+	Intra4x4PredMode=new int[sps.PicWidthInMbs*sps.FrameHeightInMbs*16];
 
 	//Everything is ok
 	return 0;
@@ -193,3 +210,8 @@ frame_type frame;
 
 //frame/4 dimenzije
 int *Intra4x4PredMode;
+
+	int mb_pos_x;
+	int mb_pos_y;
+
+	int mb_qp_delta;

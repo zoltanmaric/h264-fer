@@ -156,7 +156,17 @@ struct SH_data
 
   int sp_for_switch_flag;
 
-/*	Determines the operation of deblocking filter.
+
+
+/*	Not implemented.
+*/
+  int slice_group_change_cycle;
+
+
+  //TODO:
+  int num_ref_idx_l0_active_minus1;
+
+  /*	Determines the operation of deblocking filter.
 	Not implemented.
 */
 
@@ -164,9 +174,6 @@ struct SH_data
   int slice_alpha_c0_offset_div2;
   int slice_beta_offset_div2;
 
-/*	Not implemented.
-*/
-  int slice_group_change_cycle;
 };
 
 
