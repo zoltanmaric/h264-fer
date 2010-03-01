@@ -3,20 +3,6 @@
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
 
-// This function is a stub. It simulates the retrieval of the
-// prev_intra4x4_pred_mode_flag from the byte stream.
-bool get_prev_intra4x4_pred_mode_flag(int luma4x4BlkIdx)
-{
-	return true;
-}
-
-// This function is a stub. It simulates the retrieval of the
-// rem_intra4x4_pred_mode from the byte stream.
-int get_rem_intra4x4_pred_mode(int luma4x4BlkIdx)
-{
-	return 5;
-}
-
 // Derivation process for neighbouring locations (6.4.11)
 // luma: true if invoked for luma locations, false if invoked for chroma
 void getNeighbourLocations(int xN, int yN, int *mbAddrN, int CurrMbAddr, int *xW, int *yW, bool luma)
@@ -853,7 +839,8 @@ void intraPrediction(int CurrMbAddr, int predL[16][16], int predCr[8][8], int pr
 				int test = 0;
 			}
 
-			// the transform coefficient decoding part comes here (8.5)
+			// Standard: The transform coefficient decoding part comes here (8.5)
+			// It is instead invoked as a separate module outside of this file.
 		}
 		else
 		{
