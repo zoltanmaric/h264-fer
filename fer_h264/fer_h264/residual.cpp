@@ -3,6 +3,8 @@
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
 
+bool ChromaDCLevel_active;
+
 //Coefficient levels
 
 int i16x16DClevel[16];
@@ -612,6 +614,8 @@ struct cavlc_table *init_cavlc_table(int *items)
 
 void init_cavlc_tables()
 {
+
+	ChromaDCLevel_active=false;
  
   for(int i=0; i<4; ++i)
   {
@@ -645,13 +649,13 @@ int get_nC(int x, int y, int luma_or_select_chroma)
 
 	if (luma_or_select_chroma==0)
 	{
-		nA=((x-1)<0 || y<0)?-1:TotalCoeff_luma_array[x-1][y];
-		nB=((x)<0 || (y-1)<0)?-1:TotalCoeff_luma_array[x][y-1];
+		nA=((x-4)<0 || y<0)?-1:TotalCoeff_luma_array[x-4][y];
+		nB=((x)<0 || (y-4)<0)?-1:TotalCoeff_luma_array[x][y-4];
 	}
 	else
 	{
-		nA=(((x-1)<0 || y<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][x-1][y];
-		nB=(((x)<0 || (y-1)<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][x][y-1];
+		nA=(((x-4)<0 || y<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][x-4][y];
+		nB=(((x)<0 || (y-4)<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][x][y-4];
 	}
 
 	if(nA<0 && nB<0)
@@ -701,7 +705,9 @@ void residual(int startIdx, int endIdx)
 		//Chroma DC residual present
 		if ((CodedBlockPatternChroma & 3) && startIdx==0)
 		{
+			ChromaDCLevel_active=true;
 			residual_block_cavlc(ChromaDCLevel[iCbCr],0,4*NumC8x8-1, 4*NumC8x8, CHROMA);
+			ChromaDCLevel_active=false;
 		}
 		else
 		{
@@ -779,14 +785,21 @@ void residual_block_cavlc(int coeffLevel[16], int startIdx, int endIdx, int maxN
 {
 
 	int TotalCoeff, TrailingOnes, level_suffix, levelCode, zerosLeft;
-	int coeff_token,suffixLength, trailing_ones_sign_flag, level[16],run_before, run[16], coeffNum;
+	int coeff_token,suffixLength, trailing_ones_sign_flag, level[16],run_before, run[16], coeffNum, nC;
 
 	for (int i=0;i<maxNumCoeff;i++)
 	{
 		coeffLevel[i]=0;
 	}
 
-	int nC=get_nC(mb_pos_x,mb_pos_y,luma_or_chroma);
+	if (ChromaDCLevel_active==true)
+	{
+		nC=-1;
+	}
+	else
+	{
+		nC=get_nC(mb_pos_x,mb_pos_y,luma_or_chroma);
+	}
 
 	//nC Value as defined by the h264_vlc.pdf document:
 	/*

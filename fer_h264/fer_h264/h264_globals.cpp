@@ -213,9 +213,30 @@ int init_h264_structures()
 	Intra4x4PredMode=new int[sps.PicWidthInMbs*sps.FrameHeightInMbs*16];
 
 	TotalCoeff_luma_array=new int*[sps.FrameHeightInMbs*4];
-	for (int i
-	int **TotalCoeff_luma_array;
-	int ***TotalCoeff_chroma_array;
+
+	for (int i=0;i<sps.FrameHeightInMbs*4;i++)
+	{
+		TotalCoeff_luma_array[i]=new int[sps.PicWidthInMbs*4];
+		for (int j=0;j<sps.PicWidthInMbs*4;j++)
+		{
+			TotalCoeff_luma_array[i][j]=0;
+		}
+	}
+
+	TotalCoeff_chroma_array[0]=new int*[sps.FrameHeightInMbs*2];
+	TotalCoeff_chroma_array[1]=new int*[sps.FrameHeightInMbs*2];
+
+	for (int i=0;i<sps.FrameHeightInMbs*2;i++)
+	{
+		TotalCoeff_chroma_array[0][i]=new int[sps.PicWidthInMbs*2];
+		TotalCoeff_chroma_array[1][i]=new int[sps.PicWidthInMbs*2];
+		for (int j=0;j<sps.PicWidthInMbs*2;j++)
+		{
+			TotalCoeff_chroma_array[0][i][j]=0;
+			TotalCoeff_chroma_array[1][i][j]=0;
+		}
+	}
+	
 
 	//Everything is ok
 	return 0;

@@ -143,17 +143,11 @@ void RBSP_decode(NALunit nal_unit)
 				// mb_type (positive integer value) is equal to "Name of mb_type" (i.e. I_NxN). These are often interchanged in the norm
 				// Everything as described in norm page 119. table 7-11.
 
-<<<<<<< .mine
 			// Prediction samples formed by either intra or inter prediction.
 			int predL[16][16], predCr[8][8], predCb[8][8];
 			//Specific inter prediction?
 			if(mb_type != I_4x4 /*&& mb_type != I_8x8*/ && MbPartPredMode( mb_type, 0 )!=Intra_16x16 && NumMbPart( mb_type )==4 )
 			{
-=======
-				//Specific inter prediction?
-				if(mb_type != I_4x4 /*&& mb_type != I_8x8*/ && MbPartPredMode( mb_type, 0 )!=Intra_16x16 && NumMbPart( mb_type )==4 )
-				{
->>>>>>> .r32
 
 					//Norm:
 
@@ -241,16 +235,9 @@ void RBSP_decode(NALunit nal_unit)
 
 						intra_chroma_pred_mode=expGolomb_UD();
 
-<<<<<<< .mine
 					intraPrediction(CurrMbAddr, predL, predCr, predCb);
 				}
 				else
-				{
-					for(int mbPartIdx=0; mbPartIdx<NumMbPart( mb_type ) ; ++mbPartIdx)
-=======
-					}
-					else
->>>>>>> .r32
 					{
 						for(int mbPartIdx=0; mbPartIdx<NumMbPart( mb_type ) ; ++mbPartIdx)
 						{
@@ -381,10 +368,6 @@ void RBSP_decode(NALunit nal_unit)
 
 
 				//Data ready for rendering
-
-				int predL[16][16], predCr[8][8], predCb[8][8];
-				intraPrediction(CurrMbAddr, predL, predCr, predCb);
-
 				if (MbPartPredMode(mb_type, 0) == Intra_4x4)
 				{
 					transformDecoding4x4LumaResidual(LumaLevel, predL, &QPy_prev, CurrMbAddr);
@@ -395,11 +378,6 @@ void RBSP_decode(NALunit nal_unit)
 				}
 				transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, &QPy_prev, true);
 				transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCb, &QPy_prev, false);
-
-<<<<<<< .mine
-			
-=======
->>>>>>> .r32
 
 
 
