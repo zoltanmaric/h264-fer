@@ -585,13 +585,17 @@ void Intra16x16SamplePrediction(int CurrMbAddr, int predL[16][16])
 		getNeighbourLocations(x, y, &mbAddrN, CurrMbAddr, &xW, &yW, true);
 
 		if (mbAddrN == -1)
+		{
 			p(x,y) = -1;	// not available for Intra_16x16 prediction
+		}
+		else
+		{
+			// inverse macroblock scanning process (6.4.1)
+			int xM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
+			int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
 
-		// inverse macroblock scanning process (6.4.1)
-		int xM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
-		int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
-
-		p(x,y) = frame.L[(yM+yW)*frame.Lwidth + (xM+xW)];
+			p(x,y) = frame.L[(yM+yW)*frame.Lwidth + (xM+xW)];
+		}
 	}
 
 	switch(Intra16x16PredMode)
