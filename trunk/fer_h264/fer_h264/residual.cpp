@@ -645,13 +645,13 @@ int get_nC(int x, int y, int luma_or_select_chroma)
 
 	if (luma_or_select_chroma==0)
 	{
-		nA=((x-4)<0 || y<0)?-1:TotalCoeff_luma_array[(y/4)][((x-4)/4)];
-		nB=((x)<0 || (y-4)<0)?-1:TotalCoeff_luma_array[((y-4)/4)][((x)/4)];
+		nA=((x-1)<0 || y<0)?-1:TotalCoeff_luma_array[x-1][y];
+		nB=((x)<0 || (y-1)<0)?-1:TotalCoeff_luma_array[x][y-1];
 	}
 	else
 	{
-		nA=(((x-8)<0 || y<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][(y/8)][((x-8)/8)];
-		nB=(((x)<0 || (y-8)<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][((y-8)/8)][((x)/8)];
+		nA=(((x-1)<0 || y<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][x-1][y];
+		nB=(((x)<0 || (y-1)<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][x][y-1];
 	}
 
 	if(nA<0 && nB<0)
