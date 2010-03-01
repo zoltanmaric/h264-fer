@@ -1,6 +1,6 @@
 #include "inttransform.h"
 #include "h264_math.h"
-#include "transforms.h"
+#include "scaleTransform.h"
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
 
