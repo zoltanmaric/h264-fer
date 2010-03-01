@@ -265,15 +265,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\scaleTransform.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
 			<File
 				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
-				RelativePath=".\transforms.h"
 				>
 			</File>
 		</Filter>
