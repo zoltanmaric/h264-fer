@@ -71,7 +71,7 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool intra16x16OrChr
 
 	// Standard: because sMbFlag is always false in baseline, qP is never
 	// equal to QSy or QSc
-	if (luma)
+	if (intra16x16OrChroma)
 	{
 		
 		int QP_y = QPy + QpBdOffsetY;
