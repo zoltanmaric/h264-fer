@@ -42,4 +42,5 @@ void writeToPPM()
 	}
 
 	fwrite(slika, 1, frame.Lwidth * frame.Lheight, f);
+	fclose(f);
 }

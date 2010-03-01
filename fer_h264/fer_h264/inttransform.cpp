@@ -51,7 +51,7 @@ void transformInverseScan(int list[16], int c[4][4])
 // previously transformed macroblock. At the start
 // of each slice, it is initialized to SliceQPY
 // derived in Equation 7-29
-void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool intra16x16OrChroma, int *QPy_prev)
+void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool luma, int *QPy_prev)
 {
 	int qP, QPy, QP_y, QPc, QP_c;
 
@@ -93,7 +93,7 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool intra16x16OrChr
 
 	// TransformBypassModeFlag == 0 in baseline
 
-	inverseResidual(bitDepth, qP, c, r, intra16x16OrChroma);
+	inverseResidual(bitDepth, qP, c, r, false);
 
 }
 
