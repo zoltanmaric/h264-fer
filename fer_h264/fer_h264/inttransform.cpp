@@ -151,17 +151,16 @@ void pictureConstructionChroma(int u[8][8], int CurrMbAddr, bool Cb)
 			int x0 = 0, y0 = 0;
 
 			// Standard: MbAffFrameFlag == 0 in baseline
-			// Standard: 
+			// Standard: subWidthC == SubHeightC == 2 in baseline
 			if (Cb)
 			{
-				frame.C[0][
+				frame.C[0][((yP/2)+y0+i)*frame.Cwidth + (xP/2)+x0+j] = u[i][j];
 			}
 			else
 			{
+				frame.C[1][((yP/2)+y0+i)*frame.Cwidth + (xP/2)+x0+j] = u[i][j];
 			}
 		}
-
-	}
 	}
 }
 
@@ -252,7 +251,7 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 // invoked for Cr or Cb. The same applies for ChromaACLevel.
 // This implies that this process is invoked once for each
 // chroma component.
-void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[16], int predC[8][8], int *QPy_prev, bool Cb)
+void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int predC[8][8], int *QPy_prev, bool Cb)
 {
 	int numChroma4x4Blks = 4;	// Standard: = (MbWidthC/4) * (MbHeightC/4);
 								// MbWidthC == MbHeightC == 8 in baseline.
@@ -291,10 +290,11 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[16], int pr
 			chromaList[k] = ChromaACLevel[chroma4x4BlkIdx][k-1];
 		}
 
-		transformInverseScan(chromaList, c);
+		int c2[4][4];
+		transformInverseScan(chromaList, c2);
 
 		int r[4][4];
-		scaleAndTransform4x4Residual(c, r, false, QPy_prev);
+		scaleAndTransform4x4Residual(c2, r, false, QPy_prev);
 
 		int x0 = InverseRasterScan(chroma4x4BlkIdx, 4, 4, 8, 0);
 		int y0 = InverseRasterScan(chroma4x4BlkIdx, 4, 4, 8, 1);
