@@ -302,7 +302,7 @@ void HadamardChromaTransform (int input[2][2], int output[2][2])
 
 
 //Scaling process for the residual 4x4 blocks (Chroma and Luma)
-void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool dc)
+void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool intra16x16OrChroma)
 {	
 	int qbits = quantizer/6;
 	int adjust = 0;
@@ -327,7 +327,7 @@ void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool d
 		}
 	}
 
-	if (!dc) output[0][0] = input[0][0];	
+	if (intra16x16OrChroma) output[0][0] = input[0][0];	
 }
 
 
@@ -435,11 +435,11 @@ void scaleChromaDC(int input[2][2], int qp, int output[2][2])
 //---------------- PUBLIC FUNCTIONS -----------------//
 //---------------------------------------------------//
 
-void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool luma)
+void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool intra16x16OrChroma)
 {
 	int d[4][4];
 
-	scaleResidualBlock(c, d, qP, !luma);
+	scaleResidualBlock(c, d, qP, intra16x16OrChroma);
 	inverseTransform4x4(d, r);
 }
 
