@@ -1,5 +1,5 @@
 //#include <math.h>
-#include "transforms.h"
+#include "scaleTransform.h"
 
 //Multiplication factors for quantization
 int factorsQ[6][4][4] = 
