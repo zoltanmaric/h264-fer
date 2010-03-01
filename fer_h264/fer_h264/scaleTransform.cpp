@@ -93,73 +93,49 @@ void forwardTransform4x4(int input[4][4], int output[4][4])
 }
 
 
-void inverseTransform4x4(int input[4][4], int output[4][4])
-{
-	int i, j, pom_1, pom_3;
-	int output_temp[4][4];	
-
-	//multiply A*X
-	for (i = 0; i < 4; i++)
-	{
-		for (j = 0; j < 4; j++)
-		{
-			switch (i)
-			{
-				case 0:
-					pom_3 = input[3][j] >> 1;
-					output_temp[i][j] = input[0][j] + input[1][j] + input[2][j] + pom_3;					
-					break;
-				case 1: 
-					pom_1 = input[1][j] >> 1;					
-					output_temp[i][j] = input[0][j] + pom_1 - input[2][j] - input[3][j];
-					break;
-				case 2:
-					pom_1 = input[1][j] >> 1;					
-					output_temp[i][j] = input[0][j] - pom_1 - input[2][j] + input[3][j];
-					break;
-				case 3:
-					pom_3 = input[3][j] >> 1;
-					output_temp[i][j] = input[0][j] - input[1][j] + input[2][j] - pom_3;
-					break;
-			}
-		}
-	}
+void inverseTransform4x4(int d[4][4], int r[4][4])
+{	
+	int e[4][4], f[4][4], g[4][4], h[4][4];
 	
-	//multiply (A*X)*At
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 3; i++)
 	{
-		for (j = 0; j < 4; j++)
-		{
-			switch (j)
-			{
-				case 0:
-					pom_3 = output_temp[i][3] >> 1;
-					output[i][j] = output_temp[i][0] + output_temp[i][1] + output_temp[i][2] + pom_3;
-					break;
-				case 1: 
-					pom_1 = output_temp[i][1] >> 1;					
-					output[i][j] = output_temp[i][0] + pom_1 - output_temp[i][2] - output_temp[i][3];
-					break;
-				case 2:
-					pom_1 = output_temp[i][1] >> 1;
-					output[i][j] = output_temp[i][0] - pom_1 - output_temp[i][2] + output_temp[i][3];
-					break;
-				case 3:					
-					pom_3 = output_temp[i][3] >> 1;
-					output[i][j] = output_temp[i][0] - output_temp[i][1] + output_temp[i][2] - pom_3;
-					break;
-			}
-		}
+		e[i][0] = d[i][0] + d[i][2];
+		e[i][1] = d[i][0] - d[i][2];
+		e[i][2] = (d[i][1] >> 1) - d[i][3];
+		e[i][3] = d[i][1] + (d[i][3] >> 1);
 	}
 
-	//divide by 64 and round
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 3; i++)
 	{
-		for (j = 0; j < 4; j++)
+		f[i][0] = e[i][0] + e[i][3];
+		f[i][1] = e[i][1] + e[i][2];
+		f[i][2] = e[i][1] - e[i][2];
+		f[i][3] = e[i][0] - e[i][3];
+	}
+
+	for (int j = 0; j < 3; j++)
+	{
+		g[0][j] = f[0][j] + f[2][j];
+		g[1][j] = f[0][j] - f[2][j];
+		g[2][j] = (f[1][j] >> 1) - f[3][j];
+		g[3][j] = f[1][j] + (f[3][j] >> 1);
+	}
+
+	for (int j = 0; j < 3; j++)
+	{
+		h[0][j] = g[0][j] + g[3][j];
+		h[1][j] = g[1][j] + g[2][j];
+		h[2][j] = g[1][j] - g[2][j];
+		h[3][j] = g[0][j] - g[3][j];
+	}
+
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
 		{
-			output[i][j] = (output[i][j] + 32) >> 6;
+			r[i][j] = (h[i][j] + 32) >> 6;
 		}
-	}	
+	}
 }
 
 
