@@ -151,7 +151,7 @@ void pictureConstructionChroma(int u[8][8], int CurrMbAddr, bool Cb)
 			int x0 = 0, y0 = 0;
 
 			// Standard: MbAffFrameFlag == 0 in baseline
-
+			// Standard: 
 			if (Cb)
 			{
 				frame.C[0][
