@@ -654,8 +654,8 @@ int get_nC(int x, int y, int luma_or_select_chroma)
 	}
 	else
 	{
-		nA=(((x-4)<0 || y<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][x-4][y];
-		nB=(((x)<0 || (y-4)<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma][x][y-4];
+		nA=(((x-4)<0 || y<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma-1][x-4][y];
+		nB=(((x)<0 || (y-4)<0))?-1:TotalCoeff_chroma_array[luma_or_select_chroma-1][x][y-4];
 	}
 
 	if(nA<0 && nB<0)
@@ -706,7 +706,7 @@ void residual(int startIdx, int endIdx)
 		if ((CodedBlockPatternChroma & 3) && startIdx==0)
 		{
 			ChromaDCLevel_active=true;
-			residual_block_cavlc(ChromaDCLevel[iCbCr],0,4*NumC8x8-1, 4*NumC8x8, CHROMA);
+			residual_block_cavlc(ChromaDCLevel[iCbCr],0,4*NumC8x8-1, 4*NumC8x8, iCbCr+1);
 			ChromaDCLevel_active=false;
 		}
 		else
@@ -727,7 +727,7 @@ void residual(int startIdx, int endIdx)
 				//Chroma AC residual present
 				if ((CodedBlockPatternChroma & 2) && endIdx>0)
 				{
-					residual_block_cavlc(ChromaACLevel[iCbCr][i8x8*4+i4x4],((startIdx-1)>0?(startIdx-1):0),endIdx-1,15,CHROMA);
+					residual_block_cavlc(ChromaACLevel[iCbCr][i8x8*4+i4x4],((startIdx-1)>0?(startIdx-1):0),endIdx-1,15,iCbCr+1);
 				}
 				else
 				{
@@ -832,7 +832,17 @@ void residual_block_cavlc(int coeffLevel[16], int startIdx, int endIdx, int maxN
 
 	//Extracting TotalCoeff and TrailingOnes from coeff_token symbol.
 	//This operation is defined by the norm.
-	TotalCoeff=coeff_token/2;
+	TotalCoeff=coeff_token/4;
+
+	if (luma_or_chroma==LUMA)
+	{
+		TotalCoeff_luma_array[mb_pos_x/4][mb_pos_y/4]=TotalCoeff;
+	}
+	else
+	{
+		TotalCoeff_chroma_array[luma_or_chroma-1][mb_pos_x/4][mb_pos_y/4]=TotalCoeff;
+	}
+
 	TrailingOnes=coeff_token&3;
 
 	if (TotalCoeff>0)
