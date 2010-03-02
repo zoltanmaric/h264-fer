@@ -51,31 +51,25 @@ void transformInverseScan(int list[16], int c[4][4])
 // previously transformed macroblock. At the start
 // of each slice, it is initialized to SliceQPY
 // derived in Equation 7-29
-void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool luma, int *QPy_prev)
+void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool luma, int QPy)
 {
-	int qP, QPy, QP_y, QPc, QP_c;
+	int qP;
 
 	const int bitDepth = 8;	// Standard: bitDepth = BitDepthY or BitDepthC depending
 							// on whether this process is invoked for luma or chroma
 							// residuals. In the baseline profile, the value of both
 							// of these is always equal to 8.
 
-	const bool sMbFlag = false;	// Standard: sMbFlag is true when mb_type is equal to
-								// SI or SP. This is never the case in baseline since
-								// only I and P slices are allowed.
-
-	int QpBdOffsetY = 0;	// Standard: = 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
-	QPy = ((*QPy_prev + mb_qp_delta + 52 + 2*QpBdOffsetY) % (52 + QpBdOffsetY)) - QpBdOffsetY;
-	*QPy_prev = QPy;	// TODO: provjeri qpy_prev
-
+	// Standard: sMbFlag is true when mb_type is equal to
+	// SI or SP. This is never the case in baseline since
+	// only I and P slices are allowed.
 
 	// Standard: because sMbFlag is always false in baseline, qP is never
 	// equal to QSy or QSc
 	if (luma)
 	{
-		
-		int QP_y = QPy + QpBdOffsetY;
-
+		// Standard: QpBdOffsetY == 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
+		int QP_y = QPy;
 		qP = QP_y;
 	}
 	else
@@ -85,8 +79,8 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool luma, int *QPy_
 												// second_chroma_qp_index_offset == chroma_qp_index_offset when not
 												// present. It is not present in baseline.
 		int qPi = Clip3(-QpBdOffsetC, 51, QPy + qPoffset);
-		QPc = qPiToQPc[qPi];
-		QP_c = QPc + QpBdOffsetC;
+		int QPc = qPiToQPc[qPi];
+		int QP_c = QPc + QpBdOffsetC;
 
 		qP = QP_c;
 	}
@@ -173,10 +167,14 @@ void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], 
 {
 	int c[4][4], r[4][4], u[4][4];
 
+	// Standard: QpBdOffsetY == 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
+	int QPy = (*QPy_prev + mb_qp_delta + 52) % 52;
+	*QPy_prev = QPy;
+
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
 		transformInverseScan(LumaLevel[luma4x4BlkIdx], c);
-		scaleAndTransform4x4Residual(c, r, false, QPy_prev);
+		scaleAndTransform4x4Residual(c, r, false, QPy);
 
 		int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
 		int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
@@ -202,10 +200,10 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 
 	transformInverseScan(Intra16x16DCLevel, c);
 
-	int QpBdOffsetY = 0;	// Standard: = 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
-	int QPy = ((*QPy_prev + mb_qp_delta + 52 + 2*QpBdOffsetY) % (52 + QpBdOffsetY)) - QpBdOffsetY;
-	*QPy_prev = QPy;	// TODO: provjeri qpy_prev
-	int QP_y = QPy + QpBdOffsetY;
+	// Standard: QpBdOffsetY == 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
+	int QPy = (*QPy_prev + mb_qp_delta + 52) % 52;
+	*QPy_prev = QPy;
+	int QP_y = QPy;
 
 	InverseDCLumaIntra(8, QP_y, c, dcY);
 
@@ -219,7 +217,7 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 		}
 
 		transformInverseScan(lumaList, c);
-		scaleAndTransform4x4Residual(c, r, true, QPy_prev);
+		scaleAndTransform4x4Residual(c, r, true, QPy);
 		int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
 		int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
 
@@ -263,9 +261,9 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 		c[i/2][i%2] = ChromaDCLevel[i];
 	}
 
-	int QpBdOffsetY = 0;	// Standard: = 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
-	int QPy = ((*QPy_prev + mb_qp_delta + 52 + 2*QpBdOffsetY) % (52 + QpBdOffsetY)) - QpBdOffsetY;
-	*QPy_prev = QPy;		// TODO: provjeri qpy_prev
+	// Standard: QpBdOffsetY == 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
+	int QPy = (*QPy_prev + mb_qp_delta + 52) % 52;
+	*QPy_prev = QPy;
 
 	int QpBdOffsetC = 0;	// Standard: = 6 * bit_depth_chroma_minus8; bit_depth_chroma_minus_8 == 0 in baseline
 	int qPoffset = pps.chroma_qp_index_offset;	// Standard: qPoffset = second_chroma_qp_index_offset,
@@ -294,7 +292,7 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 		transformInverseScan(chromaList, c2);
 
 		int r[4][4];
-		scaleAndTransform4x4Residual(c2, r, true, QPy_prev);
+		scaleAndTransform4x4Residual(c2, r, true, QPy);
 
 		int x0 = InverseRasterScan(chroma4x4BlkIdx, 4, 4, 8, 0);
 		int y0 = InverseRasterScan(chroma4x4BlkIdx, 4, 4, 8, 1);
