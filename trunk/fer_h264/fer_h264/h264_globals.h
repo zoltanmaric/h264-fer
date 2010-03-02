@@ -5,6 +5,9 @@
 #define CB 1
 #define CR 2
 
+#define MbWidthC 8
+#define MbHeightC 8
+
 #define SubWidthC 2
 #define SubHeightC 2
 
@@ -149,3 +152,5 @@ extern	int mb_pos_x;
 extern	int mb_pos_y;
 
 extern int mb_qp_delta;
+
+extern int CurrMbAddr;
