@@ -128,7 +128,7 @@ int colour_block_width;
 int mb_type;
 
 //mb_type values for all the macroblocks in the current frame/slice/NAL unit
-int *mb_type_array;
+int mb_type_array[100000];
 
 //Picture/Frame dimensions in macroblocks (divided by 16 in both dimensions)
 int PicWidthInMbs, PicHeightInMbs;
@@ -179,7 +179,7 @@ int init_h264_structures()
 		}
 	}
 
-	mb_type_array=new int[sps.PicWidthInMbs*sps.FrameHeightInMbs];
+	//mb_type_array=new int[sps.PicWidthInMbs*sps.FrameHeightInMbs];
 
 	init_cavlc_tables();
 
@@ -223,14 +223,14 @@ int init_h264_structures()
 		}
 	}
 
-	TotalCoeff_chroma_array[0]=new int*[sps.FrameHeightInMbs*2];
-	TotalCoeff_chroma_array[1]=new int*[sps.FrameHeightInMbs*2];
+	TotalCoeff_chroma_array[0]=new int*[sps.FrameHeightInMbs*4];
+	TotalCoeff_chroma_array[1]=new int*[sps.FrameHeightInMbs*4];
 
-	for (int i=0;i<sps.FrameHeightInMbs*2;i++)
+	for (int i=0;i<sps.FrameHeightInMbs*4;i++)
 	{
-		TotalCoeff_chroma_array[0][i]=new int[sps.PicWidthInMbs*2];
-		TotalCoeff_chroma_array[1][i]=new int[sps.PicWidthInMbs*2];
-		for (int j=0;j<sps.PicWidthInMbs*2;j++)
+		TotalCoeff_chroma_array[0][i]=new int[sps.PicWidthInMbs*4];
+		TotalCoeff_chroma_array[1][i]=new int[sps.PicWidthInMbs*4];
+		for (int j=0;j<sps.PicWidthInMbs*4;j++)
 		{
 			TotalCoeff_chroma_array[0][i][j]=0;
 			TotalCoeff_chroma_array[1][i][j]=0;

@@ -94,7 +94,7 @@ extern int colour_block_width;
 extern int mb_type;
 
 //mb_type values for all the macroblocks in the current frame/slice/NAL unit
-extern int *mb_type_array;
+extern int mb_type_array[100000];
 
 //Picture/Frame dimensions in macroblocks (divided by 16 in both dimensions)
 extern int PicWidthInMbs, PicHeightInMbs;

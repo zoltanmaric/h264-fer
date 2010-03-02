@@ -70,6 +70,9 @@ void RBSP_decode(NALunit nal_unit)
 		QPy_prev = shd.SliceQPy;
 		while (moreDataFlag && CurrMbAddr<MbCount)
 		{
+
+			if (CurrMbAddr==247)
+				break;
 			if ((shd.slice_type%5)!=I_SLICE && (shd.slice_type%5)!=SI_SLICE)
 			{
 
@@ -120,6 +123,9 @@ void RBSP_decode(NALunit nal_unit)
 
 			if(moreDataFlag)
 			{ 
+
+
+
 				mb_type = expGolomb_UD();
 
 				//Current macroblock coordinates
@@ -286,6 +292,15 @@ void RBSP_decode(NALunit nal_unit)
 					//This if clause is not implemented since transform_8x8_mode_flag is not supported
 				}
 
+				//DOES NOT EXIST IN THE NORM!
+				else
+				{
+					CodedBlockPatternChroma=I_Macroblock_Modes[mb_type][5];
+					CodedBlockPatternLuma=I_Macroblock_Modes[mb_type][6];
+				}
+
+				
+
 				if(CodedBlockPatternLuma>0 || CodedBlockPatternChroma>0 || MbPartPredMode(mb_type,0)==Intra_16x16)
 				{
 
@@ -377,7 +392,7 @@ void RBSP_decode(NALunit nal_unit)
 					transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, &QPy_prev, CurrMbAddr);
 				}
 				transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, &QPy_prev, true);
-				transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCb, &QPy_prev, false);
+				transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, &QPy_prev, false);
 
 
 
