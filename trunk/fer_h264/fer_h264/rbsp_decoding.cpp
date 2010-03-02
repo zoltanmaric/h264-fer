@@ -123,9 +123,6 @@ void RBSP_decode(NALunit nal_unit)
 
 			if(moreDataFlag)
 			{ 
-
-
-
 				mb_type = expGolomb_UD();
 
 				//Current macroblock coordinates
@@ -512,7 +509,10 @@ void RBSP_decode(NALunit nal_unit)
 
 				moreDataFlag=more_rbsp_data();
 				++CurrMbAddr;
+
+				
 			}
+			
 		}
 
 		writeToPPM();

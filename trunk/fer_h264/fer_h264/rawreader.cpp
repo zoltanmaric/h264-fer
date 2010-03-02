@@ -20,7 +20,7 @@ bool more_rbsp_data()
 
 void skipRawBits(int N)
 {
-	RBSP_current_byte+=N/8;
+	RBSP_current_byte+=(RBSP_current_bit+N)/8;
 	RBSP_current_bit=(RBSP_current_bit+N)%8;
 }
 
@@ -44,7 +44,7 @@ unsigned int peekRawBits(int N)
 		}
 
 		//Classic bit by bit loading
-		returnValue=(returnValue<<1) + (RBSP_data[local_RBSP_current_byte]>>(7-local_RBSP_current_bit))&1;
+		returnValue=(returnValue*2) + ((RBSP_data[local_RBSP_current_byte]>>(7-local_RBSP_current_bit))&1);
 		local_RBSP_current_bit++;
 		if (local_RBSP_current_bit==8)
 		{

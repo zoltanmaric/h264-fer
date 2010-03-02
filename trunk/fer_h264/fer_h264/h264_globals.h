@@ -2,7 +2,8 @@
 
 //Constants used for "get_nC" function
 #define LUMA 0
-#define CHROMA 1
+#define CB 1
+#define CR 2
 
 #define SubWidthC 2
 #define SubHeightC 2
