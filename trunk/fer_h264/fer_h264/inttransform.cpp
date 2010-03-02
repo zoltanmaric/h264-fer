@@ -31,13 +31,6 @@ void transformInverseScan(int list[16], int c[4][4])
 	}
 }
 
-//// Haramustek
-//// (8.5.10)
-//void scaleAndTransformDCIntra_16x16(int bitDepth, int qP, int c[4][4], int dcY[4][4])
-//{
-//	
-//}
-
 // Haramustek
 // (8.5.12.1 & 8.5.12.2)
 //void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool luma)
@@ -163,13 +156,9 @@ void pictureConstructionChroma(int u[8][8], int CurrMbAddr, bool Cb)
 // previously transformed macroblock. At the start
 // of each slice, it is initialized to SliceQPY
 // derived in Equation 7-29
-void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], int *QPy_prev, int CurrMbAddr)
+void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], int QPy, int CurrMbAddr)
 {
 	int c[4][4], r[4][4], u[4][4];
-
-	// Standard: QpBdOffsetY == 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
-	int QPy = (*QPy_prev + mb_qp_delta + 52) % 52;
-	*QPy_prev = QPy;
 
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
@@ -194,15 +183,11 @@ void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], 
 }
 
 // (8.5.2)
-void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16ACLevel[16][16],int predL[16][16], int *QPy_prev, int CurrMbAddr)
+void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16ACLevel[16][16],int predL[16][16], int QPy, int CurrMbAddr)
 {
 	int c[4][4], dcY[4][4], rMb[16][16], r[4][4], u[16][16];
 
 	transformInverseScan(Intra16x16DCLevel, c);
-
-	// Standard: QpBdOffsetY == 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
-	int QPy = (*QPy_prev + mb_qp_delta + 52) % 52;
-	*QPy_prev = QPy;
 	int QP_y = QPy;
 
 	InverseDCLumaIntra(8, QP_y, c, dcY);
@@ -210,7 +195,11 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 	int lumaList[16];
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
-		lumaList[0] = dcY[luma4x4BlkIdx/4][luma4x4BlkIdx%4];
+		int x = InverseRasterScan(luma4x4BlkIdx / 4, 2, 2, 4, 0) +
+				InverseRasterScan(luma4x4BlkIdx % 4, 1, 1, 2, 0);
+		int y = InverseRasterScan(luma4x4BlkIdx / 4, 2, 2, 4, 1) +
+				InverseRasterScan(luma4x4BlkIdx % 4, 1, 1, 2, 1);
+		lumaList[0] = dcY[y][x];
 		for (int k = 1; k < 16; k++)
 		{
 			lumaList[k] = Intra16x16ACLevel[luma4x4BlkIdx][k-1];
@@ -249,7 +238,7 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 // invoked for Cr or Cb. The same applies for ChromaACLevel.
 // This implies that this process is invoked once for each
 // chroma component.
-void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int predC[8][8], int *QPy_prev, bool Cb)
+void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int predC[8][8], int QPy, bool Cb)
 {
 	int numChroma4x4Blks = 4;	// Standard: = (MbWidthC/4) * (MbHeightC/4);
 								// MbWidthC == MbHeightC == 8 in baseline.
@@ -260,10 +249,6 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 	{
 		c[i/2][i%2] = ChromaDCLevel[i];
 	}
-
-	// Standard: QpBdOffsetY == 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
-	int QPy = (*QPy_prev + mb_qp_delta + 52) % 52;
-	*QPy_prev = QPy;
 
 	int QpBdOffsetC = 0;	// Standard: = 6 * bit_depth_chroma_minus8; bit_depth_chroma_minus_8 == 0 in baseline
 	int qPoffset = pps.chroma_qp_index_offset;	// Standard: qPoffset = second_chroma_qp_index_offset,

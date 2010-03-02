@@ -92,7 +92,7 @@ void forwardTransform4x4(int input[4][4], int output[4][4])
 
 }
 
-
+// (8.5.12.2)
 void inverseTransform4x4(int d[4][4], int r[4][4])
 {	
 	int e[4][4], f[4][4], g[4][4], h[4][4];
@@ -301,7 +301,7 @@ void HadamardChromaTransform (int input[2][2], int output[2][2])
 }
 
 
-//Scaling process for the residual 4x4 blocks (Chroma and Luma)
+// (8.5.12.1) Scaling process for the residual 4x4 blocks (Chroma and Luma)
 void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool intra16x16OrChroma)
 {	
 	int qbits = quantizer/6;
@@ -443,6 +443,7 @@ void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool intra1
 	inverseTransform4x4(d, r);
 }
 
+// (8.5.10)
 void InverseDCLumaIntra (int bitDepth, int qP, int c[4][4], int dcY[4][4])
 {
 	int f[4][4];
