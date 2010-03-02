@@ -743,7 +743,6 @@ void Intra_Chroma_Plane(int *p, int predC[8][8], int MbWidthC, int MbHeightC)
 // (8.3.4)
 void IntraChromaSamplePrediction(int CurrMbAddr, int predCr[8][8], int predCb[8][8])
 {
-	const int MbWidthC = 8, MbHeightC = 8;
 	int pCr[17], pCb[17];
 	for (int i = 0; i < MbWidthC + MbHeightC + 1; i++)
 	{
