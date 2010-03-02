@@ -934,7 +934,7 @@ void residual_block_cavlc(int coeffLevel[16], int startIdx, int endIdx, int maxN
 		{
 			int total_zeros;
 			
-			if (luma_or_chroma==LUMA)
+			if (ChromaDCLevel_active==false)
 			{
 				total_zeros=cavlc_table_decode(TotalZerosCodeTable_4x4[TotalCoeff-1]);
 			}
@@ -949,20 +949,31 @@ void residual_block_cavlc(int coeffLevel[16], int startIdx, int endIdx, int maxN
 			zerosLeft=0;
 		}
 
-  for(int i=0; i<TotalCoeff-1; i++)
-  {
+
+	int run_before_index;	
+	for(int j=0; j<TotalCoeff-1; j++)
+	{
+		if (zerosLeft>5)
+		{
+			run_before_index=5;
+		}
+		else
+		{
+			run_before_index=zerosLeft-1;
+		}
+
 	  if (zerosLeft>0)
 	  {
-		  run_before=cavlc_table_decode(RunBeforeCodeTable[zerosLeft-1]);
-		  run[i]=run_before;
+		  run_before=cavlc_table_decode(RunBeforeCodeTable[run_before_index]);
+		  run[j]=run_before;
 	  }
 	  else
 	  {
-		  run[i]=0;
+		  run[j]=0;
 	  }
 
-	  zerosLeft=zerosLeft-run[i];
-  }
+	  zerosLeft=zerosLeft-run[j];
+	}
 
   run[TotalCoeff-1]=zerosLeft;
 

@@ -21,7 +21,7 @@ bool more_rbsp_data()
 void skipRawBits(int N)
 {
 	RBSP_current_byte+=N/8;
-	RBSP_current_bit+=N%8;
+	RBSP_current_bit=(RBSP_current_bit+N)%8;
 }
 
 unsigned int peekRawBits(int N)
