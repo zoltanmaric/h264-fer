@@ -55,7 +55,8 @@ void RBSP_decode(NALunit nal_unit)
 		int firstMbAddr = 0;
 
 		//Norm: CurrMbAddr = firstMbAddr
-		int CurrMbAddr = 0;
+		//Already globaly defined
+		//int CurrMbAddr = 0;
 
 		//Norm: moreDataFlag = 1
 		bool moreDataFlag = true;
@@ -66,13 +67,10 @@ void RBSP_decode(NALunit nal_unit)
 		//Used later on
 		int mb_skip_run;
 
-		int QPy_prev;
-		QPy_prev = shd.SliceQPy;
+		int QPy;
+		QPy = shd.SliceQPy;
 		while (moreDataFlag && CurrMbAddr<MbCount)
 		{
-
-			if (CurrMbAddr==247)
-				break;
 			if ((shd.slice_type%5)!=I_SLICE && (shd.slice_type%5)!=SI_SLICE)
 			{
 
@@ -380,16 +378,19 @@ void RBSP_decode(NALunit nal_unit)
 
 
 				//Data ready for rendering
+
+				QPy = (QPy + mb_qp_delta + 52)%52;
+
 				if (MbPartPredMode(mb_type, 0) == Intra_4x4)
 				{
-					transformDecoding4x4LumaResidual(LumaLevel, predL, &QPy_prev, CurrMbAddr);
+					transformDecoding4x4LumaResidual(LumaLevel, predL, QPy, CurrMbAddr);
 				}
 				else
 				{
-					transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, &QPy_prev, CurrMbAddr);
+					transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy, CurrMbAddr);
 				}
-				transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, &QPy_prev, true);
-				transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, &QPy_prev, false);
+				transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, QPy, true);
+				transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, QPy, false);
 
 
 

@@ -130,6 +130,10 @@ int mb_type;
 //mb_type values for all the macroblocks in the current frame/slice/NAL unit
 int mb_type_array[100000];
 
+int totalcoeff_array[100000];
+
+int invoked_for_Intra16x16DCLevel, invoked_for_Intra16x16ACLevel, invoked_for_LumaLevel, invoked_for_ChromaACLevel, invoked_for_ChromaDCLevel;
+
 //Picture/Frame dimensions in macroblocks (divided by 16 in both dimensions)
 int PicWidthInMbs, PicHeightInMbs;
 
