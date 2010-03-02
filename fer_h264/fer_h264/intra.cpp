@@ -607,7 +607,7 @@ void Intra16x16SamplePrediction(int CurrMbAddr, int predL[16][16])
 #define pCr(x,y) (((x) == -1) ? pCr[(y) + 1] : pCr[(x) + 9])
 #define pCb(x,y) (((x) == -1) ? pCb[(y) + 1] : pCb[(x) + 9])
 // (8.3.4.1)
-void Intra_Chroma_DC(int *p, int predC[8][8], int MbWidthC)
+void Intra_Chroma_DC(int *p, int predC[8][8])
 {
 	// chroma4x4BlkIdx € [0..(1<<ChromaArrayType+1)) - 1]; ChromaArrayType == 1 in baseline
 	for (int chroma4x4BlkIdx = 0; chroma4x4BlkIdx < 4; chroma4x4BlkIdx++)
@@ -692,7 +692,7 @@ void Intra_Chroma_DC(int *p, int predC[8][8], int MbWidthC)
 }
 
 // (8.3.4.2)
-void Intra_Chroma_Horizontal(int *p, int predC[8][8], int MbWidthC, int MbHeightC)
+void Intra_Chroma_Horizontal(int *p, int predC[8][8])
 {
 	for (int y = 0; y < MbHeightC; y++)
 	{
@@ -704,7 +704,7 @@ void Intra_Chroma_Horizontal(int *p, int predC[8][8], int MbWidthC, int MbHeight
 }
 
 // (8.3.4.3)
-void Intra_Chroma_Vertical(int *p, int predC[8][8], int MbWidthC, int MbHeightC)
+void Intra_Chroma_Vertical(int *p, int predC[8][8])
 {
 	for (int y = 0; y < MbHeightC; y++)
 	{
@@ -716,7 +716,7 @@ void Intra_Chroma_Vertical(int *p, int predC[8][8], int MbWidthC, int MbHeightC)
 }
 
 // (8.3.4.4)
-void Intra_Chroma_Plane(int *p, int predC[8][8], int MbWidthC, int MbHeightC)
+void Intra_Chroma_Plane(int *p, int predC[8][8])
 {
 	int xCF = 0;	// xCF = (ChromaArrayType == 3) ? 4 : 0; ChromaArrayType == 1 when baseline
 	int yCF = 0;	// yCF = (ChromaArrayType != 1) ? 4 : 0; ChromaArrayType == 1 when baseline
@@ -784,20 +784,20 @@ void IntraChromaSamplePrediction(int CurrMbAddr, int predCr[8][8], int predCb[8]
 	switch(intra_chroma_pred_mode)
 	{
 		case 0:
-			Intra_Chroma_DC(pCb, predCb, MbWidthC);
-			Intra_Chroma_DC(pCr, predCr, MbWidthC);
+			Intra_Chroma_DC(pCb, predCb);
+			Intra_Chroma_DC(pCr, predCr);
 			break;
 		case 1:
-			Intra_Chroma_Horizontal(pCb, predCb, MbWidthC, MbHeightC);
-			Intra_Chroma_Horizontal(pCr, predCr, MbWidthC, MbHeightC);
+			Intra_Chroma_Horizontal(pCb, predCb);
+			Intra_Chroma_Horizontal(pCr, predCr);
 			break;
 		case 2:
-			Intra_Chroma_Vertical(pCb, predCb, MbWidthC, MbHeightC);
-			Intra_Chroma_Vertical(pCr, predCr, MbWidthC, MbHeightC);
+			Intra_Chroma_Vertical(pCb, predCb);
+			Intra_Chroma_Vertical(pCr, predCr);
 			break;
 		case 3:
-			Intra_Chroma_Plane(pCb, predCb, MbWidthC, MbHeightC);
-			Intra_Chroma_Plane(pCr, predCr, MbWidthC, MbHeightC);
+			Intra_Chroma_Plane(pCb, predCb);
+			Intra_Chroma_Plane(pCr, predCr);
 			break;
 	}		
 }
