@@ -2,6 +2,7 @@
 
 //Constants used for "get_nC" function
 #define LUMA 0
+#define CHROMA 1
 #define CB 1
 #define CR 2
 
@@ -154,3 +155,7 @@ extern	int mb_pos_y;
 extern int mb_qp_delta;
 
 extern int CurrMbAddr;
+
+extern int totalcoeff_array[100000];
+
+extern int invoked_for_Intra16x16DCLevel, invoked_for_Intra16x16ACLevel, invoked_for_LumaLevel, invoked_for_ChromaACLevel, invoked_for_ChromaDCLevel;
