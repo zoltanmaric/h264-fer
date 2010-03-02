@@ -251,3 +251,5 @@ int *Intra4x4PredMode;
 	int mb_pos_y;
 
 	int mb_qp_delta;
+
+	int CurrMbAddr;
