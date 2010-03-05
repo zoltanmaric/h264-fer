@@ -121,6 +121,9 @@ void RBSP_decode(NALunit nal_unit)
 
 			if(moreDataFlag)
 			{ 
+if (CurrMbAddr>80)
+break;
+
 				mb_type = expGolomb_UD();
 
 				//Current macroblock coordinates
@@ -326,7 +329,29 @@ void RBSP_decode(NALunit nal_unit)
 					//residual_block_cavlc( coeffLevel, startIdx, endIdx, maxNumCoeff )
 					//Additional parameter "nC" has been added.
 
-					residual(0, 15);
+//					residual(0, 15);
+
+					//TEST INSERT
+
+		if(MbPartPredMode(mb_type,0)==Intra_16x16)
+            residual_block(&LumaDCLevel[0],16,LumaDC_nC);
+          for(int i8x8=0; i8x8<4; ++i8x8)
+            for(int i4x4=0; i4x4<4; ++i4x4)
+              if(CodedBlockPatternLuma&(1<<i8x8)) {
+                if(MbPartPredMode(mb_type,0)==Intra_16x16)
+                  LumaAdjust residual_block(&LumaACLevel[i8x8*4+i4x4][1],15,LumaAC_nC);
+                else
+                  LumaAdjust residual_block(&LumaACLevel[i8x8*4+i4x4][0],16,LumaAC_nC);
+              };
+          for(int iCbCr=0; iCbCr<2; iCbCr++)
+            if(CodedBlockPatternChroma&3)
+              residual_block(&ChromaDCLevel[iCbCr][0],4,ChromaDC_nC);
+          for(int iCbCr=0; iCbCr<2; iCbCr++)
+            for(int i4x4=0; i4x4<4; ++i4x4)
+              if(CodedBlockPatternChroma&2)
+                ChromaAdjust residual_block(&ChromaACLevel[iCbCr][i4x4][1],15,ChromaAC_nC);
+
+
 
 					//Old prediction code is currently commented out:
 					/*
@@ -491,7 +516,7 @@ void RBSP_decode(NALunit nal_unit)
 
 						for(int i=0; i<4; ++i)
 						{
-							coeffLevel_chroma_AC[iCbCr][i][0]=coeffLevel_chroma_DC[iCbCr][i];
+							ChromaACLevel[iCbCr][i][0]=ChromaDCLevel[iCbCr][i];
 						}
 
 						for(int i=0; i<4; ++i)
@@ -517,6 +542,7 @@ void RBSP_decode(NALunit nal_unit)
 		}
 
 		writeToPPM();
+		exit(0);
 		int stop = 0;
 
 	}

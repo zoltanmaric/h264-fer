@@ -2,6 +2,48 @@
 #include "residual.h"
 #include "h264_globals.h"
 
+//TEST INSERT
+
+int LumaDCLevel[16];
+int LumaACLevel[16][16];
+int ChromaDCLevelX[2][4];
+int ChromaACLevelX[2][4][16];
+
+
+mode_pred_info *mpi=NULL;
+
+///// nC / TotalCoeff stuff /////
+
+static inline int get_luma_nN(mode_pred_info *mpi, int x, int y) {
+  if(x<0 || y<0) return -1;
+  return ModePredInfo_TotalCoeffL(mpi,x>>2,y>>2);
+}
+
+static inline int get_chroma_nN(mode_pred_info *mpi, int x, int y, int iCbCr) {
+  if(x<0 || y<0) return -1;
+  return ModePredInfo_TotalCoeffC(mpi,x>>3,y>>3,iCbCr);
+}
+
+int get_luma_nC(mode_pred_info *mpi, int x, int y) {
+  int nA=get_luma_nN(mpi,x-4,y);
+  int nB=get_luma_nN(mpi,x,y-4);
+  if(nA<0  && nB<0)  return 0;
+  if(nA>=0 && nB>=0) return (nA+nB+1)>>1;
+  if(nA>=0) return nA;
+       else return nB;
+}
+
+int get_chroma_nC(mode_pred_info *mpi, int x, int y, int iCbCr) {
+  int nA=get_chroma_nN(mpi,x-8,y,iCbCr);
+  int nB=get_chroma_nN(mpi,x,y-8,iCbCr);
+  if(nA<0  && nB<0)  return 0;
+  if(nA>=0 && nB>=0) return (nA+nB+1)>>1;
+  if(nA>=0) return nA;
+       else return nB;
+}
+
+
+
 //Inter prediction slices - Macroblock types
 //Defined strictly by norm, page 121.
 //(Table 7-13 – Macroblock type values 0 to 4 for P and SP slices)
@@ -46,7 +88,7 @@ int I_Macroblock_Modes[27][7]=
 {
   {0,	I_4x4,			0,	Intra_4x4,   NA, NA, NA},
   //If this line was to be commented out, the MbPartPredMode macro would have to be changed
-  //since it relies on the linear rise of the first column.
+  //since it relies on the linear rise of the value in the first column.
   //{0,	I_NxN,			1,	Intra_8x8,	 NA, NA, NA},
   {1,	I_16x16_0_0_0,	NA,	Intra_16x16,  0,  0,  0},
   {2,	I_16x16_1_0_0,	NA,	Intra_16x16,  1,  0,  0},
@@ -130,7 +172,11 @@ int mb_type;
 //mb_type values for all the macroblocks in the current frame/slice/NAL unit
 int mb_type_array[100000];
 
-int totalcoeff_array[100000];
+
+//TODO: Frames with more than 1000000 4x4 blocks 
+int totalcoeff_array_luma[1000000];
+//TODO: Use less data for each chroma channel :)
+int totalcoeff_array_chroma[2][1000000];
 
 int invoked_for_Intra16x16DCLevel, invoked_for_Intra16x16ACLevel, invoked_for_LumaLevel, invoked_for_ChromaACLevel, invoked_for_ChromaDCLevel;
 
@@ -166,6 +212,40 @@ int ABS(int a)
 
 int init_h264_structures()
 {
+
+
+//TEST INSERT
+
+mpi= new mode_pred_info;
+
+  int x=mpi->MbWidth=mpi->MbPitch=sps.PicWidthInMbs>>4;
+  int y=mpi->MbHeight=sps.FrameHeightInMbs>>4;
+  //mpi->MbMode=malloc(x*y*sizeof(int));
+  // per-chroma block information    (8x8)
+  x=mpi->CbWidth=mpi->CbPitch=sps.PicWidthInMbs>>3;
+  y=mpi->CbHeight=sps.FrameHeightInMbs>>3;
+
+    x=mpi->TbWidth=mpi->TbPitch=sps.PicWidthInMbs>>2;
+  y=mpi->TbHeight=sps.FrameHeightInMbs>>2;
+
+ // per-chroma block information    (8x8)
+	x=sps.PicWidthInMbs/8;
+	y=sps.FrameHeightInMbs/8;
+  mpi->TotalCoeffC[0]=(int *)malloc(x*y*sizeof(int));
+  mpi->TotalCoeffC[1]=(int *)malloc(x*y*sizeof(int));
+  // per-transform block information (4x4)
+  x=sps.PicWidthInMbs/4;
+  y=sps.FrameHeightInMbs/4;
+  mpi->TotalCoeffL=(int *)malloc(x*y*sizeof(int));
+
+
+
+
+
+
+
+
+
 	TotalCoeff_luma_array = new int*[sps.PicWidthInMbs];
 	for (int i=0;i<sps.PicWidthInMbs;i++)
 	{
