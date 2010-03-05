@@ -60,9 +60,10 @@ void init_cavlc_tables();
 struct cavlc_table *init_cavlc_table(struct cavlc_table_item *items);
 int cavlc_table_decode(struct cavlc_table *table);
 
-//Obsolete!
+//TEST INSERT
 int residual_block(int *coeffLevel, int maxNumCoeff, int nC);
+
 
 void residual(int startIdx, int endIdx);
 void residual_luma(int i16x16DClevel[16], int i16x16AClevel[16][16], int level[16][16], int startIdx, int endIdx);
-void residual_block_cavlc(int ChromaDCLevel[16], int, int, int, int);
+void residual_block_cavlc(int ChromaDCLevel[16], int, int, int);
