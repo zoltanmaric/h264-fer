@@ -103,7 +103,6 @@ void RBSP_decode(NALunit nal_unit)
 					MotionCompensateMB(this,ref,mpi,mb_pos_x,mb_pos_y);
 					*/
 					//END INTER
-
 				}
 				//Norm: if( CurrMbAddr != firstMbAddr | | mb_skip_run > 0 ) ...
 				if (mb_skip_run>0)
@@ -147,11 +146,11 @@ break;
 				// mb_type (positive integer value) is equal to "Name of mb_type" (i.e. I_NxN). These are often interchanged in the norm
 				// Everything as described in norm page 119. table 7-11.
 
-			// Prediction samples formed by either intra or inter prediction.
-			int predL[16][16], predCr[8][8], predCb[8][8];
-			//Specific inter prediction?
-			if(mb_type != I_4x4 /*&& mb_type != I_8x8*/ && MbPartPredMode( mb_type, 0 )!=Intra_16x16 && NumMbPart( mb_type )==4 )
-			{
+				// Prediction samples formed by either intra or inter prediction.
+				int predL[16][16], predCr[8][8], predCb[8][8];
+				//Specific inter prediction?
+				if(mb_type != I_4x4 /*&& mb_type != I_8x8*/ && MbPartPredMode( mb_type, 0 )!=Intra_16x16 && NumMbPart( mb_type )==4 )
+				{
 
 					//Norm:
 
@@ -207,7 +206,7 @@ break;
 								mvdx, mvdy);
 								*/
 								//END INTER
-					  }
+							}
 						}
 					}
 				}
@@ -239,9 +238,9 @@ break;
 
 						intra_chroma_pred_mode=expGolomb_UD();
 
-					intraPrediction(CurrMbAddr, predL, predCr, predCb);
-				}
-				else
+						intraPrediction(CurrMbAddr, predL, predCr, predCb);
+					}
+					else
 					{
 						for(int mbPartIdx=0; mbPartIdx<NumMbPart( mb_type ) ; ++mbPartIdx)
 						{
@@ -295,9 +294,7 @@ break;
 				{
 					CodedBlockPatternChroma=I_Macroblock_Modes[mb_type][5];
 					CodedBlockPatternLuma=I_Macroblock_Modes[mb_type][6];
-				}
-
-				
+				}				
 
 				if(CodedBlockPatternLuma>0 || CodedBlockPatternChroma>0 || MbPartPredMode(mb_type,0)==Intra_16x16)
 				{
@@ -333,23 +330,46 @@ break;
 
 					//TEST INSERT
 
-		if(MbPartPredMode(mb_type,0)==Intra_16x16)
-            residual_block(&LumaDCLevel[0],16,LumaDC_nC);
-          for(int i8x8=0; i8x8<4; ++i8x8)
-            for(int i4x4=0; i4x4<4; ++i4x4)
-              if(CodedBlockPatternLuma&(1<<i8x8)) {
-                if(MbPartPredMode(mb_type,0)==Intra_16x16)
-                  LumaAdjust residual_block(&LumaACLevel[i8x8*4+i4x4][1],15,LumaAC_nC);
-                else
-                  LumaAdjust residual_block(&LumaACLevel[i8x8*4+i4x4][0],16,LumaAC_nC);
-              };
-          for(int iCbCr=0; iCbCr<2; iCbCr++)
-            if(CodedBlockPatternChroma&3)
-              residual_block(&ChromaDCLevel[iCbCr][0],4,ChromaDC_nC);
-          for(int iCbCr=0; iCbCr<2; iCbCr++)
-            for(int i4x4=0; i4x4<4; ++i4x4)
-              if(CodedBlockPatternChroma&2)
-                ChromaAdjust residual_block(&ChromaACLevel[iCbCr][i4x4][1],15,ChromaAC_nC);
+					// Švabo:
+					
+					if(MbPartPredMode(mb_type,0)==Intra_16x16)
+					{
+						residual_block(&LumaDCLevel[0],16,LumaDC_nC);
+					}
+					for(int i8x8=0; i8x8<4; ++i8x8)
+					{
+						for(int i4x4=0; i4x4<4; ++i4x4)
+						{
+							if(CodedBlockPatternLuma&(1<<i8x8))
+							{
+								if(MbPartPredMode(mb_type,0)==Intra_16x16)
+								{
+								  LumaAdjust residual_block(&LumaACLevel[i8x8*4+i4x4][1],15,LumaAC_nC);
+								}
+								else
+								{
+								  LumaAdjust residual_block(&LumaACLevel[i8x8*4+i4x4][0],16,LumaAC_nC);
+								}
+							}
+						}
+					}
+					for(int iCbCr=0; iCbCr<2; iCbCr++)
+					{
+						if(CodedBlockPatternChroma&3)
+						{
+						  residual_block(&ChromaDCLevel[iCbCr][0],4,ChromaDC_nC);
+						}
+					}
+					for(int iCbCr=0; iCbCr<2; iCbCr++)
+					{
+						for(int i4x4=0; i4x4<4; ++i4x4)
+						{
+							if(CodedBlockPatternChroma&2)
+							{
+								ChromaAdjust residual_block(&ChromaACLevel[iCbCr][i4x4][1],15,ChromaAC_nC);
+							}
+						}
+					}
 
 
 
@@ -404,7 +424,8 @@ break;
 
 				//Data ready for rendering
 
-				QPy = (QPy + mb_qp_delta + 52)%52;
+				// Norm: QpBdOffsetY == 0 in baseline
+				QPy = (QPy + mb_qp_delta + 52) % 52;
 
 				if (MbPartPredMode(mb_type, 0) == Intra_4x4)
 				{
@@ -535,10 +556,7 @@ break;
 
 				moreDataFlag=more_rbsp_data();
 				++CurrMbAddr;
-
-				
 			}
-			
 		}
 
 		writeToPPM();
