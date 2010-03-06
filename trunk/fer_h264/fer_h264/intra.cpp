@@ -766,19 +766,20 @@ void IntraChromaSamplePrediction(int CurrMbAddr, int predCr[8][8], int predCb[8]
 			pCr(x,y) = -1;	// not available for Intra prediction
 			pCb(x,y) = -1;
 		}
+		else
+		{
+			// inverse macroblock scanning process (6.4.1)
+			int xL = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
+			int yL = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
 
-		// inverse macroblock scanning process (6.4.1)
-		int xL = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
-		int yL = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
+			int xM = (xL >> 4)*MbWidthC;
+			int yM = (yL >> 4)*MbHeightC + (yL % 2);
 
-		int xM = (xL >> 4)*MbWidthC;
-		int yM = (yL >> 4)*MbHeightC + (yL % 2);
-
-		// Chrominance blue:
-		pCb(x,y) = (frame.C[0])[(yM+yW)*frame.Cwidth + (xM+xW)];
-		// Chrominance red:
-		pCr(x,y) = (frame.C[1])[(yM+yW)*frame.Cwidth + (xM+xW)];
-
+			// Chrominance blue:
+			pCb(x,y) = (frame.C[0])[(yM+yW)*frame.Cwidth + (xM+xW)];
+			// Chrominance red:
+			pCr(x,y) = (frame.C[1])[(yM+yW)*frame.Cwidth + (xM+xW)];
+		}
 	}
 
 	switch(intra_chroma_pred_mode)

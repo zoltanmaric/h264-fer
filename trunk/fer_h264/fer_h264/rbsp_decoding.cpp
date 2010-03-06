@@ -14,7 +14,7 @@ void RBSP_decode(NALunit nal_unit)
 
 	static int nalBrojac=0;
 
-	printf("Ulaz u RBPS_decode broj %d",nalBrojac++);
+	printf("Ulaz u RBPS_decode broj %d\n",nalBrojac++);
 
 	initRawReader(nal_unit.rbsp_byte, nal_unit.NumBytesInRBSP);
 
@@ -562,7 +562,6 @@ break;
 		writeToPPM();
 		exit(0);
 		int stop = 0;
-
 	}
 }
 
