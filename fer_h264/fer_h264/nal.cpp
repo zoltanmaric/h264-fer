@@ -134,8 +134,8 @@ NALunit getNAL(FILE *input, unsigned long *fPtr)
 	unsigned long endPtr = findNALend(input, startPtr);
 	unsigned int NumBytesInNALunit = endPtr - startPtr;
 
-	printf("NAL start found at %x\n", startPtr);
-	printf("NAL size = %x\n\n", NumBytesInNALunit);
+	printf("NAL start found at %d (0x%x)\n", startPtr, startPtr);
+	printf("NAL size = %d (0x%x)\n\n", NumBytesInNALunit, NumBytesInNALunit);
 
 	unsigned char *NALbytes;
 	NALbytes = (unsigned char*) malloc(NumBytesInNALunit);
