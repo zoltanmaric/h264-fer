@@ -203,6 +203,8 @@ extern int mb_qp_delta;
 
 extern int CurrMbAddr;
 
+extern int mb_pos_array[100000];
+
 extern int totalcoeff_array_luma[1000000];
 extern int totalcoeff_array_chroma[2][1000000];
 

@@ -171,7 +171,7 @@ int mb_type;
 
 //mb_type values for all the macroblocks in the current frame/slice/NAL unit
 int mb_type_array[100000];
-
+int mb_pos_array[100000];
 
 //TODO: Frames with more than 1000000 4x4 blocks 
 int totalcoeff_array_luma[1000000];
