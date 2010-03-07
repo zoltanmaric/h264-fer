@@ -123,7 +123,7 @@ void Decode(int predL[16][16], int predCr[8][8], int predCb[8][8], frame ** refP
 {
 	// Smallest granularity for macroblock is 8x8 subpart (and in that case partition to 4x4 can be used).
 	// After DeriveMVs called, all MV are prepared (for every subMB and every subMBPart - granularity to part 4x4 sized).
-	frame * refPic = refPicL0[*(infos->refIdxL0+mbPartIdx)];
+	frame * refPic = refPicL0[*(refIdxL0+mbPartIdx)];
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 4; j++)
 			MotionCompensateSubMBPart(predL, predCr, predCb, refPic, mbPartIdx, i, j);

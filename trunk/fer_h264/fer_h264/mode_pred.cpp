@@ -5,40 +5,6 @@
 #include "mode_pred.h"
 #include "h264_globals.h"
 
-void MPI_Init()
-{
-	infos->mb_type =  (int *)malloc(FR_numRows*FR_MB_in_row*sizeof(int));
-	infos->mvL0x =  (int *)malloc(16*FR_numRows*FR_MB_in_row*sizeof(int)); // max 16 different motion vectors per macroblock
-	infos->mvL0y =  (int *)malloc(16*FR_numRows*FR_MB_in_row*sizeof(int));
-	//infos->mvCL0x = (int *)malloc(16*FR_numRows*FR_MB_in_row*sizeof(int)); // equal to mvL0x
-	//infos->mvCL0y = (int *)malloc(16*FR_numRows*FR_MB_in_row*sizeof(int)); // equal to mvL0y
-	infos->subMvCnt = (int *)malloc(FR_numRows*FR_MB_in_row*sizeof(int));
-	infos->refIdxL0 = (int *)malloc(FR_numRows*FR_MB_in_row*sizeof(int));
-	MPI_Clear();
-}
-
-void MPI_Clear()
-{
-	memset(infos->mb_type, -1, FR_numRows*FR_MB_in_row*sizeof(int));
-	memset(infos->mvL0x, 0, 16*FR_numRows*FR_MB_in_row*sizeof(int));
-	memset(infos->mvL0y, 0, 16*FR_numRows*FR_MB_in_row*sizeof(int));
-	//memset(infos->mvCL0x, 0, 16*FR_numRows*FR_MB_in_row*sizeof(int)); // equal to mvL0x
-	//memset(infos->mvCL0y, 0, 16*FR_numRows*FR_MB_in_row*sizeof(int)); // equal to mvL0y
-	memset(infos->subMvCnt, 0, FR_numRows*FR_MB_in_row*sizeof(int));
-	memset(infos->refIdxL0, -1, FR_numRows*FR_MB_in_row*sizeof(int));
-}
-
-void MPI_Free() 
-{
-	free(infos->mb_type);
-	free(infos->mvL0x);
-	free(infos->mvL0y);
-	//free(infos->mvCL0x); // equal to mvL0x
-	//free(infos->mvCL0y); // equal to mvL0y
-	free(infos->subMvCnt);
-	free(infos->refIdxL0);
-}
-
 #define Max(a,b) ((a)>(b)?(a):(b))
 #define Min(a,b) ((a)<(b)?(a):(b))
 #define Median(a,b,c) Max(Min(a,b),Min(c,Max(a,b)))
