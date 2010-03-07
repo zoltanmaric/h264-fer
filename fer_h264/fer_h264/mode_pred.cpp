@@ -75,22 +75,22 @@ void PredictMV_Luma(int org_x, int org_y, int mbPartIdx)
 	bool validC = get_neighbour_mv(org_x+16, org_y-16, 1, curr_refIdxL0, &mvCx, &mvCy, &refIdxL0C);
 	int curr_mb_type = MPI_mb_type(org_x, org_y);
 
-	if (MbPartWidth(curr_mb_type) == 16 && MbPartHeight(curr_mb_type) == 8 && mbPartIdx == 0 && mvBx != MV_NA && curr_refIdxL0 == refIdxL0B)
+	if (curr_mb_type == P_L0_L0_16x8 && mbPartIdx == 0 && mvBx != MV_NA && curr_refIdxL0 == refIdxL0B)
 	{
 		MPI_mvL0x(org_x, org_y, mbPartIdx) = mvBx; MPI_mvL0y(org_x, org_y, mbPartIdx) = mvBy;
 		return;
 	}
-	if (MbPartWidth(curr_mb_type) == 16 && MbPartHeight(curr_mb_type) == 8 && mbPartIdx == 1 && mvAx != MV_NA && curr_refIdxL0 == refIdxL0A)
+	if (curr_mb_type == P_L0_L0_16x8 && mbPartIdx == 1 && mvAx != MV_NA && curr_refIdxL0 == refIdxL0A)
 	{
 		MPI_mvL0x(org_x, org_y, mbPartIdx) = mvAx; MPI_mvL0y(org_x, org_y, mbPartIdx) = mvAy;
 		return;
 	}
-	if (MbPartWidth(curr_mb_type) == 8 && MbPartHeight(curr_mb_type) == 16 && mbPartIdx == 0 && mvAx != MV_NA && curr_refIdxL0 == refIdxL0A)
+	if (curr_mb_type == P_L0_L0_8x16 && mbPartIdx == 0 && mvAx != MV_NA && curr_refIdxL0 == refIdxL0A)
 	{
 		MPI_mvL0x(org_x, org_y, mbPartIdx) = mvAx; MPI_mvL0y(org_x, org_y, mbPartIdx) = mvAy;
 		return;
 	}
-	if (MbPartWidth(curr_mb_type) == 8 && MbPartHeight(curr_mb_type) == 16 && mbPartIdx == 1 && mvCx != MV_NA && curr_refIdxL0 == refIdxL0C)
+	if (curr_mb_type == P_L0_L0_8x16 && mbPartIdx == 1 && mvCx != MV_NA && curr_refIdxL0 == refIdxL0C)
 	{
 		MPI_mvL0x(org_x, org_y, mbPartIdx) = mvCx; MPI_mvL0y(org_x, org_y, mbPartIdx) = mvCy;
 		return;
@@ -186,7 +186,7 @@ void DeriveMVs(int org_x, int org_y, int mvdx, int mvdy) {
 	}
 	if (MPI_subMvCnt(org_x, org_y) == 2)
 	{
-		if (MbPartWidth(MPI_mb_type(org_x,org_y)) == 16) // P_16x8
+		if (MPI_mb_type(org_x,org_y) == P_L0_L0_16x8) // P_16x8
 		{
 			MPI_mvL0x(org_x, org_y, 2) = MPI_mvL0x(org_x, org_y, 1);
 			MPI_mvL0y(org_x, org_y, 2) = MPI_mvL0y(org_x, org_y, 1);
