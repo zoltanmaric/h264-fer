@@ -1,7 +1,5 @@
 #pragma once
 
-#include "mode_pred.h"
-
 typedef struct __frame {
   unsigned char *Luma, *Chroma[2];
 } frame;

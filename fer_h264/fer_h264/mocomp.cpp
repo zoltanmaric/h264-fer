@@ -1,5 +1,7 @@
 #include "mocomp.h"
 
+#include "mode_pred.h"
+
 int L_Temp_4x4_refPart[9][9];
 int C_Temp_4x4_refPart[2][3][3];
 
