@@ -120,9 +120,10 @@ void RBSP_decode(NALunit nal_unit)
 
 			if(moreDataFlag)
 			{ 
-if (CurrMbAddr>80)
+if (CurrMbAddr>2400)
 break;
 
+				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
 				mb_type = expGolomb_UD();
 
 				//Current macroblock coordinates
@@ -133,6 +134,7 @@ break;
 				//PITCH=Line size, currently equal to "width"
 
 				mb_type_array[CurrMbAddr]=mb_type;
+				
 
 				//Transform macroblock-level coordinates to pixel-level coordinates
 				int pixel_pos_x=mb_pos_x*16;
@@ -326,8 +328,9 @@ break;
 					//residual_block_cavlc( coeffLevel, startIdx, endIdx, maxNumCoeff )
 					//Additional parameter "nC" has been added.
 
-//					residual(0, 15);
+					residual(0, 15);
 
+					/*
 					//TEST INSERT
 
 					// Švabo:
@@ -372,6 +375,13 @@ break;
 					}
 
 
+					for (int iCbCr=0;iCbCr<2;iCbCr++)
+						for(int i=0; i<4; ++i)
+						{
+							ChromaACLevel[iCbCr][i][0]=ChromaDCLevel[iCbCr][i];
+						}
+
+						*/
 
 					//Old prediction code is currently commented out:
 					/*
@@ -559,7 +569,9 @@ break;
 			}
 		}
 
-		writeToPPM();
+		//writeToPPM();
+
+		writeToPPM_bringer();
 		exit(0);
 		int stop = 0;
 	}
