@@ -5,7 +5,7 @@
 int L_Temp_4x4_refPart[9][9];
 int C_Temp_4x4_refPart[2][3][3];
 
-void FillTemp_4x4_refPart(frame *ref, int org_x, int org_y) {
+void FillTemp_4x4_refPart(frame_type *ref, int org_x, int org_y) {
 	int x,y,sx,sy;
 	for(y=0; y<9; ++y) {
 		sy=org_y+y;
@@ -15,7 +15,7 @@ void FillTemp_4x4_refPart(frame *ref, int org_x, int org_y) {
 			sx=org_x+x;
 			if (sx < 0) sx = 0;
 			if (sx >= FRAME_Width) sx = FRAME_Width-1;
-			L_Temp_4x4_refPart[y][x]=ref->Luma[sy*FRAME_Width+sx];
+			L_Temp_4x4_refPart[y][x]=ref->L[sy*FRAME_Width+sx];
 		}
 	}
 	for(y=0; y<3; ++y) {
@@ -26,8 +26,8 @@ void FillTemp_4x4_refPart(frame *ref, int org_x, int org_y) {
 			sx=org_x/2+x;
 			if (sx < 0) sx = 0;
 			if (sx >= FRAME_Width/2) sx = FRAME_Width/2-1;
-			C_Temp_4x4_refPart[0][y][x] = ref->Chroma[0][sy*FRAME_Width+sx];
-			C_Temp_4x4_refPart[1][y][x] = ref->Chroma[1][sy*FRAME_Width+sx];
+			C_Temp_4x4_refPart[0][y][x] = ref->C[0][sy*FRAME_Width+sx];
+			C_Temp_4x4_refPart[1][y][x] = ref->C[1][sy*FRAME_Width+sx];
 		}
 	}
 }
@@ -73,7 +73,7 @@ int L_MC_frac_interpol(int *data, int frac) {
 #undef p
 }
 
-void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8][8], frame *refPic,
+void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8][8], frame_type *refPic,
                         int mbPartIdx,
                         int subMbIdx, 
 						int subMbPartIdx) {
@@ -119,11 +119,11 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 // In baseline profile there is only refPicL0 used. There's no weighted prediction.
 // In global structure "MB_pred_info * infos" are placed all information needed for
 // decode process (motion compensation).
-void Decode(int predL[16][16], int predCr[8][8], int predCb[8][8], frame ** refPicL0, int mbPartIdx)
+void Decode(int predL[16][16], int predCr[8][8], int predCb[8][8], frame_type ** refPicL0, int mbPartIdx)
 {
 	// Smallest granularity for macroblock is 8x8 subpart (and in that case partition to 4x4 can be used).
 	// After DeriveMVs called, all MV are prepared (for every subMB and every subMBPart - granularity to part 4x4 sized).
-	frame * refPic = refPicL0[*(refIdxL0+mbPartIdx)];
+	frame_type * refPic = refPicL0[*(refIdxL0+mbPartIdx)];
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 4; j++)
 			MotionCompensateSubMBPart(predL, predCr, predCb, refPic, mbPartIdx, i, j);
