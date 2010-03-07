@@ -1,5 +1,7 @@
 #pragma once
 
+#include "h264_globals.h"
+
 #define FRAME_Width 720
 #define FRAME_Height 576
 #define MV_NA 0x80808080
