@@ -136,65 +136,79 @@ void getIntra4x4PredMode(int luma4x4BlkIdx, int CurrMbAddr, int *mbAddrA, int *m
 		dcPredModePredictedFlag = true;
 
 	int absIdx = CurrMbAddr * 16 + luma4x4BlkIdx;
-	if ((dcPredModePredictedFlag == true) ||	// if dc mode is predicted
-		(mb_type_array[*mbAddrA] != I_4x4) ||	// or the neighbouring
-		(mb_type_array[*mbAddrB] != I_4x4))		// macroblocks are not using 4x4 prediction
+	int intraMxMPredModeA, intraMxMPredModeB;
+	if (dcPredModePredictedFlag == true)	// if dc mode is predicted
 	{
-		Intra4x4PredMode[absIdx] = 2;		// dc prediction mode
+		intraMxMPredModeA = 2;
+		intraMxMPredModeB = 2;
 	}
 	else
 	{
-		// calculate the absolute addresses of the 4x4 blocks
-		int absIdxA = *mbAddrA * 16 + luma4x4BlkIdxA;
-		int absIdxB = *mbAddrB * 16 + luma4x4BlkIdxB;
-		int intraMxMPredModeA = Intra4x4PredMode[absIdxA];
-		int intraMxMPredModeB = Intra4x4PredMode[absIdxB];
-		// the intra4x4 prediction mode for the current block is the more probable
-		// prediction mode of the neighbouring two blocks; the more probable mode
-		// has the smaller value
-		int predIntra4x4PredMode = (intraMxMPredModeA <= intraMxMPredModeB) ? intraMxMPredModeA : intraMxMPredModeB;
-		if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == true)
-		{
-			Intra4x4PredMode[absIdx] = predIntra4x4PredMode;
+		if (mb_type_array[*mbAddrA] != I_4x4)		// if the macroblock of the neighbouring
+		{											// submacroblock is not using 4x4 prediction
+			intraMxMPredModeA = 2;					// dc prediction mode
 		}
 		else
 		{
-			if (rem_intra4x4_pred_mode[luma4x4BlkIdx] < predIntra4x4PredMode)
-				Intra4x4PredMode[absIdx] = rem_intra4x4_pred_mode[luma4x4BlkIdx];
-			else
-				Intra4x4PredMode[absIdx] = rem_intra4x4_pred_mode[luma4x4BlkIdx] + 1;
+			int absIdxA = *mbAddrA * 16 + luma4x4BlkIdxA;
+			intraMxMPredModeA = Intra4x4PredMode[absIdxA];
 		}
+		if (mb_type_array[*mbAddrB] != I_4x4)		// if the macroblock of the neighbouring
+		{											// submacroblock is not using 4x4 prediction
+			intraMxMPredModeB = 2;					// dc prediction mode
+		}
+		else
+		{
+			int absIdxB = *mbAddrB * 16 + luma4x4BlkIdxB;
+			intraMxMPredModeB = Intra4x4PredMode[absIdxB];
+		}
+	}
+	
+	// the intra4x4 prediction mode for the current block is the more probable
+	// prediction mode of the neighbouring two blocks; the more probable mode
+	// has the smaller value
+	int predIntra4x4PredMode = (intraMxMPredModeA <= intraMxMPredModeB) ? intraMxMPredModeA : intraMxMPredModeB;
+	if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == true)
+	{
+		Intra4x4PredMode[absIdx] = predIntra4x4PredMode;
+	}
+	else
+	{
+		if (rem_intra4x4_pred_mode[luma4x4BlkIdx] < predIntra4x4PredMode)
+			Intra4x4PredMode[absIdx] = rem_intra4x4_pred_mode[luma4x4BlkIdx];
+		else
+			Intra4x4PredMode[absIdx] = rem_intra4x4_pred_mode[luma4x4BlkIdx] + 1;
 	}
 }
 
 #define p(x,y) (((x) == -1) ? p[(y) + 1] : p[(x) + 5])
 
 // (8.3.1.2.1)
-void Intra_4x4_Vertical(int *p, int *pred4x4L)
+void Intra_4x4_Vertical(int *p, int pred4x4L[4][4])
 {
 	for (int y = 0; y < 4; y++)
 	{
 		for (int x = 0; x < 4; x++)
 		{
-			pred4x4L[y * 4 + x] = p(x,-1);
+			pred4x4L[x][y] = p(x,-1);
 		}
 	}
 }
 
 // (8.3.1.2.2)
-void Intra_4x4_Horizontal(int *p, int *pred4x4L)
+void Intra_4x4_Horizontal(int *p, int pred4x4L[4][4])
 {
 	for (int y = 0; y < 4; y++)
 	{
 		for (int x = 0; x < 4; x++)
 		{
-			pred4x4L[y * 4 + x] = p(-1,y);
+			pred4x4L[x][y] = p(-1,y);
 		}
 	}
 }
 
 // (8.3.1.2.3)
-void Intra_4x4_DC(int *p, int *pred4x4L)
+void Intra_4x4_DC(int *p, int pred4x4L[4][4])
 {
 	bool allAvailable = true;
 	bool leftAvailable = true;
@@ -218,7 +232,7 @@ void Intra_4x4_DC(int *p, int *pred4x4L)
 		{
 			for (int x = 0; x < 4; x++)
 			{
-				pred4x4L[y * 4 + x] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) +
+				pred4x4L[x][y] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) +
 									   p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 4) >> 3;
 			}
 		}
@@ -229,7 +243,7 @@ void Intra_4x4_DC(int *p, int *pred4x4L)
 		{
 			for (int x = 0; x < 4; x++)
 			{
-				pred4x4L[y * 4 + x] = (p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 2) >> 2;
+				pred4x4L[x][y] = (p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 2) >> 2;
 			}
 		}
 	}
@@ -239,7 +253,7 @@ void Intra_4x4_DC(int *p, int *pred4x4L)
 		{
 			for (int x = 0; x < 4; x++)
 			{
-				pred4x4L[y * 4 + x] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) + 2) >> 2;
 			}
 		}
 	}
@@ -249,46 +263,46 @@ void Intra_4x4_DC(int *p, int *pred4x4L)
 		{
 			for (int x = 0; x < 4; x++)
 			{
-				pred4x4L[y * 4 + x] = 128; // = (1 << (BitDepthY - 1); BitDepthY = 8 in baseline
+				pred4x4L[x][y] = 128; // = (1 << (BitDepthY - 1); BitDepthY = 8 in baseline
 			}
 		}
 	}
 }
 
 // (8.3.1.2.4)
-void Intra_4x4_Diagonal_Down_Left(int *p, int *pred4x4L)
+void Intra_4x4_Diagonal_Down_Left(int *p, int pred4x4L[4][4])
 {
 	for (int y = 0; y < 4; y++)
 	{
 		for (int x = 0; x < 4; x++)
 		{
 			if ((x == 3) && (y == 3))
-				pred4x4L[y * 4 + x] = (p(6,-1) + 3*p(7,-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(6,-1) + 3*p(7,-1) + 2) >> 2;
 			else
-				pred4x4L[y * 4 + x] = (p(x+y,-1) + 2*p(x+y+1,-1) + p(x+y+2,-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(x+y,-1) + 2*p(x+y+1,-1) + p(x+y+2,-1) + 2) >> 2;
 		}
 	}
 }
 
 // (8.3.1.2.5)
-void Intra_4x4_Diagonal_Down_Right(int *p, int *pred4x4L)
+void Intra_4x4_Diagonal_Down_Right(int *p, int pred4x4L[4][4])
 {
 	for (int y = 0; y < 4; y++)
 	{
 		for (int x = 0; x < 4; x++)
 		{
 			if (x > y)
-				pred4x4L[y * 4 + x] = (p(x-y-2,-1) + 2*p(x-y-1,-1) + p(x-y,-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(x-y-2,-1) + 2*p(x-y-1,-1) + p(x-y,-1) + 2) >> 2;
 			else if (x < y)
-				pred4x4L[y * 4 + x] = (p(-1,y-x-2) + 2*p(-1,y-x-1) + p(-1,y-x) + 2) >> 2;
+				pred4x4L[x][y] = (p(-1,y-x-2) + 2*p(-1,y-x-1) + p(-1,y-x) + 2) >> 2;
 			else
-				pred4x4L[y * 4 + x] = (p(0,-1) + 2*p(-1,-1) + p(-1,0) + 2) >> 2;
+				pred4x4L[x][y] = (p(0,-1) + 2*p(-1,-1) + p(-1,0) + 2) >> 2;
 		}
 	}
 }
 
 // (8.3.1.2.6)
-void Intra_4x4_Vertical_Right(int *p, int *pred4x4L)
+void Intra_4x4_Vertical_Right(int *p, int pred4x4L[4][4])
 {
 	for (int y = 0; y < 4; y++)
 	{
@@ -297,20 +311,20 @@ void Intra_4x4_Vertical_Right(int *p, int *pred4x4L)
 			int zVR = 2 * x - y;
 			if ((zVR == 0) || (zVR == 2) ||
 				(zVR == 4) || (zVR == 6))
-				pred4x4L[y * 4 + x] = (p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 1) >> 1;
+				pred4x4L[x][y] = (p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 1) >> 1;
 			else if ((zVR == 1) ||
 				(zVR == 3) || (zVR == 5))
-				pred4x4L[y * 4 + x] = (p(x-(y>>1)-2,-1) + 2*p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(x-(y>>1)-2,-1) + 2*p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 2) >> 2;
 			else if (zVR == -1)
-				pred4x4L[y * 4 + x] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
 			else
-				pred4x4L[y * 4 + x] = (p(-1,y-1) + 2*p(-1,y-2) + p(-1,y-3) + 2) >> 2;
+				pred4x4L[x][y] = (p(-1,y-1) + 2*p(-1,y-2) + p(-1,y-3) + 2) >> 2;
 		}
 	}
 }
 
 // (8.3.1.2.7)
-void Intra_4x4_Horizontal_Down(int *p, int *pred4x4L)
+void Intra_4x4_Horizontal_Down(int *p, int pred4x4L[4][4])
 {
 	for (int y = 0; y < 4; y++)
 	{
@@ -319,35 +333,35 @@ void Intra_4x4_Horizontal_Down(int *p, int *pred4x4L)
 			int zHD = 2 * y - x;
 			if ((zHD == 0) || (zHD == 2) ||
 				(zHD == 4) || (zHD == 6))
-				pred4x4L[y * 4 + x] = (p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 1) >> 1;
+				pred4x4L[x][y] = (p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 1) >> 1;
 			else if ((zHD == 1) ||
 				(zHD == 3) || (zHD == 5))
-				pred4x4L[y * 4 + x] = (p(-1,y-(x>>1)-2) + 2*p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 2) >> 2;
+				pred4x4L[x][y] = (p(-1,y-(x>>1)-2) + 2*p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 2) >> 2;
 			else if (zHD == -1)
-				pred4x4L[y * 4 + x] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
 			else
-				pred4x4L[y * 4 + x] = (p(x-1,-1) + 2*p(x-2,-1) + p(x-3,-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(x-1,-1) + 2*p(x-2,-1) + p(x-3,-1) + 2) >> 2;
 		}
 	}
 }
 
 // (8.3.1.2.8)
-void Intra_4x4_Vertical_Left(int *p, int *pred4x4L)
+void Intra_4x4_Vertical_Left(int *p, int pred4x4L[4][4])
 {
 	for (int y = 0; y < 4; y++)
 	{
 		for (int x = 0; x < 4; x++)
 		{
 			if ((y == 0) || (y==2))
-				pred4x4L[y * 4 + x] = (p(x+(y>>1),-1) + p(x+(y>>1)+1,-1) + 1) >> 1;
+				pred4x4L[x][y] = (p(x+(y>>1),-1) + p(x+(y>>1)+1,-1) + 1) >> 1;
 			else
-				pred4x4L[y * 4 + x] = (p(x-(y>>1),-1) + 2*p(x+(y>>1)+1,-1) + p(x+(y>>1)+2,-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(x-(y>>1),-1) + 2*p(x+(y>>1)+1,-1) + p(x+(y>>1)+2,-1) + 2) >> 2;
 		}
 	}
 }
 
 // (8.3.1.2.9)
-void Intra_4x4_Horizontal_Up(int *p, int *pred4x4L)
+void Intra_4x4_Horizontal_Up(int *p, int pred4x4L[4][4])
 {
 	for (int y = 0; y < 4; y++)
 	{
@@ -356,19 +370,19 @@ void Intra_4x4_Horizontal_Up(int *p, int *pred4x4L)
 			int zHU = x + 2 * y;
 			if ((zHU == 0) || (zHU == 2) ||
 				(zHU == 4))
-				pred4x4L[y * 4 + x] = (p(-1,y+(x>>1)) + p(-1,y+(x>>1)+1) + 1) >> 1;
+				pred4x4L[x][y] = (p(-1,y+(x>>1)) + p(-1,y+(x>>1)+1) + 1) >> 1;
 			else if ((zHU == 1) || (zHU == 3))
-				pred4x4L[y * 4 + x] = (p(-1,y+(x>>1)) + 2*p(-1,y+(x>>1)+1) + p(-1,y+(x>>1)+2) + 2) >> 2;
+				pred4x4L[x][y] = (p(-1,y+(x>>1)) + 2*p(-1,y+(x>>1)+1) + p(-1,y+(x>>1)+2) + 2) >> 2;
 			else if (zHU == 5)
-				pred4x4L[y * 4 + x] = (p(-1,2) + 3*p(-1,3) + 2) >> 2;
+				pred4x4L[x][y] = (p(-1,2) + 3*p(-1,3) + 2) >> 2;
 			else
-				pred4x4L[y * 4 + x] = p(-1,3);
+				pred4x4L[x][y] = p(-1,3);
 		}
 	}
 }
 
 // Intra_4x4 sample prediction (8.3.1.2)
-void Intra4x4SamplePrediction(int luma4x4BlkIdx, int CurrMbAddr, int intra4x4PredMode, int *pred4x4L)
+void Intra4x4SamplePrediction(int luma4x4BlkIdx, int CurrMbAddr, int intra4x4PredMode, int pred4x4L[4][4])
 {
 	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
@@ -820,8 +834,7 @@ void intraPrediction(int CurrMbAddr, int predL[16][16], int predCr[8][8], int pr
 				getIntra4x4PredMode(luma4x4BlkIdx, CurrMbAddr, &mbAddrA, &mbAddrB);
 
 				// the luma prediction samples
-				int *pred4x4L;
-				pred4x4L = new int[16];
+				int pred4x4L[4][4];
 				int absIdx = CurrMbAddr * 16 + luma4x4BlkIdx;
 				Intra4x4SamplePrediction(luma4x4BlkIdx, CurrMbAddr, Intra4x4PredMode[absIdx], pred4x4L);
 
@@ -832,7 +845,7 @@ void intraPrediction(int CurrMbAddr, int predL[16][16], int predCr[8][8], int pr
 				{
 					for (int x = 0; x < 4; x++)
 					{
-						predL[x0+x][y0+y] = pred4x4L[y*4 + x];
+						predL[x0+x][y0+y] = pred4x4L[x][y];
 					}
 				}
 
