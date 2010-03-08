@@ -20,17 +20,6 @@ int qPiToQPc[52] = { 0,  1,  2,  3,  4,  5,  6,  7,
 //	{2,1}, {3,0}, {3,1}, {2,2}, {1,3}, {2,3}, {3,2}, {3,3}
 //};
 
-// (8.5.6)
-void transformInverseScan(int list[16], int c[4][4])
-{
-	for (int i = 0; i < 16; i++)
-	{
-		int x = ZigZagReordering[i][0];
-		int y = ZigZagReordering[i][1];
-		c[x][y] = list[i];
-	}
-}
-
 // Haramustek
 // (8.5.12.1 & 8.5.12.2)
 //void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool luma)

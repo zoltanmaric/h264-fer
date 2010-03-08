@@ -1,5 +1,7 @@
 //#include <math.h>
 #include "scaleTransform.h"
+#include "headers_and_parameter_sets.h"
+#include "h264_globals.h"
 
 //Multiplication factors for quantization
 int factorsQ[6][4][4] = 
@@ -28,6 +30,10 @@ int ZigZagReordering[16][2] =
 	{0,0}, {0,1}, {1,0}, {2,0}, {1,1}, {0,2}, {0,3}, {1,2},
 	{2,1}, {3,0}, {3,1}, {2,2}, {1,3}, {2,3}, {3,2}, {3,3}
 };
+
+int v[6][3] = {{10, 16, 13}, {11, 18, 14},
+			   {13, 20, 16}, {14, 23, 18},
+			   {16, 25, 20}, {18, 29, 23}};
 
 //transformation for all the residual block
 //all the blocks are transformed using this transform
@@ -335,6 +341,24 @@ void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool i
 	if (intra16x16OrChroma) output[0][0] = input[0][0];	
 }
 
+// invoke with iYCbCr == 0 for luma,
+//					  == 1 for Cb
+//					  == 2 for Cr.
+void ScalingFunctions4x4Derivation(int LevelScale[4][4], int iYCbCr)
+{
+	bool mbIsInterFlag = false;
+	if ((shd.slice_type % 5 == P_SLICE) ||
+		(shd.slice_type % 5 == B_SLICE) ||
+		(shd.slice_type % 5 == SP_SLICE))
+	{
+		mbIsInterFlag = true;
+	}
+
+	// Standard: separate_colour_plane_flag == 0 in baseline
+
+
+}
+
 
 void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 {
@@ -440,6 +464,17 @@ void scaleChromaDC(int input[2][2], int qp, int output[2][2])
 //---------------------------------------------------//
 //---------------- PUBLIC FUNCTIONS -----------------//
 //---------------------------------------------------//
+
+// (8.5.6)
+void transformInverseScan(int list[16], int c[4][4])
+{
+	for (int i = 0; i < 16; i++)
+	{
+		int x = ZigZagReordering[i][0];
+		int y = ZigZagReordering[i][1];
+		c[x][y] = list[i];
+	}
+}
 
 void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool intra16x16OrChroma)
 {
