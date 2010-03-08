@@ -44,7 +44,7 @@ void transformInverseScan(int list[16], int c[4][4])
 // previously transformed macroblock. At the start
 // of each slice, it is initialized to SliceQPY
 // derived in Equation 7-29
-void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool luma, int QPy)
+void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool intra16x16OrChroma, int QPy, bool luma)
 {
 	int qP;
 
@@ -80,7 +80,7 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool luma, int QPy)
 
 	// TransformBypassModeFlag == 0 in baseline
 
-	inverseResidual(bitDepth, qP, c, r, false);
+	inverseResidual(bitDepth, qP, c, r, intra16x16OrChroma);
 
 }
 
@@ -163,7 +163,7 @@ void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], 
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
 		transformInverseScan(LumaLevel[luma4x4BlkIdx], c);
-		scaleAndTransform4x4Residual(c, r, false, QPy);
+		scaleAndTransform4x4Residual(c, r, false, QPy, true);
 
 		int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
 		int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
@@ -206,7 +206,7 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 		}
 
 		transformInverseScan(lumaList, c);
-		scaleAndTransform4x4Residual(c, r, true, QPy);
+		scaleAndTransform4x4Residual(c, r, true, QPy, true);
 		int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
 		int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
 
@@ -277,7 +277,7 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 		transformInverseScan(chromaList, c2);
 
 		int r[4][4];
-		scaleAndTransform4x4Residual(c2, r, true, QPy);
+		scaleAndTransform4x4Residual(c2, r, true, QPy, false);
 
 		int x0 = InverseRasterScan(chroma4x4BlkIdx, 4, 4, 8, 0);
 		int y0 = InverseRasterScan(chroma4x4BlkIdx, 4, 4, 8, 1);
