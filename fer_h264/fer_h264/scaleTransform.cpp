@@ -341,10 +341,26 @@ void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool i
 	if (intra16x16OrChroma) output[0][0] = input[0][0];	
 }
 
+int normAdjust(int m, int i, int j)
+{
+	if ((i%2 == 0) && (j%2 == 0))
+	{
+		return v[m][0];
+	}
+	else if ((i%2 == 1) && (j%2 == 1))
+	{
+		return v[m][1];
+	}
+	else
+	{
+		return v[m][2];
+	}
+}
+
 // invoke with iYCbCr == 0 for luma,
 //					  == 1 for Cb
 //					  == 2 for Cr.
-void ScalingFunctions4x4Derivation(int LevelScale[4][4], int iYCbCr)
+void ScalingFunctions4x4Derivation(int LevelScale[3][4][4], int iYCbCr)
 {
 	bool mbIsInterFlag = false;
 	if ((shd.slice_type % 5 == P_SLICE) ||
@@ -355,8 +371,18 @@ void ScalingFunctions4x4Derivation(int LevelScale[4][4], int iYCbCr)
 	}
 
 	// Standard: separate_colour_plane_flag == 0 in baseline
-
-
+	
+	for (int m = 0; m < 3; m++)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				// weightScale4x4 == 16 for any i,j (expression 7-7)
+				LevelScale[m][i][j] = 16 * normAdjust(m, i, j);
+			}
+		}
+	}
 }
 
 
