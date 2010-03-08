@@ -203,9 +203,11 @@ extern int mb_qp_delta;
 
 extern int CurrMbAddr;
 
+extern int to_4x4_luma_block[16];
+
 extern int mb_pos_array[100000];
 
-extern int totalcoeff_array_luma[1000000];
-extern int totalcoeff_array_chroma[2][1000000];
+extern int totalcoeff_array_luma[1000000][16];
+extern int totalcoeff_array_chroma[2][1000000][4];
 
 extern int invoked_for_Intra16x16DCLevel, invoked_for_Intra16x16ACLevel, invoked_for_LumaLevel, invoked_for_ChromaACLevel, invoked_for_ChromaDCLevel;

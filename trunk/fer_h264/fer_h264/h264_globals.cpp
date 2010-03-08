@@ -174,9 +174,9 @@ int mb_type_array[100000];
 int mb_pos_array[100000];
 
 //TODO: Frames with more than 1000000 4x4 blocks 
-int totalcoeff_array_luma[1000000];
+int totalcoeff_array_luma[1000000][16];
 //TODO: Use less data for each chroma channel :)
-int totalcoeff_array_chroma[2][1000000];
+int totalcoeff_array_chroma[2][1000000][4];
 
 int invoked_for_Intra16x16DCLevel, invoked_for_Intra16x16ACLevel, invoked_for_LumaLevel, invoked_for_ChromaACLevel, invoked_for_ChromaDCLevel;
 
@@ -194,6 +194,16 @@ int PicWidthInCbs, PicHeightInCbs;
 int rem_intra4x4_pred_mode[16];
 bool prev_intra4x4_pred_mode_flag[16];
 int intra_chroma_pred_mode;
+
+int to_4x4_luma_block[16]=
+{
+
+
+	0, 1, 4, 5,
+	2, 3, 6, 7,
+	8, 9, 12, 13,
+	10, 11, 14, 15
+};
 
 int Intra4x4ScanOrder[16][2]={
   { 0, 0},  { 4, 0},  { 0, 4},  { 4, 4},

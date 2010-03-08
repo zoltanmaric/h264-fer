@@ -2,6 +2,8 @@
 
 #define COEFF_TOKEN(TrailingOnes,TotalCoeff) (((TotalCoeff)<<2)|(TrailingOnes))
 
+void derivation_process_for_4x4_chroma_block_indices(int x, int y, int *chroma4x4BlkIdx);
+
 //Coefficient levels
 
 extern int i16x16DClevel[16];
