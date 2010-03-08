@@ -290,4 +290,6 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 			u[i][j] = Clip1C(predC[j][i] + rMb[j][i]);
 		}
 	}
+
+	pictureConstructionChroma(u, CurrMbAddr, Cb);
 }

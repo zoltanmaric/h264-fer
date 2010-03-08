@@ -200,6 +200,7 @@ extern	int mb_pos_x;
 extern	int mb_pos_y;
 
 extern int mb_qp_delta;
+extern int QPy;
 
 extern int CurrMbAddr;
 

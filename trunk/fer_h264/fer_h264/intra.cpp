@@ -1,4 +1,6 @@
 #include "intra.h"
+#include "inttransform.h"
+#include "residual.h"
 #include "h264_math.h"
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
@@ -355,7 +357,7 @@ void Intra_4x4_Vertical_Left(int *p, int pred4x4L[4][4])
 			if ((y == 0) || (y==2))
 				pred4x4L[x][y] = (p(x+(y>>1),-1) + p(x+(y>>1)+1,-1) + 1) >> 1;
 			else
-				pred4x4L[x][y] = (p(x-(y>>1),-1) + 2*p(x+(y>>1)+1,-1) + p(x+(y>>1)+2,-1) + 2) >> 2;
+				pred4x4L[x][y] = (p(x+(y>>1),-1) + 2*p(x+(y>>1)+1,-1) + p(x+(y>>1)+2,-1) + 2) >> 2;
 		}
 	}
 }
@@ -524,11 +526,11 @@ void Intra_16x16_DC(int *p, int predL[16][16])
 			{
 				predL[x][y] = (sumXi + sumYi + 16) >> 5;
 			}
-			else if (topAvailable)
+			else if (leftAvailable)
 			{
 				predL[x][y] = (sumYi + 8) >> 4;
 			}
-			else if (leftAvailable)
+			else if (topAvailable)
 			{
 				predL[x][y] = (sumXi + 8) >> 4;
 			}
@@ -773,7 +775,7 @@ void IntraChromaSamplePrediction(int CurrMbAddr, int predCr[8][8], int predCb[8]
 		}
 
 		int xW, yW, mbAddrN;
-		getNeighbourLocations(x, y, &mbAddrN, CurrMbAddr, &xW, &yW, true);
+		getNeighbourLocations(x, y, &mbAddrN, CurrMbAddr, &xW, &yW, false);
 
 		if (mbAddrN == -1)
 		{
@@ -849,11 +851,10 @@ void intraPrediction(int CurrMbAddr, int predL[16][16], int predCr[8][8], int pr
 					}
 				}
 
-				int test = 0;
+				transformDecoding4x4LumaResidual(LumaLevel, predL, QPy, CurrMbAddr);
 			}
 
-			// Standard: The transform coefficient decoding part comes here (8.5)
-			// It is instead invoked as a separate module outside of this file.
+			int test = 0;
 		}
 		else
 		{
