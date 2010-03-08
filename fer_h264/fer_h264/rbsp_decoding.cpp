@@ -67,7 +67,6 @@ void RBSP_decode(NALunit nal_unit)
 		//Used later on
 		int mb_skip_run;
 
-		int QPy;
 		QPy = shd.SliceQPy;
 		while (moreDataFlag && CurrMbAddr<MbCount)
 		{
@@ -240,7 +239,7 @@ void RBSP_decode(NALunit nal_unit)
 
 						intra_chroma_pred_mode=expGolomb_UD();
 
-						intraPrediction(CurrMbAddr, predL, predCr, predCb);
+						//intraPrediction(CurrMbAddr, predL, predCr, predCb);
 					}
 					else
 					{
@@ -335,9 +334,11 @@ void RBSP_decode(NALunit nal_unit)
 				// Norm: QpBdOffsetY == 0 in baseline
 				QPy = (QPy + mb_qp_delta + 52) % 52;
 
+				intraPrediction(CurrMbAddr, predL, predCr, predCb);
+
 				if (MbPartPredMode(mb_type, 0) == Intra_4x4)
 				{
-					transformDecoding4x4LumaResidual(LumaLevel, predL, QPy, CurrMbAddr);
+					//transformDecoding4x4LumaResidual(LumaLevel, predL, QPy, CurrMbAddr);
 				}
 				else
 				{
