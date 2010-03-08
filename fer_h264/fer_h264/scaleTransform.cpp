@@ -17,19 +17,12 @@ int factorsQ[6][4][4] =
 //Multiplication factors for inverse quantization
 int factorsDQ[6][4][4] = 
 {
-	/*{{10,13,10,13},{13,16,13,16},{10,13,10,13},{13,16,13,16}},
+	{{10,13,10,13},{13,16,13,16},{10,13,10,13},{13,16,13,16}},
 	{{11,14,11,14},{14,18,14,18},{11,14,11,14},{14,18,14,18}},
 	{{13,16,13,16},{16,20,16,20},{13,16,13,16},{16,20,16,20}},
 	{{14,18,14,18},{18,23,18,23},{14,18,14,18},{18,23,18,23}},
 	{{16,20,16,20},{20,25,20,25},{16,20,16,20},{20,25,20,25}},
-	{{18,23,18,23},{23,29,23,29},{18,23,18,23},{23,29,23,29}}*/
-
-	{{160,208,160,208},{208,256,208,256},{160,208,160,208},{208,256,208,256}},
-	{{176,224,176,224},{224,288,224,288},{176,224,176,224},{224,288,224,288}},
-	{{208,256,208,256},{256,320,256,320},{208,256,208,256},{256,320,256,320}},
-	{{224,288,224,288},{288,368,288,368},{224,288,224,288},{288,368,288,368}},
-	{{256,320,256,320},{320,400,320,400},{256,320,256,320},{320,400,320,400}},
-	{{288,368,288,368},{368,464,368,464},{288,368,288,368},{368,464,368,464}}
+	{{18,23,18,23},{23,29,23,29},{18,23,18,23},{23,29,23,29}}
 };
 
 int ZigZagReordering[16][2] = 
@@ -217,7 +210,6 @@ void HadamardLumaTransform(int input[4][4], int output[4][4])
 }
 
 
-// transformation for the DC coeff from Luma block
 void inverseHadamardLumaTransform (int input[4][4], int output[4][4])
 {
 	int i, j;
@@ -338,7 +330,7 @@ void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool i
 		for (int j = 0; j < 4; j++)
 		{
 			//Standard
-			//output[i][j] = (input[i][j] * factorsDQ[qp][i][j] + adjust) << qbits;
+			output[i][j] = (input[i][j] * factorsDQ[qp][i][j] + adjust) << qbits;
 			//Standard without adjust
 			output[i][j] = (input[i][j] * factorsDQ[qp][i][j]) << qbits;
 			// Ian Richardson
@@ -404,7 +396,7 @@ void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 	int adjust = 1 << (5 - qp_calculate);
 
 	//Scaling proccess according to the latest H.264 ITU specification
-	
+	/*
 	if (qp >= 36)
 	{
 		for (int i = 0; i < 4; i++)
@@ -412,7 +404,6 @@ void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 			for (int j = 0; j < 4; j++)
 			{
 				output[i][j] = (input[i][j]*scaleV) << shiftG36;
-				//output[i][j] = (input[i][j]*scaleV) << shiftG36;
 			}
 		}
 	}
@@ -422,15 +413,13 @@ void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				output[i][j] = (input[i][j]*scaleV) >> shiftL36;
-				//output[i][j] = (input[i][j]*scaleV*16 + adjust) >> shiftL36;
-				//output[i][j] = (input[i][j]*scaleV + adjust) >> shiftL36;
+				output[i][j] = (input[i][j]*scaleV + adjust) >> shiftL36;
 			}
 		}
-	}
+	}*/
 
 	//Scaling process according to the Ian Richardson's book
-	/*
+	
 	int shift12 = qp_calculate-2;
 	int shift0 = 2 - qp_calculate;
 
@@ -455,7 +444,7 @@ void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 			}
 		}
 	}
-	*/
+	
 }
 
 void scaleChromaDC(int input[2][2], int qp, int output[2][2])
@@ -464,7 +453,7 @@ void scaleChromaDC(int input[2][2], int qp, int output[2][2])
 	int scaleV = factorsDQ[qp%6][0][0];
 
 	// Scaling proccess according to the Ian Richardson's book
-	/*
+	
 	if (qp >= 6)
 	{
 		for (int i = 0; i < 2; i++)
@@ -484,18 +473,17 @@ void scaleChromaDC(int input[2][2], int qp, int output[2][2])
 				output[i][j] = (input[i][j]*scaleV) >> 1;
 			}
 		}
-	}*/
+	}
 	
 
 	//Scaling proccess according to the latest H.264 ITU specification	
-	for (int i = 0; i < 2; i++)
+	/*for (int i = 0; i < 2; i++)
 	{
 		for (int j = 0; j < 2; j++)
 		{
 			output[i][j] = ((input[i][j]*scaleV) << qp_calculate) >> 5;
-			//output[i][j] = ((input[i][j]*scaleV) << qp_calculate) >> 5;
 		}
-	}
+	}*/
 		
 }
 

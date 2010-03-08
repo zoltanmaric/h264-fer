@@ -411,7 +411,7 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int CurrMbAddr, int intra4x4Pre
 		getNeighbourLocations(xN, yN, &mbAddrN, CurrMbAddr, &xW, &yW, true);
 
 		if ((mbAddrN == -1) ||
-			((x > 3) && ((luma4x4BlkIdx == 3) || (luma4x4BlkIdx == 1))))
+			((x > 3) && ((luma4x4BlkIdx == 3) || (luma4x4BlkIdx == 11))))
 		{
 			// if this is an edge macroblock, replicate
 			// the edge sample p[3,-1] into the samples p[4..7,-1]
