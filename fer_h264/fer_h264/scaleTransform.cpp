@@ -427,7 +427,7 @@ void scaleChromaDC(int input[2][2], int qp, int output[2][2])
 	int scaleV = factorsDQ[qp%6][0][0];
 
 	// Scaling proccess according to the Ian Richardson's book
-	/*
+	
 	if (qp >= 6)
 	{
 		for (int i = 0; i < 2; i++)
@@ -448,16 +448,16 @@ void scaleChromaDC(int input[2][2], int qp, int output[2][2])
 			}
 		}
 	}
-	*/
+	
 
 	//Scaling proccess according to the latest H.264 ITU specification	
-	for (int i = 0; i < 2; i++)
+	/*for (int i = 0; i < 2; i++)
 	{
 		for (int j = 0; j < 2; j++)
 		{
 			output[i][j] = ((input[i][j]*scaleV) << qp_calculate) >> 5;
 		}
-	}
+	}*/
 		
 }
 
