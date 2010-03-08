@@ -323,7 +323,12 @@ void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool i
 	{
 		for (int j = 0; j < 4; j++)
 		{
+			//Standard
 			output[i][j] = (input[i][j] * factorsDQ[qp][i][j] + adjust) << qbits;
+			//Standard without adjust
+			output[i][j] = (input[i][j] * factorsDQ[qp][i][j]) << qbits;
+			// Ian Richardson
+			/*output[i][j] = input[i][j] * factorsDQ[qp][i][j] * (1 << qbits);*/
 		}
 	}
 
@@ -341,6 +346,7 @@ void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 	int adjust = 1 << (5 - qp_calculate);
 
 	//Scaling proccess according to the latest H.264 ITU specification
+	/*
 	if (qp >= 36)
 	{
 		for (int i = 0; i < 4; i++)
@@ -360,10 +366,10 @@ void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 				output[i][j] = (input[i][j]*scaleV + adjust) >> shiftL36;
 			}
 		}
-	}
+	}*/
 
 	//Scaling process according to the Ian Richardson's book
-	/*
+	
 	int shift12 = qp_calculate-2;
 	int shift0 = 2 - qp_calculate;
 
@@ -388,7 +394,7 @@ void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 			}
 		}
 	}
-	*/
+	
 }
 
 void scaleChromaDC(int input[2][2], int qp, int output[2][2])

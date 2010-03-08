@@ -330,8 +330,8 @@ void RBSP_decode(NALunit nal_unit)
 				}
 
 
-				//Data ready for rendering
-
+				//Data ready for rendering			
+			
 				// Norm: QpBdOffsetY == 0 in baseline
 				QPy = (QPy + mb_qp_delta + 52) % 52;
 
