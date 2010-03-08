@@ -120,8 +120,8 @@ void RBSP_decode(NALunit nal_unit)
 
 			if(moreDataFlag)
 			{ 
-if (CurrMbAddr>2400)
-break;
+//if (CurrMbAddr>1900)
+//break;
 
 				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
 				mb_type = expGolomb_UD();
@@ -301,8 +301,6 @@ break;
 				if(CodedBlockPatternLuma>0 || CodedBlockPatternChroma>0 || MbPartPredMode(mb_type,0)==Intra_16x16)
 				{
 
-					//Norm: mb_qp_delta
-
 					mb_qp_delta=expGolomb_SD();
 
 					//BEGIN Kvantizacijski paramteri
@@ -326,108 +324,8 @@ break;
 
 					//Norm: decode residual data.
 					//residual_block_cavlc( coeffLevel, startIdx, endIdx, maxNumCoeff )
-					//Additional parameter "nC" has been added.
 
 					residual(0, 15);
-
-					/*
-					//TEST INSERT
-
-					// Švabo:
-					
-					if(MbPartPredMode(mb_type,0)==Intra_16x16)
-					{
-						residual_block(&LumaDCLevel[0],16,LumaDC_nC);
-					}
-					for(int i8x8=0; i8x8<4; ++i8x8)
-					{
-						for(int i4x4=0; i4x4<4; ++i4x4)
-						{
-							if(CodedBlockPatternLuma&(1<<i8x8))
-							{
-								if(MbPartPredMode(mb_type,0)==Intra_16x16)
-								{
-								  LumaAdjust residual_block(&LumaACLevel[i8x8*4+i4x4][1],15,LumaAC_nC);
-								}
-								else
-								{
-								  LumaAdjust residual_block(&LumaACLevel[i8x8*4+i4x4][0],16,LumaAC_nC);
-								}
-							}
-						}
-					}
-					for(int iCbCr=0; iCbCr<2; iCbCr++)
-					{
-						if(CodedBlockPatternChroma&3)
-						{
-						  residual_block(&ChromaDCLevel[iCbCr][0],4,ChromaDC_nC);
-						}
-					}
-					for(int iCbCr=0; iCbCr<2; iCbCr++)
-					{
-						for(int i4x4=0; i4x4<4; ++i4x4)
-						{
-							if(CodedBlockPatternChroma&2)
-							{
-								ChromaAdjust residual_block(&ChromaACLevel[iCbCr][i4x4][1],15,ChromaAC_nC);
-							}
-						}
-					}
-
-
-					for (int iCbCr=0;iCbCr<2;iCbCr++)
-						for(int i=0; i<4; ++i)
-						{
-							ChromaACLevel[iCbCr][i][0]=ChromaDCLevel[iCbCr][i];
-						}
-
-						*/
-
-					//Old prediction code is currently commented out:
-					/*
-					if(MbPartPredMode(mb_type,0)==Intra_16x16)
-					{
-					residual_block(&coeffLevel_luma_DC[0],16,get_nC(mb_pos_x,mb_pos_y,LUMA));
-					}
-
-					for(int i8x8=0; i8x8<4; i8x8++)
-					{
-					for(int i4x4=0; i4x4<4; ++i4x4)
-					{
-					if(CodedBlockPatternLuma&(1<<i8x8))
-					{
-					if(MbPartPredMode(mb_type,0)==Intra_16x16)
-					{
-					TotalCoeff_luma_array[(mb_pos_x+Intra4x4ScanOrder[i8x8*4+i4x4][0])/4][(mb_pos_y+Intra4x4ScanOrder[i8x8*4+i4x4][1])/4]=residual_block(&coeffLevel_luma_AC[i8x8*4+i4x4][1],15,get_nC(mb_pos_x,mb_pos_y,LUMA));
-					}
-					else
-					{
-					TotalCoeff_luma_array[(mb_pos_x+Intra4x4ScanOrder[i8x8*4+i4x4][0])/4][(mb_pos_y+Intra4x4ScanOrder[i8x8*4+i4x4][1])/4]=residual_block(&coeffLevel_luma_AC[i8x8*4+i4x4][0],16,get_nC(mb_pos_x,mb_pos_y,LUMA));
-					}
-					}
-					}
-					}
-
-					for(int iCbCr=0; iCbCr<2; iCbCr++)
-					{
-					if(CodedBlockPatternChroma&3)
-					{
-					residual_block(&coeffLevel_chroma_DC[iCbCr][0],4,get_nC(mb_pos_x,mb_pos_y,CHROMA));
-					}
-					}
-
-					for(int iCbCr=0; iCbCr<2; iCbCr++)
-					{
-					for(int i4x4=0; i4x4<4; ++i4x4)
-					{
-					if(CodedBlockPatternChroma&2)
-					{
-					TotalCoeff_chroma_array[iCbCr][((mb_pos_y+(i4x4>>1)*8)>>3)][((mb_pos_x+(i4x4&1)*8)>>3)]=residual_block(&coeffLevel_chroma_AC[iCbCr][i4x4][1],15,get_nC(mb_pos_x,mb_pos_y,CHROMA)); 
-					}
-					}
-					}
-					*/
-
 
 				}
 
@@ -448,128 +346,10 @@ break;
 				transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, QPy, true);
 				transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, QPy, false);
 
-
-
-				if(MbPartPredMode(mb_type,0)==Intra_4x4)
-				{
-					for(int i=0; i<16; ++i)
-					{
-
-						//BEGIN INTRA
-						/*
-						int x=mb_pos_x+Intra4x4ScanOrder[i][0];
-						int y=mb_pos_y+Intra4x4ScanOrder[i][1];
-						Intra_4x4_Dispatch(this,mpi,x,y,i);
-						*/
-						//END INTRA
-
-						//BEGIN T&Q
-						/*
-						enter_luma_block(&LumaACLevel[i][0],this,x,y,QPy,0);
-						*/
-						//END T&Q
-					}
-
-					//BEGIN INTRA
-					/*
-					Intra_Chroma_Dispatch(this,mpi,intra_chroma_pred_mode,mb_pos_x>>1,mb_pos_y>>1,pps->constrained_intra_pred_flag);
-					*/
-					//END INTRA
-
-				}
-				else if(MbPartPredMode(mb_type,0)==Intra_16x16)
-				{
-					//BEGIN INTRA
-					/*
-					Intra_16x16_Dispatch(this,mpi,mb.Intra16x16PredMode,mb_pos_x,mb_pos_y,pps->constrained_intra_pred_flag);
-					*/
-					//END INTRA
-
-					//BEGIN T&Q
-					/*
-					transform_luma_dc(&LumaDCLevel[0],&LumaACLevel[0][0],QPy);
-					*/
-					//END T&Q
-
-
-
-					for(int i=0; i<16; i++)
-					{
-						int x=mb_pos_x+Intra4x4ScanOrder[i][0];
-						int y=mb_pos_y+Intra4x4ScanOrder[i][1];
-						//BEGIN T&Q
-						/*
-						enter_luma_block(&LumaACLevel[i][0],this,x,y,QPy,1);
-						*/
-						//END T&Q
-					}
-
-					//BEGIN INTRA
-					/*
-					Intra_Chroma_Dispatch(this,mpi,intra_chroma_pred_mode,mb_pos_x>>1,mb_pos_y>>1,pps->constrained_intra_pred_flag);
-
-					for(i=0; i<4; ++i) for(j=0; j<4; ++j)
-					{
-					ModePredInfo_Intra4x4PredMode(mpi,(mb_pos_x>>2)+j,(mb_pos_y>>2)+i)=2;
-					}
-					*/
-					//END INTRA
-				}
-				else
-				{
-					//BEGIN INTER
-					/*
-					MotionCompensateMB(this,ref,mpi,mb_pos_x,mb_pos_y);
-					*/
-					//END INTER
-
-					for(int i=0; i<16; ++i)
-					{
-						int x=mb_pos_x+Intra4x4ScanOrder[i][0];
-						int y=mb_pos_y+Intra4x4ScanOrder[i][1];
-						//BEGIN T&Q
-						/*
-						enter_luma_block(&LumaACLevel[i][0],this,x,y,QPy,0);
-						*/
-						//END T&Q
-					}
-				}
-
-				if(CodedBlockPatternChroma!=0)
-				{
-					for(int iCbCr=0; iCbCr<2; ++iCbCr)
-					{
-						//BEGIN T&Q
-						/*
-						transform_chroma_dc(&ChromaDCLevel[iCbCr][0],QPc);
-						*/
-						//END T&Q
-
-						for(int i=0; i<4; ++i)
-						{
-							ChromaACLevel[iCbCr][i][0]=ChromaDCLevel[iCbCr][i];
-						}
-
-						for(int i=0; i<4; ++i)
-						{
-							//BEGIN T&Q
-							/*
-							enter_chroma_block(&ChromaACLevel[iCbCr][i][0],this,iCbCr,
-							(mb_pos_x>>1)+Intra4x4ScanOrder[i][0],
-							(mb_pos_y>>1)+Intra4x4ScanOrder[i][1],
-							QPc,1);
-							*/
-							//END T&Q
-						}
-					}
-				}
-
 				moreDataFlag=more_rbsp_data();
 				++CurrMbAddr;
 			}
 		}
-
-		//writeToPPM();
 
 		writeToPPM_bringer();
 		exit(0);
