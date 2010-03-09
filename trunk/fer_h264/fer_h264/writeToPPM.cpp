@@ -26,11 +26,13 @@ void toRGB()
 	}
 }
 
-void writeToPPM_bringer()
+void writeToPPM_bringer(int frameCount)
 {
 	FILE *out;
 
-    out=fopen("RGB.ppm","w");
+	char filename[50];
+	sprintf(filename, "frame%d.ppm", frameCount);
+    out=fopen(filename,"w");
     fprintf(out,"P3\n1920 816\n255\n");
     char znak;
     int i,j;

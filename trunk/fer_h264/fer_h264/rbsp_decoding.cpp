@@ -41,7 +41,7 @@ void RBSP_decode(NALunit nal_unit)
 	//Actual picture decoding takes place here
 	//The main loop works macroblock by macroblock until the end of the slice
 	//Macroblock skipping is implemented
-	else if (nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR || nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR)
+	else if (nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) // || nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR)
 	{
 
 		//Read slice header
@@ -56,7 +56,7 @@ void RBSP_decode(NALunit nal_unit)
 
 		//Norm: CurrMbAddr = firstMbAddr
 		//Already globaly defined
-		//int CurrMbAddr = 0;
+		CurrMbAddr = firstMbAddr;
 
 		//Norm: moreDataFlag = 1
 		bool moreDataFlag = true;
@@ -336,11 +336,7 @@ void RBSP_decode(NALunit nal_unit)
 
 				intraPrediction(CurrMbAddr, predL, predCr, predCb);
 
-				if (MbPartPredMode(mb_type, 0) == Intra_4x4)
-				{
-					//transformDecoding4x4LumaResidual(LumaLevel, predL, QPy, CurrMbAddr);
-				}
-				else
+				if (MbPartPredMode(mb_type, 0) != Intra_4x4)
 				{
 					transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy, CurrMbAddr);
 				}
@@ -352,7 +348,8 @@ void RBSP_decode(NALunit nal_unit)
 			}
 		}
 
-		writeToPPM_bringer();
+		static int intraFrameCounter = 1;
+		writeToPPM_bringer(intraFrameCounter++);
 		exit(0);
 		int stop = 0;
 	}
