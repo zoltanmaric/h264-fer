@@ -306,41 +306,6 @@ void HadamardChromaTransform (int input[2][2], int output[2][2])
 	}
 }
 
-
-// (8.5.12.1) Scaling process for the residual 4x4 blocks (Chroma and Luma)
-void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool intra16x16OrChroma)
-{	
-	int qbits = quantizer/6;
-	int adjust = 0;
-	int qp=quantizer%6;
-
-	if (quantizer>=24)
-	{
-		qbits = qbits - 4;
-		adjust = 0;
-	}
-	else
-	{
-		adjust = 1 << (3 - qbits);
-		qbits = 4 - qbits;		
-	}
-
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			//Standard
-			output[i][j] = (input[i][j] * factorsDQ[qp][i][j] + adjust) << qbits;
-			//Standard without adjust
-			output[i][j] = (input[i][j] * factorsDQ[qp][i][j]) << qbits;
-			// Ian Richardson
-			/*output[i][j] = input[i][j] * factorsDQ[qp][i][j] * (1 << qbits);*/
-		}
-	}
-
-	if (intra16x16OrChroma) output[0][0] = input[0][0];	
-}
-
 int normAdjust(int m, int i, int j)
 {
 	if ((i%2 == 0) && (j%2 == 0))
@@ -357,10 +322,8 @@ int normAdjust(int m, int i, int j)
 	}
 }
 
-// invoke with iYCbCr == 0 for luma,
-//					  == 1 for Cb
-//					  == 2 for Cr.
-void ScalingFunctions4x4Derivation(int LevelScale[3][4][4], int iYCbCr)
+// (8.5.9) Derivation process for scaling functions
+void ScalingFunctions4x4Derivation(int LevelScale[6][4][4])
 {
 	bool mbIsInterFlag = false;
 	if ((shd.slice_type % 5 == P_SLICE) ||
@@ -372,7 +335,7 @@ void ScalingFunctions4x4Derivation(int LevelScale[3][4][4], int iYCbCr)
 
 	// Standard: separate_colour_plane_flag == 0 in baseline
 	
-	for (int m = 0; m < 3; m++)
+	for (int m = 0; m < 6; m++)
 	{
 		for (int i = 0; i < 4; i++)
 		{
@@ -385,6 +348,69 @@ void ScalingFunctions4x4Derivation(int LevelScale[3][4][4], int iYCbCr)
 	}
 }
 
+
+
+// (8.5.12.1) Scaling process for the residual 4x4 blocks (Chroma and Luma)
+void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool intra16x16OrChroma)
+{	
+	//int qbits = quantizer/6;
+	//int adjust = 0;
+	//int qp=quantizer%6;
+
+	//if (quantizer>=24)
+	//{
+	//	qbits = qbits - 4;
+	//	adjust = 0;
+	//}
+	//else
+	//{
+	//	adjust = 1 << (3 - qbits);
+	//	qbits = 4 - qbits;		
+	//}
+
+	//int LevelScale[6][4][4];
+	//ScalingFunctions4x4Derivation(LevelScale, 0);
+
+	//for (int i = 0; i < 4; i++)
+	//{
+	//	for (int j = 0; j < 4; j++)
+	//	{
+	//		//Standard
+	//		//output[i][j] = (input[i][j] * factorsDQ[qp][i][j] * 16 + adjust) << qbits;
+	//		//Standard without adjust
+	//		//output[i][j] = (input[i][j] * factorsDQ[qp][i][j]) << qbits;
+	//		// Ian Richardson
+	//		/*output[i][j] = input[i][j] * factorsDQ[qp][i][j] * (1 << qbits);*/
+	//		output[i][j] = (input[i][j] * LevelScale[qp][i][j] + adjust) << qbits;
+	//	}
+	//}
+
+	int LevelScale[6][4][4];
+	ScalingFunctions4x4Derivation(LevelScale);
+
+	if (quantizer >= 24)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				output[i][j] = (input[i][j] * LevelScale[quantizer%6][i][j]) << (quantizer/6 - 4);
+			}
+		}
+	}
+	else
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				output[i][j] = (input[i][j] * LevelScale[quantizer%6][i][j] + (1 << (3-quantizer/6))) >> (4 - quantizer/6);
+			}
+		}
+	}
+
+	if (intra16x16OrChroma) output[0][0] = input[0][0];	
+}
 
 void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 {
