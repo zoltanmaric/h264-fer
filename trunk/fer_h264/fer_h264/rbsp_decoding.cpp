@@ -220,7 +220,7 @@ void RBSP_decode(NALunit nal_unit)
 						{
 							for(int luma4x4BlkIdx=0; luma4x4BlkIdx<16; luma4x4BlkIdx++)
 							{
-								prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]=getRawBits(1);
+								prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] = (bool)getRawBits(1);
 								if(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]==0)
 								{
 									rem_intra4x4_pred_mode[luma4x4BlkIdx]=getRawBits(3);
@@ -334,11 +334,11 @@ void RBSP_decode(NALunit nal_unit)
 				// Norm: QpBdOffsetY == 0 in baseline
 				QPy = (QPy + mb_qp_delta + 52) % 52;
 
-				intraPrediction(CurrMbAddr, predL, predCr, predCb);
+				intraPrediction(predL, predCr, predCb);
 
 				if (MbPartPredMode(mb_type, 0) != Intra_4x4)
 				{
-					transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy, CurrMbAddr);
+					transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy);
 				}
 				transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, QPy, true);
 				transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, QPy, false);

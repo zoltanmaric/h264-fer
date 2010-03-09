@@ -34,7 +34,6 @@ void writeToPPM_bringer(int frameCount)
 	sprintf(filename, "frame%d.ppm", frameCount);
     out=fopen(filename,"w");
     fprintf(out,"P3\n1920 816\n255\n");
-    char znak;
     int i,j;
 
     for (i=0;i<816;i++)

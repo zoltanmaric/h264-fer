@@ -74,7 +74,7 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool intra16x16OrChr
 }
 
 // (8.5.14) partial
-void pictureConstruction4x4Luma(int u[4][4], int luma4x4BlkIdx, int CurrMbAddr)
+void pictureConstruction4x4Luma(int u[4][4], int luma4x4BlkIdx)
 {
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
@@ -94,7 +94,7 @@ void pictureConstruction4x4Luma(int u[4][4], int luma4x4BlkIdx, int CurrMbAddr)
 }
 
 // (8.5.14) partial
-void pictureConstructionIntra_16x16Luma(int u[16][16], int CurrMbAddr)
+void pictureConstructionIntra_16x16Luma(int u[16][16])
 {
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
@@ -114,7 +114,7 @@ void pictureConstructionIntra_16x16Luma(int u[16][16], int CurrMbAddr)
 }
 
 // (8.5.14) partial
-void pictureConstructionChroma(int u[8][8], int CurrMbAddr, bool Cb)
+void pictureConstructionChroma(int u[8][8], bool Cb)
 {
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
@@ -145,7 +145,7 @@ void pictureConstructionChroma(int u[8][8], int CurrMbAddr, bool Cb)
 // previously transformed macroblock. At the start
 // of each slice, it is initialized to SliceQPY
 // derived in Equation 7-29
-void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], int luma4x4BlkIdx, int QPy, int CurrMbAddr)
+void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], int luma4x4BlkIdx, int QPy)
 {
 	int c[4][4], r[4][4], u[4][4];
 
@@ -165,11 +165,11 @@ void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], 
 
 	// Standard: TransformBypassModeFlag == 0 in baseline
 
-	pictureConstruction4x4Luma(u, luma4x4BlkIdx, CurrMbAddr);
+	pictureConstruction4x4Luma(u, luma4x4BlkIdx);
 }
 
 // (8.5.2)
-void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16ACLevel[16][16],int predL[16][16], int QPy, int CurrMbAddr)
+void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16ACLevel[16][16],int predL[16][16], int QPy)
 {
 	int c[4][4], dcY[4][4], rMb[16][16], r[4][4], u[16][16];
 
@@ -215,7 +215,7 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 		}
 	}
 
-	pictureConstructionIntra_16x16Luma(u, CurrMbAddr);
+	pictureConstructionIntra_16x16Luma(u);
 }
 
 // (8.5.4)
@@ -288,5 +288,5 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 		}
 	}
 
-	pictureConstructionChroma(u, CurrMbAddr, Cb);
+	pictureConstructionChroma(u, Cb);
 }
