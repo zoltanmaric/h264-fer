@@ -7,7 +7,7 @@
 
 // Derivation process for neighbouring locations (6.4.11)
 // luma: true if invoked for luma locations, false if invoked for chroma
-void getNeighbourLocations(int xN, int yN, int *mbAddrN, int CurrMbAddr, int *xW, int *yW, bool luma)
+void getNeighbourLocations(int xN, int yN, int *mbAddrN, int *xW, int *yW, bool luma)
 {
 	// width and height of the macroblock
 	int maxW, maxH;
@@ -86,7 +86,7 @@ void getNeighbourLocations(int xN, int yN, int *mbAddrN, int CurrMbAddr, int *xW
 
 // Derivation process for neighbouring 4x4 luma blocks (6.4.10.4)
 // nA - neighbour (A if true, B if false, see figure 6-12)
-void getNeighbourAddresses(int CurrMbAddr, int luma4x4BlkIdx, bool nA, int *mbAddrN, int *luma4x4BlkIdxN)
+void getNeighbourAddresses(int luma4x4BlkIdx, bool nA, int *mbAddrN, int *luma4x4BlkIdxN)
 {
 	int xD, yD;			// table 6-2
 	// Neighbour A
@@ -116,7 +116,7 @@ void getNeighbourAddresses(int CurrMbAddr, int luma4x4BlkIdx, bool nA, int *mbAd
 	int yN = y + yD;
 
 	int xW, yW;
-	getNeighbourLocations(xN, yN, mbAddrN, CurrMbAddr, &xW, &yW, true);
+	getNeighbourLocations(xN, yN, mbAddrN, &xW, &yW, true);
 
 	if (*mbAddrN != -1)
 		*luma4x4BlkIdxN = 8 * (yW / 8) + 4 * (xW / 8) + 2 * ((yW % 8) / 4) + ((xW % 8) / 4);
@@ -125,11 +125,11 @@ void getNeighbourAddresses(int CurrMbAddr, int luma4x4BlkIdx, bool nA, int *mbAd
 }
 
 // Derivation process for Intra4x4PredMode (8.3.1.1)
-void getIntra4x4PredMode(int luma4x4BlkIdx, int CurrMbAddr, int *mbAddrA, int *mbAddrB)
+void getIntra4x4PredMode(int luma4x4BlkIdx, int *mbAddrA, int *mbAddrB)
 {
 	int luma4x4BlkIdxA, luma4x4BlkIdxB;
-	getNeighbourAddresses(CurrMbAddr, luma4x4BlkIdx, true, mbAddrA, &luma4x4BlkIdxA);
-	getNeighbourAddresses(CurrMbAddr, luma4x4BlkIdx, false, mbAddrB, &luma4x4BlkIdxB);
+	getNeighbourAddresses(luma4x4BlkIdx, true, mbAddrA, &luma4x4BlkIdxA);
+	getNeighbourAddresses(luma4x4BlkIdx, false, mbAddrB, &luma4x4BlkIdxB);
 
 	// no checking whether the neighbouring
 	// macroblocks are coded as P-macroblocks
@@ -384,7 +384,7 @@ void Intra_4x4_Horizontal_Up(int *p, int pred4x4L[4][4])
 }
 
 // Intra_4x4 sample prediction (8.3.1.2)
-void Intra4x4SamplePrediction(int luma4x4BlkIdx, int CurrMbAddr, int intra4x4PredMode, int pred4x4L[4][4])
+void Intra4x4SamplePrediction(int luma4x4BlkIdx, int intra4x4PredMode, int pred4x4L[4][4])
 {
 	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
@@ -408,7 +408,7 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int CurrMbAddr, int intra4x4Pre
 		int yN = y0 + y;
 
 		int mbAddrN, xW, yW;
-		getNeighbourLocations(xN, yN, &mbAddrN, CurrMbAddr, &xW, &yW, true);
+		getNeighbourLocations(xN, yN, &mbAddrN, &xW, &yW, true);
 
 		if ((mbAddrN == -1) ||
 			((x > 3) && ((luma4x4BlkIdx == 3) || (luma4x4BlkIdx == 11))))
@@ -566,7 +566,7 @@ void Intra_16x16_Plane(int *p, int predL[16][16])
 }
 
 // (8.3.3)
-void Intra16x16SamplePrediction(int CurrMbAddr, int predL[16][16])
+void Intra16x16SamplePrediction(int predL[16][16])
 {
 	int p[33];
 	for (int i = 0; i < 33; i++)
@@ -584,7 +584,7 @@ void Intra16x16SamplePrediction(int CurrMbAddr, int predL[16][16])
 		}
 
 		int xW, yW, mbAddrN;
-		getNeighbourLocations(x, y, &mbAddrN, CurrMbAddr, &xW, &yW, true);
+		getNeighbourLocations(x, y, &mbAddrN, &xW, &yW, true);
 
 		if (mbAddrN == -1)
 		{
@@ -757,7 +757,7 @@ void Intra_Chroma_Plane(int *p, int predC[8][8])
 }
 
 // (8.3.4)
-void IntraChromaSamplePrediction(int CurrMbAddr, int predCr[8][8], int predCb[8][8])
+void IntraChromaSamplePrediction(int predCr[8][8], int predCb[8][8])
 {
 	int pCr[17], pCb[17];
 	for (int i = 0; i < MbWidthC + MbHeightC + 1; i++)
@@ -775,7 +775,7 @@ void IntraChromaSamplePrediction(int CurrMbAddr, int predCr[8][8], int predCb[8]
 		}
 
 		int xW, yW, mbAddrN;
-		getNeighbourLocations(x, y, &mbAddrN, CurrMbAddr, &xW, &yW, false);
+		getNeighbourLocations(x, y, &mbAddrN, &xW, &yW, false);
 
 		if (mbAddrN == -1)
 		{
@@ -821,7 +821,7 @@ void IntraChromaSamplePrediction(int CurrMbAddr, int predCr[8][8], int predCb[8]
 
 // predL, predCr and predCb are the output prediction samples
 // with dimensions 16x16, 8x8 and 8x8 respectively
-void intraPrediction(int CurrMbAddr, int predL[16][16], int predCr[8][8], int predCb[8][8])
+void intraPrediction(int predL[16][16], int predCr[8][8], int predCb[8][8])
 {
 	// mb_pred(mb_type) in the standard
 	if ((MbPartPredMode(mb_type , 0) == Intra_4x4) || (MbPartPredMode(mb_type , 0) == Intra_16x16))
@@ -833,12 +833,12 @@ void intraPrediction(int CurrMbAddr, int predL[16][16], int predCr[8][8], int pr
 			for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 			{
 				int mbAddrA, mbAddrB;
-				getIntra4x4PredMode(luma4x4BlkIdx, CurrMbAddr, &mbAddrA, &mbAddrB);
+				getIntra4x4PredMode(luma4x4BlkIdx, &mbAddrA, &mbAddrB);
 
 				// the luma prediction samples
 				int pred4x4L[4][4];
 				int absIdx = CurrMbAddr * 16 + luma4x4BlkIdx;
-				Intra4x4SamplePrediction(luma4x4BlkIdx, CurrMbAddr, Intra4x4PredMode[absIdx], pred4x4L);
+				Intra4x4SamplePrediction(luma4x4BlkIdx, Intra4x4PredMode[absIdx], pred4x4L);
 
 				int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 				int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
@@ -851,17 +851,17 @@ void intraPrediction(int CurrMbAddr, int predL[16][16], int predCr[8][8], int pr
 					}
 				}
 
-				transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy, CurrMbAddr);
+				transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
 			}
 
 			int test = 0;
 		}
 		else
 		{
-			Intra16x16SamplePrediction(CurrMbAddr, predL);
+			Intra16x16SamplePrediction(predL);
 		}
 
 		// CHROMA:
-		IntraChromaSamplePrediction(CurrMbAddr, predCr, predCb);
+		IntraChromaSamplePrediction(predCr, predCb);
 	}	
 }
