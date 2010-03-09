@@ -851,7 +851,7 @@ void intraPrediction(int CurrMbAddr, int predL[16][16], int predCr[8][8], int pr
 					}
 				}
 
-				transformDecoding4x4LumaResidual(LumaLevel, predL, QPy, CurrMbAddr);
+				transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy, CurrMbAddr);
 			}
 
 			int test = 0;

@@ -145,30 +145,27 @@ void pictureConstructionChroma(int u[8][8], int CurrMbAddr, bool Cb)
 // previously transformed macroblock. At the start
 // of each slice, it is initialized to SliceQPY
 // derived in Equation 7-29
-void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], int QPy, int CurrMbAddr)
+void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], int luma4x4BlkIdx, int QPy, int CurrMbAddr)
 {
 	int c[4][4], r[4][4], u[4][4];
 
-	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+	transformInverseScan(LumaLevel[luma4x4BlkIdx], c);
+	scaleAndTransform4x4Residual(c, r, false, QPy, true);
+
+	int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
+	int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
+
+	for (int i = 0; i < 4; i++)
 	{
-		transformInverseScan(LumaLevel[luma4x4BlkIdx], c);
-		scaleAndTransform4x4Residual(c, r, false, QPy, true);
-
-		int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
-		int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
-
-		for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
 		{
-			for (int j = 0; j < 4; j++)
-			{
-				u[i][j] = Clip1Y(predL[x0 + j][y0 + i] + r[i][j]);
-			}
+			u[i][j] = Clip1Y(predL[x0 + j][y0 + i] + r[i][j]);
 		}
-
-		// Standard: TransformBypassModeFlag == 0 in baseline
-
-		pictureConstruction4x4Luma(u, luma4x4BlkIdx, CurrMbAddr);
 	}
+
+	// Standard: TransformBypassModeFlag == 0 in baseline
+
+	pictureConstruction4x4Luma(u, luma4x4BlkIdx, CurrMbAddr);
 }
 
 // (8.5.2)
