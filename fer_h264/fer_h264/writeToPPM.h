@@ -2,4 +2,4 @@
 
 void writeToPPM();
 
-void writeToPPM_bringer();
+void writeToPPM_bringer(int frameCount);
