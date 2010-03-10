@@ -161,6 +161,10 @@ int codeNum_to_coded_block_pattern_inter[48]=
 int CodedBlockPatternLuma;
 int CodedBlockPatternChroma;
 
+// Zoltan prcka po kodu:
+int *CodedBlockPatternLumaArray;
+int *CodedBlockPatternChromaArray;
+
 /* TODO: These variables are currently unmanaged
 */
 
@@ -300,6 +304,10 @@ mpi= new mode_pred_info;
 	{
 		frame.C[0][i]=frame.C[1][i]=0;
 	}
+
+	// Zoltan:
+	CodedBlockPatternLumaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];
+	CodedBlockPatternChromaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];
 
 	PicWidthInMbs=sps.PicWidthInMbs;
 	PicHeightInMbs=sps.FrameHeightInMbs;

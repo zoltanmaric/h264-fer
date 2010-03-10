@@ -119,7 +119,7 @@ void RBSP_decode(NALunit nal_unit)
 
 			if(moreDataFlag)
 			{ 
-//if (CurrMbAddr>1900)
+//if (CurrMbAddr>2000)
 //break;
 
 				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
@@ -221,7 +221,7 @@ void RBSP_decode(NALunit nal_unit)
 							for(int luma4x4BlkIdx=0; luma4x4BlkIdx<16; luma4x4BlkIdx++)
 							{
 								prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] = (bool)getRawBits(1);
-								if(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]==0)
+								if(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]==false)
 								{
 									rem_intra4x4_pred_mode[luma4x4BlkIdx]=getRawBits(3);
 								}
@@ -238,8 +238,6 @@ void RBSP_decode(NALunit nal_unit)
 						//We only support "ChromaArrayType==1", so the if clause is skipped
 
 						intra_chroma_pred_mode=expGolomb_UD();
-
-						//intraPrediction(CurrMbAddr, predL, predCr, predCb);
 					}
 					else
 					{
@@ -296,6 +294,9 @@ void RBSP_decode(NALunit nal_unit)
 					CodedBlockPatternChroma=I_Macroblock_Modes[mb_type][5];
 					CodedBlockPatternLuma=I_Macroblock_Modes[mb_type][6];
 				}				
+
+				CodedBlockPatternLumaArray[CurrMbAddr] = CodedBlockPatternLuma;
+				CodedBlockPatternChromaArray[CurrMbAddr] = CodedBlockPatternChroma;
 
 				if(CodedBlockPatternLuma>0 || CodedBlockPatternChroma>0 || MbPartPredMode(mb_type,0)==Intra_16x16)
 				{
