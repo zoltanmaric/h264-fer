@@ -446,27 +446,52 @@ void scaleLumaDCIntra(int input[4][4], int qp, int output[4][4])
 
 	//Scaling process according to the Ian Richardson's book
 	
-	int shift12 = qp_calculate-2;
-	int shift0 = 2 - qp_calculate;
+	//int shift12 = qp_calculate-2;
+	//int shift0 = 2 - qp_calculate;
 
-	if (qp >= 12)
+	//if (qp >= 12)
+	//{
+	//	for (int i = 0; i < 4; i++)
+	//	{
+	//		for (int j = 0; j < 4; j++)
+	//		{
+	//			output[i][j] = (input[i][j]*scaleV) << shift12;
+	//		}
+	//	}
+	//}
+	//else
+	//{
+	//	int pom = 1 << (1 - qp);
+	//	for (int i = 0; i < 4; i++)
+	//	{
+	//		for (int j = 0; j < 4; j++)
+	//		{
+	//			output[i][j] = (input[i][j]*scaleV + pom) >> shift0;
+	//		}
+	//	}
+	//}
+
+	// Standard:
+	int LevelScale[6][4][4];
+	ScalingFunctions4x4Derivation(LevelScale);
+
+	if (qp >= 36)
 	{
 		for (int i = 0; i < 4; i++)
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				output[i][j] = (input[i][j]*scaleV) << shift12;
+				output[i][j] = (input[i][j] * LevelScale[qp%6][0][0]) << (qp/6 - 6);
 			}
 		}
 	}
 	else
 	{
-		int pom = 1 << (1 - qp);
 		for (int i = 0; i < 4; i++)
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				output[i][j] = (input[i][j]*scaleV + pom) >> shift0;
+				output[i][j] = (input[i][j] * LevelScale[qp%6][0][0] + (1<<(5 - qp/6))) >> (6 - qp/6);
 			}
 		}
 	}
