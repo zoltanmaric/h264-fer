@@ -136,6 +136,10 @@ extern int codeNum_to_coded_block_pattern_inter[48];
 extern int CodedBlockPatternLuma;
 extern int CodedBlockPatternChroma;
 
+// Zoltan:
+extern int *CodedBlockPatternLumaArray;
+extern int *CodedBlockPatternChromaArray;
+
 /* TODO: These variables are currently unmanaged
 */
 
