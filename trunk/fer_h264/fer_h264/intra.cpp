@@ -192,7 +192,7 @@ void Intra_4x4_Vertical(int *p, int pred4x4L[4][4])
 	{
 		for (int x = 0; x < 4; x++)
 		{
-			pred4x4L[x][y] = p(x,-1);
+			pred4x4L[y][x] = p(x,-1);
 		}
 	}
 }
@@ -204,7 +204,7 @@ void Intra_4x4_Horizontal(int *p, int pred4x4L[4][4])
 	{
 		for (int x = 0; x < 4; x++)
 		{
-			pred4x4L[x][y] = p(-1,y);
+			pred4x4L[y][x] = p(-1,y);
 		}
 	}
 }
@@ -234,7 +234,7 @@ void Intra_4x4_DC(int *p, int pred4x4L[4][4])
 		{
 			for (int x = 0; x < 4; x++)
 			{
-				pred4x4L[x][y] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) +
+				pred4x4L[y][x] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) +
 									   p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 4) >> 3;
 			}
 		}
@@ -245,7 +245,7 @@ void Intra_4x4_DC(int *p, int pred4x4L[4][4])
 		{
 			for (int x = 0; x < 4; x++)
 			{
-				pred4x4L[x][y] = (p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 2) >> 2;
 			}
 		}
 	}
@@ -255,7 +255,7 @@ void Intra_4x4_DC(int *p, int pred4x4L[4][4])
 		{
 			for (int x = 0; x < 4; x++)
 			{
-				pred4x4L[x][y] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) + 2) >> 2;
 			}
 		}
 	}
@@ -265,7 +265,7 @@ void Intra_4x4_DC(int *p, int pred4x4L[4][4])
 		{
 			for (int x = 0; x < 4; x++)
 			{
-				pred4x4L[x][y] = 128; // = (1 << (BitDepthY - 1); BitDepthY = 8 in baseline
+				pred4x4L[y][x] = 128; // = (1 << (BitDepthY - 1); BitDepthY = 8 in baseline
 			}
 		}
 	}
@@ -279,9 +279,9 @@ void Intra_4x4_Diagonal_Down_Left(int *p, int pred4x4L[4][4])
 		for (int x = 0; x < 4; x++)
 		{
 			if ((x == 3) && (y == 3))
-				pred4x4L[x][y] = (p(6,-1) + 3*p(7,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(6,-1) + 3*p(7,-1) + 2) >> 2;
 			else
-				pred4x4L[x][y] = (p(x+y,-1) + 2*p(x+y+1,-1) + p(x+y+2,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x+y,-1) + 2*p(x+y+1,-1) + p(x+y+2,-1) + 2) >> 2;
 		}
 	}
 }
@@ -294,11 +294,11 @@ void Intra_4x4_Diagonal_Down_Right(int *p, int pred4x4L[4][4])
 		for (int x = 0; x < 4; x++)
 		{
 			if (x > y)
-				pred4x4L[x][y] = (p(x-y-2,-1) + 2*p(x-y-1,-1) + p(x-y,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x-y-2,-1) + 2*p(x-y-1,-1) + p(x-y,-1) + 2) >> 2;
 			else if (x < y)
-				pred4x4L[x][y] = (p(-1,y-x-2) + 2*p(-1,y-x-1) + p(-1,y-x) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,y-x-2) + 2*p(-1,y-x-1) + p(-1,y-x) + 2) >> 2;
 			else
-				pred4x4L[x][y] = (p(0,-1) + 2*p(-1,-1) + p(-1,0) + 2) >> 2;
+				pred4x4L[y][x] = (p(0,-1) + 2*p(-1,-1) + p(-1,0) + 2) >> 2;
 		}
 	}
 }
@@ -313,14 +313,14 @@ void Intra_4x4_Vertical_Right(int *p, int pred4x4L[4][4])
 			int zVR = 2 * x - y;
 			if ((zVR == 0) || (zVR == 2) ||
 				(zVR == 4) || (zVR == 6))
-				pred4x4L[x][y] = (p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 1) >> 1;
+				pred4x4L[y][x] = (p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 1) >> 1;
 			else if ((zVR == 1) ||
 				(zVR == 3) || (zVR == 5))
-				pred4x4L[x][y] = (p(x-(y>>1)-2,-1) + 2*p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x-(y>>1)-2,-1) + 2*p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 2) >> 2;
 			else if (zVR == -1)
-				pred4x4L[x][y] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
 			else
-				pred4x4L[x][y] = (p(-1,y-1) + 2*p(-1,y-2) + p(-1,y-3) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,y-1) + 2*p(-1,y-2) + p(-1,y-3) + 2) >> 2;
 		}
 	}
 }
@@ -335,14 +335,14 @@ void Intra_4x4_Horizontal_Down(int *p, int pred4x4L[4][4])
 			int zHD = 2 * y - x;
 			if ((zHD == 0) || (zHD == 2) ||
 				(zHD == 4) || (zHD == 6))
-				pred4x4L[x][y] = (p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 1) >> 1;
+				pred4x4L[y][x] = (p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 1) >> 1;
 			else if ((zHD == 1) ||
 				(zHD == 3) || (zHD == 5))
-				pred4x4L[x][y] = (p(-1,y-(x>>1)-2) + 2*p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,y-(x>>1)-2) + 2*p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 2) >> 2;
 			else if (zHD == -1)
-				pred4x4L[x][y] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
 			else
-				pred4x4L[x][y] = (p(x-1,-1) + 2*p(x-2,-1) + p(x-3,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x-1,-1) + 2*p(x-2,-1) + p(x-3,-1) + 2) >> 2;
 		}
 	}
 }
@@ -355,9 +355,9 @@ void Intra_4x4_Vertical_Left(int *p, int pred4x4L[4][4])
 		for (int x = 0; x < 4; x++)
 		{
 			if ((y == 0) || (y==2))
-				pred4x4L[x][y] = (p(x+(y>>1),-1) + p(x+(y>>1)+1,-1) + 1) >> 1;
+				pred4x4L[y][x] = (p(x+(y>>1),-1) + p(x+(y>>1)+1,-1) + 1) >> 1;
 			else
-				pred4x4L[x][y] = (p(x+(y>>1),-1) + 2*p(x+(y>>1)+1,-1) + p(x+(y>>1)+2,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x+(y>>1),-1) + 2*p(x+(y>>1)+1,-1) + p(x+(y>>1)+2,-1) + 2) >> 2;
 		}
 	}
 }
@@ -372,13 +372,13 @@ void Intra_4x4_Horizontal_Up(int *p, int pred4x4L[4][4])
 			int zHU = x + 2 * y;
 			if ((zHU == 0) || (zHU == 2) ||
 				(zHU == 4))
-				pred4x4L[x][y] = (p(-1,y+(x>>1)) + p(-1,y+(x>>1)+1) + 1) >> 1;
+				pred4x4L[y][x] = (p(-1,y+(x>>1)) + p(-1,y+(x>>1)+1) + 1) >> 1;
 			else if ((zHU == 1) || (zHU == 3))
-				pred4x4L[x][y] = (p(-1,y+(x>>1)) + 2*p(-1,y+(x>>1)+1) + p(-1,y+(x>>1)+2) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,y+(x>>1)) + 2*p(-1,y+(x>>1)+1) + p(-1,y+(x>>1)+2) + 2) >> 2;
 			else if (zHU == 5)
-				pred4x4L[x][y] = (p(-1,2) + 3*p(-1,3) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,2) + 3*p(-1,3) + 2) >> 2;
 			else
-				pred4x4L[x][y] = p(-1,3);
+				pred4x4L[y][x] = p(-1,3);
 		}
 	}
 }
@@ -419,6 +419,8 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int intra4x4PredMode, int pred4
 				p[i] = p[8];
 			else
 				p[i] = -1;	// not available for intra prediction
+
+			int test = 0;
 		}
 		else
 		{
@@ -427,6 +429,7 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int intra4x4PredMode, int pred4
 			int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
 
 			p[i] = frame.L[(yM + yW) * frame.Lwidth + (xM + xW)];
+			int test = 0;
 		}
 	}
 
@@ -474,7 +477,7 @@ void Intra_16x16_Vertical(int *p, int predL[16][16])
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			predL[x][y] = p(x,-1);
+			predL[y][x] = p(x,-1);
 		}
 	}
 }
@@ -486,7 +489,7 @@ void Intra_16x16_Horizontal(int *p, int predL[16][16])
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			predL[x][y] = p(-1,y);
+			predL[y][x] = p(-1,y);
 		}
 	}
 }
@@ -524,19 +527,19 @@ void Intra_16x16_DC(int *p, int predL[16][16])
 		{
 			if (allAvailable)
 			{
-				predL[x][y] = (sumXi + sumYi + 16) >> 5;
+				predL[y][x] = (sumXi + sumYi + 16) >> 5;
 			}
 			else if (leftAvailable)
 			{
-				predL[x][y] = (sumYi + 8) >> 4;
+				predL[y][x] = (sumYi + 8) >> 4;
 			}
 			else if (topAvailable)
 			{
-				predL[x][y] = (sumXi + 8) >> 4;
+				predL[y][x] = (sumXi + 8) >> 4;
 			}
 			else
 			{
-				predL[x][y] = 1 << 7;		// == 1 << (BitDepthY-1) (BitDepthY is always equal to 8 in the baseline profile)
+				predL[y][x] = 1 << 7;		// == 1 << (BitDepthY-1) (BitDepthY is always equal to 8 in the baseline profile)
 			}
 		}
 	}
@@ -560,7 +563,7 @@ void Intra_16x16_Plane(int *p, int predL[16][16])
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			predL[x][y] = Clip1Y((a + b*(x-7) + c*(y-7) + 16) >> 5);
+			predL[y][x] = Clip1Y((a + b*(x-7) + c*(y-7) + 16) >> 5);
 		}
 	}
 }
@@ -714,7 +717,7 @@ void Intra_Chroma_Horizontal(int *p, int predC[8][8])
 	{
 		for (int x = 0; x < MbWidthC; x++)
 		{
-			predC[x][y] = p(-1,y);
+			predC[y][x] = p(-1,y);
 		}
 	}
 }
@@ -726,7 +729,7 @@ void Intra_Chroma_Vertical(int *p, int predC[8][8])
 	{
 		for (int x = 0; x < MbWidthC; x++)
 		{
-			predC[x][y] = p(x,-1);
+			predC[y][x] = p(x,-1);
 		}
 	}
 }
@@ -751,7 +754,7 @@ void Intra_Chroma_Plane(int *p, int predC[8][8])
 	{
 		for (int x = 0; x < MbWidthC; x++)
 		{
-			predC[x][y] = Clip1C((a + b*(x-3-xCF) + c*(y-3-yCF) + 16) >> 5);
+			predC[y][x] = Clip1C((a + b*(x-3-xCF) + c*(y-3-yCF) + 16) >> 5);
 		}
 	}
 }
@@ -847,7 +850,7 @@ void intraPrediction(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				{
 					for (int x = 0; x < 4; x++)
 					{
-						predL[x0+x][y0+y] = pred4x4L[x][y];
+						predL[y0+y][x0+x] = pred4x4L[y][x];
 					}
 				}
 
