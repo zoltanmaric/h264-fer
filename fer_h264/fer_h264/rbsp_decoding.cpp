@@ -351,7 +351,10 @@ void RBSP_decode(NALunit nal_unit)
 
 		static int intraFrameCounter = 1;
 		writeToPPM_bringer(intraFrameCounter++);
-		exit(0);
+		
+		if (intraFrameCounter > 2)
+			exit(0);
+		
 		int stop = 0;
 	}
 }
