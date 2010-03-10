@@ -71,6 +71,21 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool intra16x16OrChr
 
 	inverseResidual(bitDepth, qP, c, r, intra16x16OrChroma);
 
+	// MEGATEST:
+	//if (intra16x16OrChroma == false)
+	//{
+	//	for (int i = 0; i < 4; i++)
+	//	{
+	//		for (int j = i + 1; j < 4; j++)
+	//		{
+	//			int temp = r[i][j];
+	//			r[i][j] = r[j][i];
+	//			r[j][i] = temp;
+	//		}
+	//	}
+	//}
+
+	int test = 0;
 }
 
 // (8.5.14) partial
@@ -159,7 +174,7 @@ void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], 
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			u[i][j] = Clip1Y(predL[x0 + j][y0 + i] + r[i][j]);
+			u[i][j] = Clip1Y(predL[y0+i][x0+j] + r[i][j]);
 		}
 	}
 
@@ -200,7 +215,7 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				rMb[x0+j][y0+i] = r[i][j];
+				rMb[y0+i][x0+j] = r[i][j];
 			}
 		}
 	}
@@ -211,7 +226,12 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 	{
 		for (int j = 0; j < 16; j++)
 		{
-			u[i][j] = Clip1Y(predL[j][i] + rMb[j][i]);
+			// Standard:
+			// u(i,j) = Clip1Y(predL[j][i] + rMb[j][i])
+			// this is inverted because the first index
+			// corresponds to the x coordinate in the
+			// standard.
+			u[i][j] = Clip1Y(predL[i][j] + rMb[i][j]);
 		}
 	}
 
@@ -272,7 +292,7 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				rMb[x0+j][y0+i] = r[i][j];
+				rMb[y0+i][x0+j] = r[i][j];
 			}
 		}
 	}
