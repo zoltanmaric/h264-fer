@@ -43,7 +43,7 @@ void writeToPPM_bringer(int frameCount)
 	FILE *out;
 
 	char filename[50];
-	sprintf(filename, "frame%dljubo.ppm", frameCount);
+	sprintf(filename, "frame%d.ppm", frameCount);
     out=fopen(filename,"w");
     fprintf(out,"P3\n1920 816\n255\n");
     int i,j;
@@ -74,19 +74,12 @@ void writeToPPM(int frameCount)
 {
 	toRGB();
 
-	FILE *f;
-
-	char filename[50];
-	sprintf(filename, "frame%d.ppm", frameCount);
-	f = fopen(filename,"wt");
-	fprintf(f, "P3\n%d %d\n255\n", frame.Lwidth, frame.Lheight);
-
 	char *pic;
-	int pic_size = frame.Lwidth * frame.Lheight * 12 + frame.Lheight;
-	pic = new char[pic_size];
+	pic = new char[frame.Lwidth * frame.Lheight * 12 + frame.Lheight];
 	
+	int pic_size = frame.Lheight * frame.Lwidth;
 	int k = 0;
-	for (int i = 0; i < frame.Lheight * frame.Lwidth; i++)
+	for (int i = 0; i < pic_size; i++)
 	{
 		k += sprintf(pic + k, "%d %d %d ", red[i], green[i], blue[i]);
 		
@@ -96,6 +89,11 @@ void writeToPPM(int frameCount)
 		}
 	}
 
+	FILE *f;
+	char filename[50];
+	sprintf(filename, "frame%d.ppm", frameCount);
+	f = fopen(filename,"wt");
+	fprintf(f, "P3\n%d %d\n255\n", frame.Lwidth, frame.Lheight);
 	fwrite(pic, 1, k, f);
 	fclose(f);
 }
