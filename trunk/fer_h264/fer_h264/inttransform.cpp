@@ -304,7 +304,12 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			u[i][j] = Clip1C(predC[j][i] + rMb[j][i]);
+			// Standard:
+			// u(i,j) = Clip1C(predC[j][i] + rMb[j][i])
+			// this is inverted because the first index
+			// corresponds to the x coordinate in the
+			// standard.
+			u[i][j] = Clip1C(predC[i][j] + rMb[i][j]);
 		}
 	}
 

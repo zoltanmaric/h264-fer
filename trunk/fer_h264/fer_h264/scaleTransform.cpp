@@ -233,7 +233,7 @@ void transformDCChroma (int c[2][2], int f[2][2])
 					f[i][j] = f_temp[i][0] + f_temp[i][1];
 					break;
 				case 1: 					
-					f[i][j] = f_temp[i][0] + f_temp[i][1];
+					f[i][j] = f_temp[i][0] - f_temp[i][1];
 					break;				
 			}
 		}
