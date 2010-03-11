@@ -1,5 +1,5 @@
 #pragma once
 
-void writeToPPM();
+void writeToPPM(int frameCount);
 
 void writeToPPM_bringer(int frameCount);
