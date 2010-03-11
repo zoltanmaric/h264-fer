@@ -505,26 +505,26 @@ void scaleChromaDC(int input[2][2], int qp, int output[2][2])
 
 	// Scaling proccess according to the Ian Richardson's book
 	
-	if (qp >= 6)
-	{
-		for (int i = 0; i < 2; i++)
-		{
-			for (int j = 0; j < 2; j++)
-			{
-				output[i][j] = (input[i][j]*scaleV) << (qp_calculate - 1);
-			}
-		}		
-	}
-	else
-	{
-		for (int i = 0; i < 2; i++)
-		{
-			for (int j = 0; j < 2; j++)
-			{
-				output[i][j] = (input[i][j]*scaleV) >> 1;
-			}
-		}
-	}
+	//if (qp >= 6)
+	//{
+	//	for (int i = 0; i < 2; i++)
+	//	{
+	//		for (int j = 0; j < 2; j++)
+	//		{
+	//			output[i][j] = (input[i][j]*scaleV) << (qp_calculate - 1);
+	//		}
+	//	}		
+	//}
+	//else
+	//{
+	//	for (int i = 0; i < 2; i++)
+	//	{
+	//		for (int j = 0; j < 2; j++)
+	//		{
+	//			output[i][j] = (input[i][j]*scaleV) >> 1;
+	//		}
+	//	}
+	//}
 	
 
 	//Scaling proccess according to the latest H.264 ITU specification	
@@ -535,6 +535,16 @@ void scaleChromaDC(int input[2][2], int qp, int output[2][2])
 			output[i][j] = ((input[i][j]*scaleV) << qp_calculate) >> 5;
 		}
 	}*/
+
+	int LevelScale[6][4][4];
+	ScalingFunctions4x4Derivation(LevelScale);
+	for (int i = 0; i < 2; i++)
+	{
+		for (int j = 0; j < 2; j++)
+		{
+			output[i][j] = ((input[i][j] * LevelScale[qp%6][0][0]) << (qp/6)) >> 5;
+		}
+	}
 		
 }
 
