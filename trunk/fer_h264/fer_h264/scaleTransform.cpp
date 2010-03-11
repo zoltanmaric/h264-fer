@@ -3,6 +3,9 @@
 #include "headers_and_parameter_sets.h"
 #include "h264_globals.h"
 
+void ScalingFunctions4x4Derivation(int LevelScale[6][4][4]);//, int iYCbCr);
+int normAdjust(int m, int i, int j);
+
 //Multiplication factors for quantization
 int factorsQ[6][4][4] = 
 {
@@ -14,7 +17,7 @@ int factorsQ[6][4][4] =
 	{{7282,4559, 7282,4559},{4559,2893,4559,2893},{7282,4559, 7282,4559},{4559,2893,4559,2893}}
 };
 
-//Multiplication factors for inverse quantization
+//Scaling factors
 int factorsDQ[6][4][4] = 
 {
 	{{10,13,10,13},{13,16,13,16},{10,13,10,13},{13,16,13,16}},
@@ -23,6 +26,13 @@ int factorsDQ[6][4][4] =
 	{{14,18,14,18},{18,23,18,23},{14,18,14,18},{18,23,18,23}},
 	{{16,20,16,20},{20,25,20,25},{16,20,16,20},{20,25,20,25}},
 	{{18,23,18,23},{23,29,23,29},{18,23,18,23},{23,29,23,29}}
+
+	/*{{160,208,160,208},{208,256,208,256},{160,208,160,208},{208,256,208,256}},
+	{{176,224,176,224},{224,288,224,288},{176,224,176,224},{224,288,224,288}},
+	{{208,256,208,256},{256,320,256,320},{208,256,208,256},{256,320,256,320}},
+	{{224,288,224,288},{288,368,288,368},{224,288,224,288},{288,368,288,368}},
+	{{256,320,256,320},{320,400,320,400},{256,320,256,320},{320,400,320,400}},
+	{{288,368,288,368},{368,464,368,464},{288,368,288,368},{368,464,368,464}}*/
 };
 
 int ZigZagReordering[16][2] = 
@@ -97,56 +107,6 @@ void forwardTransform4x4(int input[4][4], int output[4][4])
 	}
 
 }
-
-// (8.5.12.2)
-void inverseTransform4x4(int d[4][4], int r[4][4])
-{	
-	int e[4][4], f[4][4], g[4][4], h[4][4];
-	
-	for (int i = 0; i < 4; i++)
-	{
-		e[i][0] = d[i][0] + d[i][2];
-		e[i][1] = d[i][0] - d[i][2];
-		e[i][2] = (d[i][1] >> 1) - d[i][3];
-		e[i][3] = d[i][1] + (d[i][3] >> 1);
-	}
-
-	for (int i = 0; i < 4; i++)
-	{
-		f[i][0] = e[i][0] + e[i][3];
-		f[i][1] = e[i][1] + e[i][2];
-		f[i][2] = e[i][1] - e[i][2];
-		f[i][3] = e[i][0] - e[i][3];
-	}
-
-	for (int j = 0; j < 4; j++)
-	{
-		g[0][j] = f[0][j] + f[2][j];
-		g[1][j] = f[0][j] - f[2][j];
-		g[2][j] = (f[1][j] >> 1) - f[3][j];
-		g[3][j] = f[1][j] + (f[3][j] >> 1);
-	}
-
-	for (int j = 0; j < 4; j++)
-	{
-		h[0][j] = g[0][j] + g[3][j];
-		h[1][j] = g[1][j] + g[2][j];
-		h[2][j] = g[1][j] - g[2][j];
-		h[3][j] = g[0][j] - g[3][j];
-	}
-
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			r[i][j] = (h[i][j] + 32) >> 6;
-		}
-	}
-}
-
-
-// transformation for the DC coeff from Luma block previously transformed using integer
-// transformation
 void HadamardLumaTransform(int input[4][4], int output[4][4])
 {
 	int i, j;
@@ -210,12 +170,62 @@ void HadamardLumaTransform(int input[4][4], int output[4][4])
 }
 
 
-void inverseHadamardLumaTransform (int input[4][4], int output[4][4])
+
+// 8.5.12.2 Transformation process for residual 4x4 blocks 
+void inverseTransform4x4(int d[4][4], int r[4][4])
+{	
+	int e[4][4], f[4][4], g[4][4], h[4][4];
+	
+	for (int i = 0; i < 4; i++)
+	{
+		e[i][0] = d[i][0] + d[i][2];
+		e[i][1] = d[i][0] - d[i][2];
+		e[i][2] = (d[i][1] >> 1) - d[i][3];
+		e[i][3] = d[i][1] + (d[i][3] >> 1);
+	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		f[i][0] = e[i][0] + e[i][3];
+		f[i][1] = e[i][1] + e[i][2];
+		f[i][2] = e[i][1] - e[i][2];
+		f[i][3] = e[i][0] - e[i][3];
+	}
+
+	for (int j = 0; j < 4; j++)
+	{
+		g[0][j] = f[0][j] + f[2][j];
+		g[1][j] = f[0][j] - f[2][j];
+		g[2][j] = (f[1][j] >> 1) - f[3][j];
+		g[3][j] = f[1][j] + (f[3][j] >> 1);
+	}
+
+	for (int j = 0; j < 4; j++)
+	{
+		h[0][j] = g[0][j] + g[3][j];
+		h[1][j] = g[1][j] + g[2][j];
+		h[2][j] = g[1][j] - g[2][j];
+		h[3][j] = g[0][j] - g[3][j];
+	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			r[i][j] = (h[i][j] + 32) >> 6;
+		}
+	}
+}
+
+
+
+// 8.5.10 (part 1) Transformation process for DC transform coefficients for Intra_16x16 macroblock type  
+void inverseTransformDCLumaIntra (int c[4][4], int f[4][4])
 {
 	int i, j;
-	int output_temp[4][4];
+	int f_temp[4][4];
 
-	//multiply A*W
+	//multiply A*c
 	for (i = 0; i < 4; i++)
 	{
 		for (j = 0; j < 4; j++)
@@ -223,22 +233,22 @@ void inverseHadamardLumaTransform (int input[4][4], int output[4][4])
 			switch (i)
 			{
 				case 0: 
-					output_temp[i][j] = input[0][j] + input[1][j] + input[2][j] + input[3][j];					
+					f_temp[i][j] = c[0][j] + c[1][j] + c[2][j] + c[3][j];					
 					break;
 				case 1: 					
-					output_temp[i][j] = input[0][j] + input[1][j] - input[2][j] - input[3][j];
+					f_temp[i][j] = c[0][j] + c[1][j] - c[2][j] - c[3][j];
 					break;
 				case 2:
-					output_temp[i][j] = input[0][j] - input[1][j] - input[2][j] + input[3][j];
+					f_temp[i][j] = c[0][j] - c[1][j] - c[2][j] + c[3][j];
 					break;
 				case 3:					
-					output_temp[i][j] = input[0][j] - input[1][j] + input[2][j] - input[3][j];
+					f_temp[i][j] = c[0][j] - c[1][j] + c[2][j] - c[3][j];
 					break;
 			}
 		}
 	}
 	
-	//multiply (A*W)*At
+	//multiply (A*c)*At
 	for (i = 0; i < 4; i++)
 	{
 		for (j = 0; j < 4; j++)
@@ -246,16 +256,16 @@ void inverseHadamardLumaTransform (int input[4][4], int output[4][4])
 			switch (j)
 			{
 				case 0: 
-					output[i][j] = output_temp[i][0] + output_temp[i][1] + output_temp[i][2] + output_temp[i][3];
+					f[i][j] = f_temp[i][0] + f_temp[i][1] + f_temp[i][2] + f_temp[i][3];
 					break;
 				case 1: 					
-					output[i][j] = output_temp[i][0] + output_temp[i][1] - output_temp[i][2] - output_temp[i][3];
+					f[i][j] = f_temp[i][0] + f_temp[i][1] - f_temp[i][2] - f_temp[i][3];
 					break;
 				case 2:
-					output[i][j] = output_temp[i][0] - output_temp[i][1] - output_temp[i][2] + output_temp[i][3];
+					f[i][j] = f_temp[i][0] - f_temp[i][1] - f_temp[i][2] + f_temp[i][3];
 					break;
 				case 3:					
-					output[i][j] = output_temp[i][0] - output_temp[i][1] + output_temp[i][2] - output_temp[i][3];
+					f[i][j] = f_temp[i][0] - f_temp[i][1] + f_temp[i][2] - f_temp[i][3];
 					break;
 			}
 		}
@@ -263,13 +273,12 @@ void inverseHadamardLumaTransform (int input[4][4], int output[4][4])
 }
 
 
-// transformation for the DC coeff from Chroma block previously transformed using integer
-// transformation
-// forward and inverse transformations are the same
-void HadamardChromaTransform (int input[2][2], int output[2][2])
+// --------------------------------------------------//
+// 8.5.11.1 Transformation process for chroma DC transform coefficients
+void transformDCChroma (int c[2][2], int f[2][2])
 {
 	int i, j;
-	int output_temp[2][2];
+	int f_temp[2][2];
 
 	//multiply A*W
 	for (i = 0; i < 2; i++)
@@ -279,10 +288,10 @@ void HadamardChromaTransform (int input[2][2], int output[2][2])
 			switch (i)
 			{
 				case 0: 
-					output_temp[i][j] = input[0][j] + input[1][j];
+					f_temp[i][j] = c[0][j] + c[1][j];
 					break;
 				case 1: 					
-					output_temp[i][j] = input[0][j] - input[1][j];
+					f_temp[i][j] = c[0][j] - c[1][j];
 					break;				
 			}
 		}
@@ -296,61 +305,19 @@ void HadamardChromaTransform (int input[2][2], int output[2][2])
 			switch (j)
 			{
 				case 0: 
-					output[i][j] = output_temp[i][0] + output_temp[i][1];
+					f[i][j] = f_temp[i][0] + f_temp[i][1];
 					break;
 				case 1: 					
-					output[i][j] = output_temp[i][0] + output_temp[i][1];
+					f[i][j] = f_temp[i][0] + f_temp[i][1];
 					break;				
 			}
 		}
 	}
 }
 
-int normAdjust(int m, int i, int j)
-{
-	if ((i%2 == 0) && (j%2 == 0))
-	{
-		return v[m][0];
-	}
-	else if ((i%2 == 1) && (j%2 == 1))
-	{
-		return v[m][1];
-	}
-	else
-	{
-		return v[m][2];
-	}
-}
 
-// (8.5.9) Derivation process for scaling functions
-void ScalingFunctions4x4Derivation(int LevelScale[6][4][4])
-{
-	bool mbIsInterFlag = false;
-	if ((shd.slice_type % 5 == P_SLICE) ||
-		(shd.slice_type % 5 == B_SLICE) ||
-		(shd.slice_type % 5 == SP_SLICE))
-	{
-		mbIsInterFlag = true;
-	}
-
-	// Standard: separate_colour_plane_flag == 0 in baseline
-	
-	for (int m = 0; m < 6; m++)
-	{
-		for (int i = 0; i < 4; i++)
-		{
-			for (int j = 0; j < 4; j++)
-			{
-				// weightScale4x4 == 16 for any i,j (expression 7-7)
-				LevelScale[m][i][j] = 16 * normAdjust(m, i, j);
-			}
-		}
-	}
-}
-
-
-
-// (8.5.12.1) Scaling process for the residual 4x4 blocks (Chroma and Luma)
+// --------------------------------------------------//
+// 8.5.12.1 Scaling process for the residual 4x4 blocks (Chroma and Luma)
 void scaleResidualBlock(int input[4][4], int output[4][4], int quantizer, bool intra16x16OrChroma)
 {	
 	//int qbits = quantizer/6;
@@ -551,7 +518,6 @@ void scaleChromaDC(int input[2][2], int qp, int output[2][2])
 //---------------------------------------------------//
 //---------------- PUBLIC FUNCTIONS -----------------//
 //---------------------------------------------------//
-
 // (8.5.6)
 void transformInverseScan(int list[16], int c[4][4])
 {
@@ -576,7 +542,7 @@ void InverseDCLumaIntra (int bitDepth, int qP, int c[4][4], int dcY[4][4])
 {
 	int f[4][4];
 
-	inverseHadamardLumaTransform(c, f);
+	inverseTransformDCLumaIntra(c, f);
 	scaleLumaDCIntra(f, qP, dcY);	
 }
 
@@ -584,6 +550,54 @@ void InverseDCChroma (int bitDepth, int qP, int c[2][2], int dcC[2][2])
 {
 	int f[2][2];
 
-	HadamardChromaTransform(c, f);
+	transformDCChroma(c, f);
 	scaleChromaDC(f, qP, dcC);	
 }
+
+//---------------------------------------------------//
+//---------------------------------------------------//
+
+int normAdjust(int m, int i, int j)
+{
+	if ((i%2 == 0) && (j%2 == 0))
+	{
+		return v[m][0];
+	}
+	else if ((i%2 == 1) && (j%2 == 1))
+	{
+		return v[m][1];
+	}
+	else
+	{
+		return v[m][2];
+	}
+}
+
+// invoke with iYCbCr == 0 for luma,
+//					  == 1 for Cb
+//					  == 2 for Cr.
+void ScalingFunctions4x4Derivation(int LevelScale[6][4][4]) //, int iYCbCr)
+{
+	bool mbIsInterFlag = false;
+	if ((shd.slice_type % 5 == P_SLICE) ||
+		(shd.slice_type % 5 == B_SLICE) ||
+		(shd.slice_type % 5 == SP_SLICE))
+	{
+		mbIsInterFlag = true;
+	}
+
+	// Standard: separate_colour_plane_flag == 0 in baseline
+	
+	for (int m = 0; m < 6; m++)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				// weightScale4x4 == 16 for any i,j (expression 7-7)
+				LevelScale[m][i][j] = 16 * normAdjust(m, i, j);
+			}
+		}
+	}
+}
+
