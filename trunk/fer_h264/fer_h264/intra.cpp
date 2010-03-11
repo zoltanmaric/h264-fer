@@ -684,11 +684,11 @@ void Intra_Chroma_DC(int *p, int predC[8][8])
 				for (int x = 0; x < 4; x++)
 				{
 					if (topAvailable)
-						predC[x+x0][y+y0] = (sumXi + 2) >> 2;
+						predC[y+y0][x+x0] = (sumXi + 2) >> 2;
 					else if (leftAvailable)
-						predC[x+x0][y+y0] = (sumYi + 2) >> 2;
+						predC[y+y0][x+x0] = (sumYi + 2) >> 2;
 					else
-						predC[x+x0][y+y0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
+						predC[y+y0][x+x0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
 				}
 			}
 		}
@@ -699,11 +699,11 @@ void Intra_Chroma_DC(int *p, int predC[8][8])
 				for (int x = 0; x < 4; x++)
 				{
 					if (leftAvailable)
-						predC[x+x0][y+y0] = (sumYi + 2) >> 2;
+						predC[y+y0][x+x0] = (sumYi + 2) >> 2;
 					else if (topAvailable)
-						predC[x+x0][y+y0] = (sumXi + 2) >> 2;
+						predC[y+y0][x+x0] = (sumXi + 2) >> 2;
 					else
-						predC[x+x0][y+y0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
+						predC[y+y0][x+x0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
 				}
 			}
 		}
@@ -741,9 +741,9 @@ void Intra_Chroma_Plane(int *p, int predC[8][8])
 	int yCF = 0;	// yCF = (ChromaArrayType != 1) ? 4 : 0; ChromaArrayType == 1 when baseline
 
 	int H = 0, V = 0;
-	for (int i = 0; i < 3 + xCF; i++)
-		H += (i+1)*(p((4+xCF+i),-1) - p((2-xCF-i),-1));
-	for (int i = 0; i < 3 + yCF; i++)
+	for (int i = 0; i <= 3 + xCF; i++)
+		H += (i+1)*(p((4+xCF+i),-1) - p((2+xCF-i),-1));
+	for (int i = 0; i <= 3 + yCF; i++)
 		V += (i+1)*(p(-1,(4+yCF+i)) - p(-1,(2+yCF-i)));
 
 	int a = 16 * (p(-1, (MbHeightC - 1)) + p((MbWidthC - 1), -1));
