@@ -549,10 +549,10 @@ void Intra_16x16_DC(int *p, int predL[16][16])
 void Intra_16x16_Plane(int *p, int predL[16][16])
 {
 	int H = 0, V = 0;
-	for (int i = 0; i < 7; i++)
+	for (int i = 0; i <= 7; i++)
 	{
 		H += (i+1)*(p(8+i,-1) - p(6-i,-1));
-		V += (i+1)*(p(-1,8+1) - p(-1,6-i));
+		V += (i+1)*(p(-1,8+i) - p(-1,6-i));
 	}
 
 	int a = 16 * (p(-1,15) + p(15,-1));
