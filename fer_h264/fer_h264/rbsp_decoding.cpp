@@ -9,11 +9,13 @@
 #include "writeToPPM.h"
 #include <stdio.h>
 
+
 void RBSP_decode(NALunit nal_unit)
 {
 
 	static int nalBrojac=0;
 
+	static int idr_frame_number=0;
 	printf("Ulaz u RBPS_decode broj %d\n",nalBrojac++);
 
 	initRawReader(nal_unit.rbsp_byte, nal_unit.NumBytesInRBSP);
@@ -43,6 +45,8 @@ void RBSP_decode(NALunit nal_unit)
 	//Macroblock skipping is implemented
 	else if (nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) // || nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR)
 	{
+		
+			
 
 		//Read slice header
 		fill_shd(&nal_unit);
@@ -119,8 +123,6 @@ void RBSP_decode(NALunit nal_unit)
 
 			if(moreDataFlag)
 			{ 
-//if (CurrMbAddr>531)
-//break;
 
 				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
 				mb_type = expGolomb_UD();
@@ -328,6 +330,10 @@ void RBSP_decode(NALunit nal_unit)
 					residual(0, 15);
 
 				}
+				else
+				{
+					clear_residual_structures();
+				}
 
 
 				//Data ready for rendering			
@@ -350,10 +356,14 @@ void RBSP_decode(NALunit nal_unit)
 		}
 
 		static int intraFrameCounter = 1;
-		writeToPPM(intraFrameCounter++);
 		
-		if (intraFrameCounter > 3)
-			exit(0);
+			writeToPPM(intraFrameCounter++);
+
+			idr_frame_number++;
+		
+		
+		//if (intraFrameCounter > 3)
+		//	exit(0);
 		
 		int stop = 0;
 	}

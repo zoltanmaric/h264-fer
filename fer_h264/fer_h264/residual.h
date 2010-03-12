@@ -12,6 +12,8 @@ extern int Intra16x16DCLevel[16];
 extern int Intra16x16ACLevel[16][16];
 extern int level[16][16], LumaLevel[16][16];
 
+void clear_residual_structures();
+
 extern int ChromaDCLevel[2][4];
 extern int ChromaACLevel[2][4][16];
 
