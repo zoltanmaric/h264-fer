@@ -142,8 +142,46 @@ void inverseTransform4x4(int d[4][4], int r[4][4])
 	}
 }
 
+// --------------------------------------------------//
+// 8.5.10 (part 1) Transformation process for DC transform coefficients for Intra_16x16 macroblock type  
+void inverseTransformDCLumaIntraFast (int c[4][4], int f[4][4])
+{
+	int d[4][4], e[4][4], g[4][4], h[4][4];
+	
+	for (int i = 0; i < 4; i++)
+	{
+		d[i][0] = c[i][0] + c[i][2];
+		d[i][1] = c[i][0] - c[i][2];
+		d[i][2] = c[i][1] - c[i][3];
+		d[i][3] = c[i][1] + c[i][3];
+	}
 
+	for (int i = 0; i < 4; i++)
+	{
+		e[i][0] = d[i][0] + d[i][3];
+		e[i][1] = d[i][1] + d[i][2];
+		e[i][2] = d[i][1] - d[i][2];
+		e[i][3] = d[i][0] - d[i][3];
+	}
 
+	for (int j = 0; j < 4; j++)
+	{
+		g[0][j] = e[0][j] + e[2][j];
+		g[1][j] = e[0][j] - e[2][j];
+		g[2][j] = e[1][j] - e[3][j];
+		g[3][j] = e[1][j] + e[3][j];
+	}
+
+	for (int j = 0; j < 4; j++)
+	{
+		f[0][j] = g[0][j] + g[3][j];
+		f[1][j] = g[1][j] + g[2][j];
+		f[2][j] = g[1][j] - g[2][j];
+		f[3][j] = g[0][j] - g[3][j];
+	}
+}
+
+// --------------------------------------------------//
 // 8.5.10 (part 1) Transformation process for DC transform coefficients for Intra_16x16 macroblock type  
 void inverseTransformDCLumaIntra (int c[4][4], int f[4][4])
 {
@@ -197,6 +235,23 @@ void inverseTransformDCLumaIntra (int c[4][4], int f[4][4])
 	}
 }
 
+// --------------------------------------------------//
+// 8.5.11.1 Transformation process for chroma DC transform coefficients
+void transformDCChromaFast (int c[2][2], int f[2][2])
+{
+	int d[2][2];
+
+	d[0][0] = c[0][0] + c[1][0];
+	d[0][1] = c[0][1] + c[1][1];
+	d[1][0] = c[0][0] - c[1][0];
+	d[1][1] = c[0][1] - c[1][1];
+
+	f[0][0] = d[0][0] + d[0][1];
+	f[0][1] = d[0][0] - d[0][1];
+	f[1][0] = d[1][0] + d[1][1];
+	f[1][1] = d[1][0] - d[1][1];
+	
+}
 
 // --------------------------------------------------//
 // 8.5.11.1 Transformation process for chroma DC transform coefficients
@@ -413,7 +468,7 @@ void InverseDCLumaIntra (int bitDepth, int qP, int c[4][4], int dcY[4][4])
 {
 	int f[4][4];
 
-	inverseTransformDCLumaIntra(c, f);
+	inverseTransformDCLumaIntraFast(c, f);
 	scaleLumaDCIntra(f, qP, dcY);	
 }
 // --------------------------------------------------//
@@ -422,7 +477,7 @@ void InverseDCChroma (int bitDepth, int qP, int c[2][2], int dcC[2][2])
 {
 	int f[2][2];
 
-	transformDCChroma(c, f);
+	transformDCChromaFast(c, f);
 	scaleChromaDC(f, qP, dcC);	
 }
 
