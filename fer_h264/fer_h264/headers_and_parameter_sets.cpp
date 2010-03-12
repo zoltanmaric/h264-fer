@@ -8,65 +8,123 @@ struct SPS_data sps;
 struct PPS_data pps;
 struct SH_data shd;
 
+// (7.3.3.1) Reference picture list modification syntax
+void ref_pic_list_modification()
+{
+	if((shd.slice_type%5)!=I_SLICE && (shd.slice_type%5)!=SI_SLICE)
+	{
+		shd.ref_pic_list_modificatnion_flag_l0		=getRawBits(1);
+
+		if (shd.ref_pic_list_modificatnion_flag_l0)
+		{
+			do
+			{
+				shd.modification_of_pic_nums_idc	=expGolomb_UD();
+				if (shd.modification_of_pic_nums_idc == 0 ||
+					shd.modification_of_pic_nums_idc == 1)
+				{
+					shd.abs_diff_pic_num_minus1		=expGolomb_UD();
+				}
+				else if (shd.modification_of_pic_nums_idc == 2)
+				{
+					shd.long_term_pic_num			=expGolomb_UD();
+				}
+			} while (shd.modification_of_pic_nums_idc != 3);
+		}
+	}
+
+	// Norm: slice_type%5 cannot be 1 in baseline (no B frames)
+}
+
+// (7.3.3.3) Decoded reference picture marking syntax
+void dec_ref_pic_marking(bool IdrPicFlag)
+{
+	if (IdrPicFlag)
+	{
+		shd.no_output_of_prior_pics_flag		=getRawBits(1);
+		shd.long_term_reference_flag			=getRawBits(1);
+	}
+	else
+	{
+		shd.adaptive_ref_pic_marking_mode_flag	=getRawBits(1);
+
+		if (shd.adaptive_ref_pic_marking_mode_flag)
+		{
+			do
+			{
+				shd.memory_management_control_operation =expGolomb_UD();
+
+				if (shd.memory_management_control_operation == 1 ||
+					shd.memory_management_control_operation == 3)
+				{
+					shd.difference_of_pic_nums_minus1	=expGolomb_UD();
+				}
+				if (shd.memory_management_control_operation == 2)
+				{
+					shd.long_term_pic_num				=expGolomb_UD();
+				}
+				if (shd.memory_management_control_operation == 3 ||
+					shd.memory_management_control_operation == 6)
+				{
+					shd.long_term_frame_idx				=expGolomb_UD();
+				}
+				if (shd.memory_management_control_operation == 4)
+				{
+					shd.max_long_term_frame_idx_plus1	=expGolomb_UD();
+				}
+			} while (shd.memory_management_control_operation != 0);
+		}
+	}
+}
+
 //////////////////////////////////////////////////////////////////
 //Reading slice header
 //////////////////////////////////////////////////////////////////
 
 void fill_shd(NALunit *nal_unit)
 {
-  shd.first_mb_in_slice			=expGolomb_UD();
-  shd.slice_type				=expGolomb_UD();
-  shd.pic_parameter_set_id		=expGolomb_UD();
+	shd.first_mb_in_slice			=expGolomb_UD();
+	shd.slice_type				=expGolomb_UD();
+	shd.pic_parameter_set_id		=expGolomb_UD();
 
-  //From the norm:
-  /*
-  frame_num is used as an identifier for pictures and shall be represented by log2_max_frame_num_minus4 + 4 bits in
-  the bitstream.
-  */
+	//From the norm:
+	/*
+	frame_num is used as an identifier for pictures and shall be represented by log2_max_frame_num_minus4 + 4 bits in
+	the bitstream.
+	*/
 
-  shd.frame_num					=getRawBits(sps.log2_max_frame_num);
-  
-  shd.PicHeightInMbs=sps.FrameHeightInMbs;
-  shd.PicHeightInSamples=(shd.PicHeightInMbs)<<4;
-  shd.PicSizeInMbs=sps.PicWidthInMbs*shd.PicHeightInMbs;
+	shd.frame_num					=getRawBits(sps.log2_max_frame_num);
 
-  if(nal_unit->nal_unit_type==5)
-    shd.idr_pic_id				=expGolomb_UD();
+	shd.PicHeightInMbs=sps.FrameHeightInMbs;
+	shd.PicHeightInSamples=(shd.PicHeightInMbs)<<4;
+	shd.PicSizeInMbs=sps.PicWidthInMbs*shd.PicHeightInMbs;
 
-  shd.pic_order_cnt_lsb			=getRawBits(sps.log2_max_pic_order_cnt_lsb);
+	if(nal_unit->nal_unit_type==5)
+		shd.idr_pic_id				=expGolomb_UD();
 
-  if((shd.slice_type%5)==P_SLICE || (shd.slice_type%5)==B_SLICE || (shd.slice_type%5)==SP_SLICE)
-  {
-    shd.num_ref_idx_active_override_flag=getRawBits(1);
-	if (shd.num_ref_idx_active_override_flag==1)
+	shd.pic_order_cnt_lsb			=getRawBits(sps.log2_max_pic_order_cnt_lsb);
+
+	if((shd.slice_type%5)==P_SLICE || (shd.slice_type%5)==B_SLICE || (shd.slice_type%5)==SP_SLICE)
 	{
-		shd.num_ref_idx_l0_active_minus1	=expGolomb_UD();
+		shd.num_ref_idx_active_override_flag=getRawBits(1);
+		if (shd.num_ref_idx_active_override_flag==1)
+		{
+			shd.num_ref_idx_l0_active_minus1	=expGolomb_UD();
+		}
 	}
-  }
 
-  if((shd.slice_type%5)!=I_SLICE && (shd.slice_type%5)!=SI_SLICE)
-  {
-    shd.ref_pic_list_reordering_flag_l0		=getRawBits(1);
-  }
+	ref_pic_list_modification();
 
-  if(nal_unit->nal_ref_idc!=0)
-  {
-    if(nal_unit->nal_unit_type==5)
+	if(nal_unit->nal_ref_idc!=0)
 	{
-      shd.no_output_of_prior_pics_flag		=getRawBits(1);
-      shd.long_term_reference_flag			=getRawBits(1);
-    }
-	else
-	{
-	  //Adaptive ref pic marking mode is TODO
-      shd.adaptive_ref_pic_marking_mode_flag=getRawBits(1);
-    }
-  }
+		bool IdrPicFlag = (nal_unit->nal_unit_type == 5);
+		dec_ref_pic_marking(IdrPicFlag);
+	}
 
-  shd.slice_qp_delta						=expGolomb_SD();
-  shd.SliceQPy=pps.pic_init_qp+shd.slice_qp_delta;
+	shd.slice_qp_delta						=expGolomb_SD();
+	shd.SliceQPy=pps.pic_init_qp+shd.slice_qp_delta;
 
-  if(pps.deblocking_filter_control_present_flag==1)
+	if(pps.deblocking_filter_control_present_flag==1)
 	{
 		shd.disable_deblocking_filter_idc	= expGolomb_UD();
 		if (shd.disable_deblocking_filter_idc != 1)
@@ -75,7 +133,6 @@ void fill_shd(NALunit *nal_unit)
 			shd.slice_beta_offset_div2		= expGolomb_SD();
 		}
 	}
-
 }
 
 
