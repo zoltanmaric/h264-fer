@@ -146,7 +146,7 @@ void inverseTransform4x4(int d[4][4], int r[4][4])
 // 8.5.10 (part 1) Transformation process for DC transform coefficients for Intra_16x16 macroblock type  
 void inverseTransformDCLumaIntraFast (int c[4][4], int f[4][4])
 {
-	int d[4][4], e[4][4], g[4][4], h[4][4];
+	int d[4][4], e[4][4], g[4][4];
 	
 	for (int i = 0; i < 4; i++)
 	{
