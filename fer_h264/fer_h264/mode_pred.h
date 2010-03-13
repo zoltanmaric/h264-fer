@@ -26,4 +26,4 @@
 bool get_neighbour_mv(int org_x, int org_y, int mbPartIdx, int curr_refIdxL0, int * mvNx, int * mvNy, int * refIdxL0N);
 void PredictMV_Luma(int org_x, int org_y, int mbPartIdx);
 void PredictMV(int org_x, int org_y);
-void DeriveMVs(int org_x, int org_y, int mvdx, int mvdy);
+void DeriveMVs(int org_x, int org_y);
