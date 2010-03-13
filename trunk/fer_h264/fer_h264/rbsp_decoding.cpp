@@ -43,7 +43,7 @@ void RBSP_decode(NALunit nal_unit)
 	//Actual picture decoding takes place here
 	//The main loop works macroblock by macroblock until the end of the slice
 	//Macroblock skipping is implemented
-	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
+	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR)) // || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
 	{
 		//Read slice header
 		fill_shd(&nal_unit);

@@ -15,7 +15,7 @@ void initRawReader(unsigned char *RBSP,unsigned int size)
 
 bool more_rbsp_data()
 {
-	return RBSP_current_byte < RBSP_total_size;
+	return (RBSP_current_byte < RBSP_total_size - 1);// || ((RBSP_current_byte;
 }
 
 void skipRawBits(int N)
