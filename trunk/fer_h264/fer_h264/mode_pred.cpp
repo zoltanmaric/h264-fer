@@ -137,7 +137,7 @@ void PredictMV(int org_x, int org_y)
 	}
 }
 
-void DeriveMVs(int org_x, int org_y, int mvdx, int mvdy) {
+void DeriveMVs(int org_x, int org_y) {
 	// Prediction
 	PredictMV(org_x,org_y);
 	// Populate every submacroblocks (for example, in 16x8 partition, motion vectors for two more subMBhas to be assigned).
@@ -170,8 +170,8 @@ void DeriveMVs(int org_x, int org_y, int mvdx, int mvdy) {
 	// Adding given difference
 	for (int i = 0; i < 4; i++)
 	{
-		MPI_mvL0x(org_x, org_y, i) += mvdx;
-		MPI_mvL0y(org_x, org_y, i) += mvdy;
+		MPI_mvL0x(org_x, org_y, i) += mvd_l0[i][0][0];
+		MPI_mvL0y(org_x, org_y, i) += mvd_l0[i][0][1];
 		if (MPI_subMvCnt(org_x, org_y) != 4)
 		{ // If current macroblock isn't 8x8 partitioned, then every 4x4 subpart in submacroblocks has the same MV.
 			for (int j = 0; j < 4; j++)
@@ -183,8 +183,8 @@ void DeriveMVs(int org_x, int org_y, int mvdx, int mvdy) {
 			// If current macroblock is 8x8 partitioned, then only mvdx, mvdy is added to predicted MV.
 			for (int j = 0; j < 4; j++)
 			{
-				MPI_mvSubL0x(org_x, org_y, i, j) += mvdx;
-				MPI_mvSubL0y(org_x, org_y, i, j) += mvdy;
+				MPI_mvSubL0x(org_x, org_y, i, j) += mvd_l0[i][j][0];
+				MPI_mvSubL0y(org_x, org_y, i, j) += mvd_l0[i][j][1];
 			}
 		}
 	}
