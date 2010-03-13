@@ -22,6 +22,9 @@
 #define MPI_subMvCnt(org_x,org_y) *(subMvCnt+((org_y/MB_Height)*FR_MB_in_row+org_x/MB_Width))
 #define MPI_refIdxL0(org_x,org_y) *(refIdxL0+((org_y/MB_Height)*FR_MB_in_row+org_x/MB_Width))
 
+int mvL0x[Frame_Width][Frame_Height], mvL0y[Frame_Height][Frame_Height];
+int subMvCnt[Frame_Width/MB_Width][Frame_Height/MB_Height], refIdxL0[Frame_Height/MB_Width][Frame_Height/MB_Height];
+
 // in following methods global "MB_pred_info * infos" is used, so it has to be initialized before calling any of these methods
 bool get_neighbour_mv(int org_x, int org_y, int mbPartIdx, int curr_refIdxL0, int * mvNx, int * mvNy, int * refIdxL0N);
 void PredictMV_Luma(int org_x, int org_y, int mbPartIdx);
