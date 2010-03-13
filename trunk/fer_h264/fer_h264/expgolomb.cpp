@@ -26,3 +26,29 @@ signed int expGolomb_SD()
 		return -returnValue/2;
 	}
 }
+
+// Truncated exp-golomb code
+unsigned int expGolomb_TD()
+{
+	unsigned int zeroCount = 0;
+	
+	while (getRawBits(1) == 0)
+	{
+		zeroCount++;
+	}
+
+	if (zeroCount == 0)
+	{
+		return 0;
+	}
+
+	unsigned int x = getRawBits(zeroCount);
+	if (x > 1)
+	{
+		return (1 << zeroCount) - 1 + x;
+	}
+	else
+	{
+		return !getRawBits(1);
+	}
+}
