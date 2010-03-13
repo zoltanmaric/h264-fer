@@ -216,6 +216,10 @@ int Intra4x4ScanOrder[16][2]={
   { 8, 8},  {12, 8},  { 8,12},  {12,12}
 };
 
+// Inter prediction globals
+int ref_idx_l0[4];
+int mvd_l0[4][4][2];
+
 int ABS(int a)
 {
 	if (a>0)

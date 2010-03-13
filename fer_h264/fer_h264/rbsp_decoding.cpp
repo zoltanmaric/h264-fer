@@ -43,7 +43,7 @@ void RBSP_decode(NALunit nal_unit)
 	//Actual picture decoding takes place here
 	//The main loop works macroblock by macroblock until the end of the slice
 	//Macroblock skipping is implemented
-	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR)) // || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
+	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
 	{
 		//Read slice header
 		fill_shd(&nal_unit);
@@ -140,9 +140,6 @@ void RBSP_decode(NALunit nal_unit)
 
 				//Contains sub_mb_type for each 8x8 submacroblock for inter prediction.
 				int sub_mb_type_array[4];
-
-				int ref_idx_l0[4];
-				int mvd_l0[4][4][2];
 
 				//Norm: if( mb_type != I_NxN && MbPartPredMode( mb_type, 0 ) != Intra_16x16 && NumMbPart( mb_type ) == 4 )
 				// I_NxN is an alias for Intra_4x4 and Intra_8x8 MbPartPredMode (mb_type in both cases equal to 0)
@@ -256,7 +253,7 @@ void RBSP_decode(NALunit nal_unit)
 					//Inter prediction
 					else
 					{
-						coded_block_pattern=codeNum_to_coded_block_pattern_intra[coded_block_pattern];
+						coded_block_pattern=codeNum_to_coded_block_pattern_inter[coded_block_pattern];
 					}
 
 					CodedBlockPatternLuma=coded_block_pattern%16;
