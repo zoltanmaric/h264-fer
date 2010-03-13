@@ -164,8 +164,10 @@ void fill_sps(NALunit *nal_unit)
 	//Unsigned expGolomb
 	sps.log2_max_frame_num=expGolomb_UD()+4;
 
-	//Derived from maximal frame number
+	//Derived from maximum frame number
 	sps.MaxFrameNum=1<<sps.log2_max_frame_num;
+	// TODO: invoke RefPicList0 initialization
+	// according to MaxFrameNum
 
 	//Unsigned expGolomb
 	sps.pic_order_cnt_type=expGolomb_UD();
