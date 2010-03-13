@@ -22,8 +22,6 @@ int _tmain(int argc, _TCHAR* argv[])
 			break;
 		}
 
-	
-		initRawReader(nu.rbsp_byte, nu.NumBytesInRBSP);
 		RBSP_decode(nu);
 	}		
 	

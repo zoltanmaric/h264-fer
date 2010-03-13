@@ -43,11 +43,8 @@ void RBSP_decode(NALunit nal_unit)
 	//Actual picture decoding takes place here
 	//The main loop works macroblock by macroblock until the end of the slice
 	//Macroblock skipping is implemented
-	else if (nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) // || nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR)
+	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR)) // || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
 	{
-		
-			
-
 		//Read slice header
 		fill_shd(&nal_unit);
 
@@ -107,8 +104,8 @@ void RBSP_decode(NALunit nal_unit)
 					*/
 					//END INTER
 				}
-				//Norm: if( CurrMbAddr != firstMbAddr | | mb_skip_run > 0 ) ...
-				if (mb_skip_run>0)
+				
+				if ((CurrMbAddr != firstMbAddr) || (mb_skip_run > 0))
 				{
 					moreDataFlag = more_rbsp_data();
 				}
@@ -123,7 +120,7 @@ void RBSP_decode(NALunit nal_unit)
 
 			if(moreDataFlag)
 			{ 
-
+				// Norm: start macroblock_layer()
 				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
 				mb_type = expGolomb_UD();
 
@@ -144,6 +141,9 @@ void RBSP_decode(NALunit nal_unit)
 				//Contains sub_mb_type for each 8x8 submacroblock for inter prediction.
 				int sub_mb_type_array[4];
 
+				int ref_idx_l0[4];
+				int mvd_l0[4][4][2];
+
 				//Norm: if( mb_type != I_NxN && MbPartPredMode( mb_type, 0 ) != Intra_16x16 && NumMbPart( mb_type ) == 4 )
 				// I_NxN is an alias for Intra_4x4 and Intra_8x8 MbPartPredMode (mb_type in both cases equal to 0)
 				// mb_type (positive integer value) is equal to "Name of mb_type" (i.e. I_NxN). These are often interchanged in the norm
@@ -154,64 +154,35 @@ void RBSP_decode(NALunit nal_unit)
 				//Specific inter prediction?
 				if(mb_type != I_4x4 /*&& mb_type != I_8x8*/ && MbPartPredMode( mb_type, 0 )!=Intra_16x16 && NumMbPart( mb_type )==4 )
 				{
-
-					//Norm:
-
-					/*
-					for( mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++ )
-					sub_mb_type[ mbPartIdx ]
-					*/
-
-					for(int mbPartIdx=0; mbPartIdx<4; mbPartIdx++)
+					// Norm: start sub_mb_pred(mb_type)
+					int mbPartIdx;
+					for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
 					{
 						sub_mb_type_array[mbPartIdx]=expGolomb_UD();
 					}
 
-					//Let's read the list of referenced frames for inter prediction.
-					//Norm: 
-
-					/*
-					for( mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++ )
-					if (( num_ref_idx_l0_active_minus1 > 0 || mb_field_decoding_flag != field_pic_flag ) && mb_type != P_8x8ref0 &&
-					sub_mb_type[ mbPartIdx ] != B_Direct_8x8 && SubMbPredMode( sub_mb_type[ mbPartIdx ] ) != Pred_L1 )
-
-					ref_idx_l0[ mbPartIdx ]
-					*/
-
-					//This is not implemented, only 1-frame prediction is currently supported.
-
-
-					//Let's read the motion vector information for the motion vector derivation process
-					//Norm:
-
-					/*
-					for( mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++ )
-					if( sub_mb_type[ mbPartIdx ] != B_Direct_8x8 && SubMbPredMode( sub_mb_type[ mbPartIdx ] ) != Pred_L1 )
-					for( subMbPartIdx = 0; subMbPartIdx < NumSubMbPart( sub_mb_type[ mbPartIdx ] ); subMbPartIdx++)
-					for( compIdx = 0; compIdx < 2; compIdx++ )
-					mvd_l0[ mbPartIdx ][ subMbPartIdx ][ compIdx ]
-					*/
-
-					for(int mbPartIdx=0; mbPartIdx<4; mbPartIdx++)
+					for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
 					{
-						if(sub_mb_type_array[mbPartIdx] != B_Direct_8x8 && SubMbPredMode(sub_mb_type_array[mbPartIdx])!=Pred_L1)
-						{ 
-							for(int subMbPartIdx=0; subMbPartIdx<NumSubMbPart(sub_mb_type_array[mbPartIdx]); subMbPartIdx++)
-							{
-								int mvdx=expGolomb_SD();
-								int mvdy=expGolomb_SD();
-								//BEGIN INTER
-								/*
-								DeriveMVs(mpi, mb_pos_x+Intra4x4ScanOrder[mbPartIdx*4+subMbPartIdx*SOF][0], 
-								mb_pos_y+Intra4x4ScanOrder[mbPartIdx*4+subMbPartIdx*SOF][1],
-								sub[mbPartIdx].SubMbPartWidth,
-								sub[mbPartIdx].SubMbPartHeight,
-								mvdx, mvdy);
-								*/
-								//END INTER
-							}
+						if ((shd.num_ref_idx_active_override_flag > 0) &&
+							(mb_type != P_8x8ref0) &&
+							(SubMbPredMode(sub_mb_type_array[mbPartIdx]) != Pred_L1))
+						{
+							ref_idx_l0[mbPartIdx] = expGolomb_TD();
 						}
 					}
+
+					// Norm: there are no B-frames in baseline, so the stream
+					// does not contain ref_idx_l1 or mvd_l1
+
+					for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
+					{
+						for (int subMbPartIdx = 0; subMbPartIdx < NumSubMbPart(sub_mb_type_array[mbPartIdx]); subMbPartIdx++)
+						{
+							mvd_l0[mbPartIdx][subMbPartIdx][0] = expGolomb_SD();
+							mvd_l0[mbPartIdx][subMbPartIdx][1] = expGolomb_SD();
+						}
+					}
+					// Norm: end sub_mb_pred(mb_type)
 				}
 				else
 				{
@@ -232,31 +203,40 @@ void RBSP_decode(NALunit nal_unit)
 
 						//Norm:
 						//if( MbPartPredMode( mb_type, 0 ) = = Intra_8x8 )
-						//This if clause has been skipped, because "intra_8x8" is not supported.
+						//This if clause has been skipped, because "intra_8x8" is not supported in baseline.
 
 
 						//Norm:
 						//if( ChromaArrayType == 1 || ChromaArrayType == 2 )
-						//We only support "ChromaArrayType==1", so the if clause is skipped
+						//baseline defines "ChromaArrayType==1", so the if clause is skipped
 
 						intra_chroma_pred_mode=expGolomb_UD();
 					}
 					else
 					{
-						for(int mbPartIdx=0; mbPartIdx<NumMbPart( mb_type ) ; ++mbPartIdx)
+						int mbPartIdx;
+						for (mbPartIdx = 0; mbPartIdx < NumMbPart(mb_type); mbPartIdx++)
 						{
-							if(MbPartPredMode( mb_type, mbPartIdx )!=Pred_L1)
+							if ((shd.num_ref_idx_l0_active_minus1 > 0) &&
+								(MbPartPredMode(mb_type, mbPartIdx) != Pred_L1))
 							{
-								int mvdx=expGolomb_SD();
-								int mvdy=expGolomb_SD();
-								/*
-								DeriveMVs(mpi, mb_pos_x+Intra4x4ScanOrder[mbPartIdx*SOF][0],
-								mb_pos_y+Intra4x4ScanOrder[mbPartIdx*SOF][1],
-								mb.MbPartWidth, mb.MbPartHeight, mvdx, mvdy);
-								*/
+								ref_idx_l0[mbPartIdx] = expGolomb_TD();
+							}
+						}
+
+						// Norm: there are no B-frames in baseline, so the stream
+						// does not contain ref_idx_l1 or mvd_l1
+
+						for (mbPartIdx = 0; mbPartIdx < NumMbPart(mb_type); ++mbPartIdx)
+						{
+							if (MbPartPredMode(mb_type, mbPartIdx) != Pred_L1)
+							{
+								mvd_l0[mbPartIdx][0][0] = expGolomb_SD();	
+								mvd_l0[mbPartIdx][0][1] = expGolomb_SD();
 							}
 						}
 					}
+					// Norm: end mb_pred(mb_type)
 				}
 
 				//If the next if clause does not execute, this is the final value of coded block patterns for this macroblock
@@ -334,7 +314,7 @@ void RBSP_decode(NALunit nal_unit)
 				{
 					clear_residual_structures();
 				}
-
+				// Norm: end macroblock_layer()
 
 				//Data ready for rendering			
 			
