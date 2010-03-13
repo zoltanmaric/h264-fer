@@ -129,18 +129,19 @@ struct SH_data
 	TODO:
 */
 
-  int ref_pic_list_modificatnion_flag_l0;
-  int ref_pic_list_modificatnion_flag_l1;
+  int ref_pic_list_modification_flag_l0;
   int no_output_of_prior_pics_flag;
   int long_term_reference_flag;
   int adaptive_ref_pic_marking_mode_flag;
-  int modification_of_pic_nums_idc;
-  int abs_diff_pic_num_minus1;
-  int long_term_pic_num;
-  int memory_management_control_operation;
-  int difference_of_pic_nums_minus1;
-  int long_term_frame_idx;
-  int max_long_term_frame_idx_plus1;
+  
+  int *modification_of_pic_nums_idc;
+  int *abs_diff_pic_num_minus1;
+  int *long_term_pic_num;
+
+  int *memory_management_control_operation;
+  int *difference_of_pic_nums_minus1;
+  int *long_term_frame_idx;
+  int *max_long_term_frame_idx_plus1;
 
 /*	Specifies CABAC initialization table, values from 0 to 2.
 	Not implemented since only CAVLC is used.
@@ -182,8 +183,6 @@ struct SH_data
   int slice_beta_offset_div2;
 
 };
-
-
 
 
 ///////////////////////////////////////////////////////////////////
