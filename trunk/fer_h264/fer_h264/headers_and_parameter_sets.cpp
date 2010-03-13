@@ -13,23 +13,24 @@ void ref_pic_list_modification()
 {
 	if((shd.slice_type%5)!=I_SLICE && (shd.slice_type%5)!=SI_SLICE)
 	{
-		shd.ref_pic_list_modificatnion_flag_l0		=getRawBits(1);
+		shd.ref_pic_list_modification_flag_l0		=getRawBits(1);
 
-		if (shd.ref_pic_list_modificatnion_flag_l0)
+		if (shd.ref_pic_list_modification_flag_l0)
 		{
+			int i = 0, j = 0, k = 0;
 			do
 			{
-				shd.modification_of_pic_nums_idc	=expGolomb_UD();
-				if (shd.modification_of_pic_nums_idc == 0 ||
-					shd.modification_of_pic_nums_idc == 1)
+				shd.modification_of_pic_nums_idc[i]	=expGolomb_UD();
+				if (shd.modification_of_pic_nums_idc[i] == 0 ||
+					shd.modification_of_pic_nums_idc[i] == 1)
 				{
-					shd.abs_diff_pic_num_minus1		=expGolomb_UD();
+					shd.abs_diff_pic_num_minus1[j++]	=expGolomb_UD();
 				}
-				else if (shd.modification_of_pic_nums_idc == 2)
+				else if (shd.modification_of_pic_nums_idc[i] == 2)
 				{
-					shd.long_term_pic_num			=expGolomb_UD();
+					shd.long_term_pic_num[k++]			=expGolomb_UD();
 				}
-			} while (shd.modification_of_pic_nums_idc != 3);
+			} while (shd.modification_of_pic_nums_idc[i++] != 3);
 		}
 	}
 
@@ -50,29 +51,30 @@ void dec_ref_pic_marking(bool IdrPicFlag)
 
 		if (shd.adaptive_ref_pic_marking_mode_flag)
 		{
+			int i = 0, j = 0, k = 0, l = 0, m = 0;
 			do
 			{
-				shd.memory_management_control_operation =expGolomb_UD();
+				shd.memory_management_control_operation[i] =expGolomb_UD();
 
-				if (shd.memory_management_control_operation == 1 ||
-					shd.memory_management_control_operation == 3)
+				if (shd.memory_management_control_operation[i] == 1 ||
+					shd.memory_management_control_operation[i] == 3)
 				{
-					shd.difference_of_pic_nums_minus1	=expGolomb_UD();
+					shd.difference_of_pic_nums_minus1[j++]	=expGolomb_UD();
 				}
-				if (shd.memory_management_control_operation == 2)
+				if (shd.memory_management_control_operation[i] == 2)
 				{
-					shd.long_term_pic_num				=expGolomb_UD();
+					shd.long_term_pic_num[k++]				=expGolomb_UD();
 				}
-				if (shd.memory_management_control_operation == 3 ||
-					shd.memory_management_control_operation == 6)
+				if (shd.memory_management_control_operation[i] == 3 ||
+					shd.memory_management_control_operation[i] == 6)
 				{
-					shd.long_term_frame_idx				=expGolomb_UD();
+					shd.long_term_frame_idx[l++]			=expGolomb_UD();
 				}
-				if (shd.memory_management_control_operation == 4)
+				if (shd.memory_management_control_operation[i] == 4)
 				{
-					shd.max_long_term_frame_idx_plus1	=expGolomb_UD();
+					shd.max_long_term_frame_idx_plus1[m++]	=expGolomb_UD();
 				}
-			} while (shd.memory_management_control_operation != 0);
+			} while (shd.memory_management_control_operation[i++] != 0);
 		}
 	}
 }
@@ -112,6 +114,17 @@ void fill_shd(NALunit *nal_unit)
 			shd.num_ref_idx_l0_active_minus1	=expGolomb_UD();
 		}
 	}
+
+	// These variables are stored for the reference picture
+	// list modification process described in 8.2.4.3
+	shd.modification_of_pic_nums_idc = new int[sps.MaxFrameNum];
+	shd.abs_diff_pic_num_minus1 = new int[sps.MaxFrameNum];
+	shd.long_term_pic_num = new int[sps.MaxFrameNum];
+
+	shd.memory_management_control_operation = new int[sps.MaxFrameNum];
+	shd.difference_of_pic_nums_minus1 = new int[sps.MaxFrameNum];
+	shd.long_term_frame_idx = new int[sps.MaxFrameNum];
+	shd.max_long_term_frame_idx_plus1 = new int[sps.MaxFrameNum];
 
 	ref_pic_list_modification();
 
