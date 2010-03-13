@@ -4,6 +4,7 @@
 
 #include "mode_pred.h"
 #include "h264_globals.h"
+#include "h264_math.h"
 
 #define Max(a,b) ((a)>(b)?(a):(b))
 #define Min(a,b) ((a)<(b)?(a):(b))
@@ -13,7 +14,7 @@
 bool get_neighbour_mv(int org_x, int org_y, int mbPartIdx, int curr_refIdxL0, int * mvNx, int * mvNy, int * refIdxL0N)
 {
 	*mvNx = MV_NA; *mvNy = MV_NA;
-	if (org_x < 0 || org_y < 0 || org_x >= FRAME_Width) return true; // not available, but still valid
+	if (org_x < 0 || org_y < 0 || org_x >= frame.Lwidth) return true; // not available, but still valid
 	if (   MPI_mb_type(org_x, org_y) != P_L0_16x16
 		&& MPI_mb_type(org_x, org_y) != P_8x8
 		&& MPI_mb_type(org_x, org_y) != P_L0_L0_16x8
@@ -105,6 +106,7 @@ void PredictMV_Luma(int org_x, int org_y, int mbPartIdx)
 
 void PredictMV(int org_x, int org_y)
 {
+	MbPartPredMode(mb_type, 0) == P_Skip
 	if (MPI_mb_type(org_x, org_y) == P_Skip)
 	{
 		MPI_subMvCnt(org_x, org_y) = 1;
@@ -137,7 +139,12 @@ void PredictMV(int org_x, int org_y)
 	}
 }
 
-void DeriveMVs(int org_x, int org_y) {
+void DeriveMVs() {
+
+	// inverse macroblock scanning process (6.4.1)
+	int org_x = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
+	int org_y = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
+
 	// Prediction
 	PredictMV(org_x,org_y);
 	// Populate every submacroblocks (for example, in 16x8 partition, motion vectors for two more subMBhas to be assigned).

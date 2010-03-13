@@ -9,24 +9,24 @@ void FillTemp_4x4_refPart(frame_type *ref, int org_x, int org_y) {
 	for(y=0; y<9; ++y) {
 		sy=org_y+y;
 		if(sy<0) sy=0;
-		if(sy >= FRAME_Height) sy=FRAME_Height-1;
+		if(sy >= frame.Lheight) sy=frame.Lheight-1;
 		for(x=0; x<9; ++x) {
 			sx=org_x+x;
 			if (sx < 0) sx = 0;
-			if (sx >= FRAME_Width) sx = FRAME_Width-1;
-			L_Temp_4x4_refPart[y][x]=ref->L[sy*FRAME_Width+sx];
+			if (sx >= frame.Lwidth) sx = frame.Lwidth-1;
+			L_Temp_4x4_refPart[y][x]=ref->L[sy*frame.Lwidth+sx];
 		}
 	}
 	for(y=0; y<3; ++y) {
 		sy=org_y/2+y;
 		if(sy<0) sy=0;
-		if(sy>=FRAME_Height/2) sy=FRAME_Height/2-1;
+		if(sy>=frame.Lheight/2) sy=frame.Lheight/2-1;
 		for(x=0; x<3; ++x) {
 			sx=org_x/2+x;
 			if (sx < 0) sx = 0;
-			if (sx >= FRAME_Width/2) sx = FRAME_Width/2-1;
-			C_Temp_4x4_refPart[0][y][x] = ref->C[0][sy*FRAME_Width+sx];
-			C_Temp_4x4_refPart[1][y][x] = ref->C[1][sy*FRAME_Width+sx];
+			if (sx >= frame.Lwidth/2) sx = frame.Lwidth/2-1;
+			C_Temp_4x4_refPart[0][y][x] = ref->C[0][sy*frame.Lwidth+sx];
+			C_Temp_4x4_refPart[1][y][x] = ref->C[1][sy*frame.Lwidth+sx];
 		}
 	}
 }

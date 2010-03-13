@@ -182,7 +182,7 @@ extern int intra_chroma_pred_mode;
 extern int Intra4x4ScanOrder[16][2];
 
 // Inter prediction globals
-extern int ref_idx_l0[4];
+extern int **ref_idx_l0_array;
 extern int mvd_l0[4][4][2];
 
 //Various helping functions

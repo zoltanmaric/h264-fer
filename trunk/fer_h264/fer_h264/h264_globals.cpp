@@ -217,7 +217,7 @@ int Intra4x4ScanOrder[16][2]={
 };
 
 // Inter prediction globals
-int ref_idx_l0[4];
+int **ref_idx_l0_array;
 int mvd_l0[4][4][2];
 
 int ABS(int a)
@@ -309,7 +309,12 @@ mpi= new mode_pred_info;
 		frame.C[0][i]=frame.C[1][i]=0;
 	}
 
-	// Zoltan:
+	ref_idx_l0_array = new int*[sps.FrameHeightInMbs * sps.PicWidthInMbs];
+	for (int i = 0; i < sps.FrameHeightInMbs * sps.PicWidthInMbs; i++)
+	{
+		ref_idx_l0_array[i] = new int[4];
+	}
+
 	CodedBlockPatternLumaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];
 	CodedBlockPatternChromaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];
 

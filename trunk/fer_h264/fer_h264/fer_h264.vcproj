@@ -224,6 +224,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\mocomp.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\mode_pred.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\nal.cpp"
 				>
 			</File>
@@ -283,6 +291,14 @@
 			</File>
 			<File
 				RelativePath=".\inttransform.h"
+				>
+			</File>
+			<File
+				RelativePath=".\mocomp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\mode_pred.h"
 				>
 			</File>
 			<File
