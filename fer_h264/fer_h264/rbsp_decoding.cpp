@@ -7,6 +7,10 @@
 #include "intra.h"
 #include "inttransform.h"
 #include "writeToPPM.h"
+#include "ref_frames.h"
+#include "mocomp.h"
+#include "mode_pred.h"
+
 #include <stdio.h>
 
 
@@ -164,7 +168,7 @@ void RBSP_decode(NALunit nal_unit)
 							(mb_type != P_8x8ref0) &&
 							(SubMbPredMode(sub_mb_type_array[mbPartIdx]) != Pred_L1))
 						{
-							ref_idx_l0[mbPartIdx] = expGolomb_TD();
+							ref_idx_l0_array[CurrMbAddr][mbPartIdx] = expGolomb_TD();
 						}
 					}
 
@@ -217,7 +221,7 @@ void RBSP_decode(NALunit nal_unit)
 							if ((shd.num_ref_idx_l0_active_minus1 > 0) &&
 								(MbPartPredMode(mb_type, mbPartIdx) != Pred_L1))
 							{
-								ref_idx_l0[mbPartIdx] = expGolomb_TD();
+								ref_idx_l0_array[CurrMbAddr][mbPartIdx] = expGolomb_TD();
 							}
 						}
 
@@ -318,7 +322,14 @@ void RBSP_decode(NALunit nal_unit)
 				// Norm: QpBdOffsetY == 0 in baseline
 				QPy = (QPy + mb_qp_delta + 52) % 52;
 
-				intraPrediction(predL, predCr, predCb);
+				if ((MbPartPredMode(mb_type , 0) == Intra_4x4) || (MbPartPredMode(mb_type , 0) == Intra_16x16))
+				{
+					intraPrediction(predL, predCr, predCb);
+				}
+				else
+				{
+					DeriveMVs();
+				}
 
 				if (MbPartPredMode(mb_type, 0) != Intra_4x4)
 				{
@@ -331,6 +342,13 @@ void RBSP_decode(NALunit nal_unit)
 				++CurrMbAddr;
 			}
 		}
+
+		if (shd.slice_type == I_SLICE)
+		{
+			initialisationProcess();
+		}
+
+		modificationProcess();
 
 		static int intraFrameCounter = 1;
 		

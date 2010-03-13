@@ -826,45 +826,39 @@ void IntraChromaSamplePrediction(int predCr[8][8], int predCb[8][8])
 // with dimensions 16x16, 8x8 and 8x8 respectively
 void intraPrediction(int predL[16][16], int predCr[8][8], int predCb[8][8])
 {
-	// mb_pred(mb_type) in the standard
-	if ((MbPartPredMode(mb_type , 0) == Intra_4x4) || (MbPartPredMode(mb_type , 0) == Intra_16x16))
+	if (MbPartPredMode(mb_type , 0) == Intra_4x4)
 	{
-		// LUMA:
-
-		if (MbPartPredMode(mb_type , 0) == Intra_4x4)
+		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 		{
-			for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+			int mbAddrA, mbAddrB;
+			getIntra4x4PredMode(luma4x4BlkIdx, &mbAddrA, &mbAddrB);
+
+			// the luma prediction samples
+			int pred4x4L[4][4];
+			int absIdx = CurrMbAddr * 16 + luma4x4BlkIdx;
+			Intra4x4SamplePrediction(luma4x4BlkIdx, Intra4x4PredMode[absIdx], pred4x4L);
+
+			int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
+			int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
+
+			for (int y = 0; y < 4; y++)
 			{
-				int mbAddrA, mbAddrB;
-				getIntra4x4PredMode(luma4x4BlkIdx, &mbAddrA, &mbAddrB);
-
-				// the luma prediction samples
-				int pred4x4L[4][4];
-				int absIdx = CurrMbAddr * 16 + luma4x4BlkIdx;
-				Intra4x4SamplePrediction(luma4x4BlkIdx, Intra4x4PredMode[absIdx], pred4x4L);
-
-				int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
-				int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
-
-				for (int y = 0; y < 4; y++)
+				for (int x = 0; x < 4; x++)
 				{
-					for (int x = 0; x < 4; x++)
-					{
-						predL[y0+y][x0+x] = pred4x4L[y][x];
-					}
+					predL[y0+y][x0+x] = pred4x4L[y][x];
 				}
-
-				transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
 			}
 
-			int test = 0;
-		}
-		else
-		{
-			Intra16x16SamplePrediction(predL);
+			transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
 		}
 
-		// CHROMA:
-		IntraChromaSamplePrediction(predCr, predCb);
-	}	
+		int test = 0;
+	}
+	else
+	{
+		Intra16x16SamplePrediction(predL);
+	}
+
+	// CHROMA:
+	IntraChromaSamplePrediction(predCr, predCb);
 }
