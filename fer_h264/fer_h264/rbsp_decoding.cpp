@@ -87,11 +87,15 @@ void RBSP_decode(NALunit nal_unit)
 				prevMbSkipped = (mb_skip_run > 0);
 				for(int i=0; i<mb_skip_run; i++ )
 				{
+					mb_type = P_Skip;
 					mb_type_array[CurrMbAddr]=P_Skip;
 
 					// Inter prediction:
 					DeriveMVs();
 					Decode(predL, predCr, predCb);
+
+					// Norm: QpBdOffsetY == 0 in baseline
+					QPy = (QPy + mb_qp_delta + 52) % 52;
 
 					// Inverse transformation and decoded sample construction:
 					transformDecodingP_Skip(predL, predCb, predCr, QPy);
@@ -295,9 +299,16 @@ void RBSP_decode(NALunit nal_unit)
 					Decode(predL, predCr, predCb);
 				}
 
-				if (MbPartPredMode(mb_type, 0) != Intra_4x4)
+				if (MbPartPredMode(mb_type, 0) == Intra_16x16)
 				{
 					transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy);
+				}
+				else if (MbPartPredMode(mb_type, 0) != Intra_4x4)	// Intra
+				{
+					for(int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+					{
+						transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
+					}
 				}
 				transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, QPy, true);
 				transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, QPy, false);
@@ -309,9 +320,11 @@ void RBSP_decode(NALunit nal_unit)
 
 		if (shd.slice_type == I_SLICE)
 		{
+			// Reference frame list initialisation
 			initialisationProcess();
 		}
 
+		// Reference frame list modification
 		modificationProcess();
 
 		static int intraFrameCounter = 1;
