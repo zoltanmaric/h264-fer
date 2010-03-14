@@ -18,8 +18,8 @@ void getNeighbourLocations(int xN, int yN, int *mbAddrN, int *xW, int *yW, bool 
 	}
 	else
 	{
-		maxW = 8;		// Standard: maxW = MbWidthC;
-		maxH = 8;		// Standard: maxH = MbHeightC;
+		maxW = 8;		// Norm: maxW = MbWidthC;
+		maxH = 8;		// Norm: maxH = MbHeightC;
 	}
 	
 	// if xN and yN are within this macroblock
@@ -747,8 +747,8 @@ void Intra_Chroma_Plane(int *p, int predC[8][8])
 		V += (i+1)*(p(-1,(4+yCF+i)) - p(-1,(2+yCF-i)));
 
 	int a = 16 * (p(-1, (MbHeightC - 1)) + p((MbWidthC - 1), -1));
-	int b = (34 * H + 32) >> 6;	// Standard: ChromaArrayType == 0, so there's no 29*(ChromaArrayType == 3) coefficient
-	int c = (34 * V + 32) >> 6;	// Standard: ChromaArrayType == 0, so there's no 29*(ChromaArrayType != 1) coefficient
+	int b = (34 * H + 32) >> 6;	// Norm: ChromaArrayType == 0, so there's no 29*(ChromaArrayType == 3) coefficient
+	int c = (34 * V + 32) >> 6;	// Norm: ChromaArrayType == 0, so there's no 29*(ChromaArrayType != 1) coefficient
 
 	for (int y = 0; y < MbHeightC; y++)
 	{
