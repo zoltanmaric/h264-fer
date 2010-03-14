@@ -1,4 +1,6 @@
+#include "headers_and_parameter_sets.h"
 #include "mocomp.h"
+#include "ref_frames.h"
 #include "mode_pred.h"
 
 int L_Temp_4x4_refPart[9][9];
@@ -118,12 +120,12 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 // In baseline profile there is only refPicL0 used. There's no weighted prediction.
 // In global structure "MB_pred_info * infos" are placed all information needed for
 // decode process (motion compensation).
-void Decode(int predL[16][16], int predCr[8][8], int predCb[8][8], frame_type ** refPicL0, int mbPartIdx)
+void Decode(int predL[16][16], int predCr[8][8], int predCb[8][8])
 {
 	// Smallest granularity for macroblock is 8x8 subpart (and in that case partition to 4x4 can be used).
 	// After DeriveMVs called, all MV are prepared (for every subMB and every subMBPart - granularity to part 4x4 sized).
-	frame_type * refPic = refPicL0[*(refIdxL0+mbPartIdx)];
+	frame_type * refPic = RefPicList0[*(refIdxL0+CurrMbAddr)].frame;
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 4; j++)
-			MotionCompensateSubMBPart(predL, predCr, predCb, refPic, mbPartIdx, i, j);
+			MotionCompensateSubMBPart(predL, predCr, predCb, refPic, CurrMbAddr, i, j);
 }
