@@ -16,15 +16,35 @@ void toRGB()
 	blue = new int[frame.Lwidth * frame.Lheight];
 
 	int lumaIndex, chromaIndex;
+	int r_shift, g_shift, b_shift;
+	int y_shift, cb_shift, cr_shift;
 	for (int i = 0; i < frame.Lheight; i++)
 	{
 		for (int j = 0; j < frame.Lwidth; j++)
 		{
 			lumaIndex = i*frame.Lwidth + j;
 			chromaIndex = (i/2)*frame.Cwidth + (j/2);
-			red[lumaIndex] = 1.164*(frame.L[lumaIndex] - 16) + 1.596*(frame.C[1][chromaIndex] - 128);
-			green[lumaIndex] = 1.164*(frame.L[lumaIndex] - 16) - 0.813*(frame.C[1][chromaIndex] - 128) - 0.391*(frame.C[0][chromaIndex] - 128);
-			blue[lumaIndex] = 1.164*(frame.L[lumaIndex] - 16) + 2.018*(frame.C[0][chromaIndex] - 128);
+			y_shift = (frame.L[lumaIndex] - 16) << 10;
+			cb_shift = (frame.C[0][chromaIndex] - 128) << 10;
+			cr_shift = (frame.C[1][chromaIndex] - 128) << 10;
+
+			// 1.164 << 10 == 1192
+			// 1.596 << 10 == 1634
+			// 0.391 << 10 == 401
+			// 0.813 << 10 == 832
+			// 2.018 << 10 == 2066
+			
+			r_shift = 1192 * y_shift + 1634 * cr_shift;
+			g_shift = 1192 * y_shift + 401 * cb_shift - 832 * cr_shift;
+			b_shift = 1192 * y_shift + 2066 * cb_shift;
+
+			//red[lumaIndex] = 1.164*(frame.L[lumaIndex] - 16) + 1.596*(frame.C[1][chromaIndex] - 128);
+			//green[lumaIndex] = 1.164*(frame.L[lumaIndex] - 16) - 0.391*(frame.C[0][chromaIndex] - 128) - 0.813*(frame.C[1][chromaIndex] - 128);
+			//blue[lumaIndex] = 1.164*(frame.L[lumaIndex] - 16) + 2.018*(frame.C[0][chromaIndex] - 128);
+
+			red[lumaIndex] = r_shift >> 20;
+			green[lumaIndex] = g_shift >> 20;
+			blue[lumaIndex] = b_shift >> 20;
 
 			if (red[lumaIndex] > 255) red[lumaIndex] = 255;
 			else if (red[lumaIndex] < 0) red[lumaIndex] = 0;
