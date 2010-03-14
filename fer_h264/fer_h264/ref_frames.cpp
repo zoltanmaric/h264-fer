@@ -1,29 +1,32 @@
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
 #include "ref_frames.h"
-
+#include <cstdlib>
+#include <cstring>
+#include <string>
 ref_pic_type RefPicList0[50000];
+frame_type dpb[50000];
+int iskoristeno;
 
-void frameDeepCopy(frame_type * OldFrame, frame_type * NewFrame)
+void frameDeepCopy(ref_pic_type * ref)
 {
-	frame_type newFrame;
-	newFrame.Lheight=OldFrame->Lheight;
-	newFrame.Lwidth=OldFrame->Lwidth;
-	newFrame.Cheight=OldFrame->Cheight;
-	newFrame.Cwidth=OldFrame->Cwidth;
+	ref->frame = &(dpb[iskoristeno++]);
+	ref->frame->Lheight=frame.Lheight;
+	ref->frame->Lwidth=frame.Lwidth;
+	ref->frame->Cheight=frame.Cheight;
+	ref->frame->Cwidth=frame.Cwidth;
 
-	newFrame.L=new unsigned char[newFrame.Lheight*newFrame.Lwidth];
-	for (int i=0;i<newFrame.Lheight*newFrame.Lwidth;i++)
-		newFrame.L[i]=OldFrame->L[i];
+	ref->frame->L=new unsigned char[ref->frame->Lheight*ref->frame->Lwidth];
+	for (int i=0;i<ref->frame->Lheight*ref->frame->Lwidth;i++)
+		ref->frame->L[i]=frame.L[i];
 
-	newFrame.C[0]=new unsigned char[newFrame.Cheight*newFrame.Cwidth];
-	newFrame.C[1]=new unsigned char[newFrame.Cheight*newFrame.Cwidth];
-	for (int i=0;i<newFrame.Cheight*newFrame.Cwidth;i++)
+	ref->frame->C[0]=new unsigned char[ref->frame->Cheight*ref->frame->Cwidth];
+	ref->frame->C[1]=new unsigned char[ref->frame->Cheight*ref->frame->Cwidth];
+	for (int i=0;i<ref->frame->Cheight*ref->frame->Cwidth;i++)
 	{
-		newFrame.C[0][i]=OldFrame->C[0][i];
-		newFrame.C[1][i]=OldFrame->C[1][i];
+		ref->frame->C[0][i]=frame.C[0][i];
+		ref->frame->C[1][i]=frame.C[1][i];
 	}
-	NewFrame = &newFrame;
 }
 
 void decodePictureNumbers()
@@ -35,8 +38,7 @@ void decodePictureNumbers()
 		if (!RefPicList0[i].IsLongTerm)
 		{
 			if (RefPicList0[i].FrameNum > shd.frame_num)
-				RefPicList0[i].FrameNumWrap = RefPicList0[i].FrameNum - sps.MaxFrameNum;
-			else 
+				RefPicList0[i].FrameNumWrap = RefPicList0[i].FrameNum - sps.MaxFrameNum;			else 
 				RefPicList0[i].FrameNumWrap = RefPicList0[i].FrameNum;
 			RefPicList0[i].PicNum = RefPicList0[i].FrameNum;
 		} else {
@@ -101,7 +103,7 @@ void modificationProcess()
 				RefPicList0[refIdxL0].FrameNum = shd.frame_num;
 				RefPicList0[refIdxL0].IsLongTerm = false;
 				RefPicList0[refIdxL0].RefPicPresent = true;
-				frameDeepCopy(&frame, RefPicList0[refIdxL0++].frame);
+				frameDeepCopy(RefPicList0 + (refIdxL0++));
 
 				int nIdx = refIdxL0;
 				for (int cIdx = refIdxL0; cIdx <= shd.num_ref_idx_l0_active_minus1+1; cIdx++)
@@ -116,7 +118,7 @@ void modificationProcess()
 				RefPicList0[refIdxL0].FrameNum = shd.frame_num;
 				RefPicList0[refIdxL0].IsLongTerm = true;
 				RefPicList0[refIdxL0].RefPicPresent = true;
-				frameDeepCopy(&frame, RefPicList0[refIdxL0++].frame);
+				frameDeepCopy(RefPicList0 + (refIdxL0++));
 
 				int nIdx = refIdxL0;
 				for (int cIdx = refIdxL0; cIdx <= shd.num_ref_idx_l0_active_minus1+1; cIdx++)
@@ -124,6 +126,33 @@ void modificationProcess()
 						RefPicList0[nIdx++] = RefPicList0[cIdx];
 			}
 		} while (shd.modification_of_pic_nums_idc[curr_id++] != 3);
+	} else {
+				int refIdxL0 = 0, curr_id = 0;
+		int picNumL0Pred = shd.frame_num, picNumL0NoWrap, picNumL0;
+				if (picNumL0Pred - (shd.abs_diff_pic_num_minus1[curr_id]+1) < 0)
+					picNumL0NoWrap = picNumL0Pred - (shd.abs_diff_pic_num_minus1[curr_id]+1) + sps.MaxFrameNum;
+				else
+					picNumL0NoWrap = picNumL0Pred - (shd.abs_diff_pic_num_minus1[curr_id]+1);
+				picNumL0Pred = picNumL0NoWrap;
+				if (picNumL0NoWrap > shd.frame_num)
+					picNumL0 = picNumL0NoWrap - sps.MaxFrameNum;
+				else 
+					picNumL0 = picNumL0NoWrap;
+
+				for (int cIdx = shd.num_ref_idx_l0_active_minus1+1; cIdx>refIdxL0; cIdx--)
+					RefPicList0[cIdx] = RefPicList0[cIdx-1];
+				// Postavljanje u listu
+				RefPicList0[refIdxL0].PicNum = picNumL0;
+				RefPicList0[refIdxL0].LongTermPicNum = 0;
+				RefPicList0[refIdxL0].FrameNum = shd.frame_num;
+				RefPicList0[refIdxL0].IsLongTerm = false;
+				RefPicList0[refIdxL0].RefPicPresent = true;
+				frameDeepCopy(RefPicList0 + (refIdxL0++));
+
+				int nIdx = refIdxL0;
+				for (int cIdx = refIdxL0; cIdx <= shd.num_ref_idx_l0_active_minus1+1; cIdx++)
+					if (picNumF(cIdx) != picNumL0)
+						RefPicList0[nIdx++] = RefPicList0[cIdx];	
 	}
 	RefPicList0[shd.num_ref_idx_l0_active_minus1+1].RefPicPresent = false;
 }

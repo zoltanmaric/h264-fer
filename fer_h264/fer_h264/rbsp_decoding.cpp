@@ -23,6 +23,7 @@ void RBSP_decode(NALunit nal_unit)
 	printf("Ulaz u RBPS_decode broj %d\n",nalBrojac++);
 
 	initRawReader(nal_unit.rbsp_byte, nal_unit.NumBytesInRBSP);
+	initialisationProcess();
 
 	//TYPE 7 = Sequence parameter set TODO: Provjera je li vec postoji SPS
 	//READ SPS
