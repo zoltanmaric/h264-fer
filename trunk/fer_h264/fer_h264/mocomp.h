@@ -2,4 +2,4 @@
 
 #include "h264_globals.h"
 
-void Decode(int predL[16][16], int predCr[8][8], int predCb[8][8], frame_type ** refPicL0, int mbPartIdx);
+void Decode(int predL[16][16], int predCr[8][8], int predCb[8][8]);
