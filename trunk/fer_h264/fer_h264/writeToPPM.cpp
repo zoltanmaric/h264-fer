@@ -38,10 +38,6 @@ void toRGB()
 			g_shift = 1192 * y_shift + 401 * cb_shift - 832 * cr_shift;
 			b_shift = 1192 * y_shift + 2066 * cb_shift;
 
-			//red[lumaIndex] = 1.164*(frame.L[lumaIndex] - 16) + 1.596*(frame.C[1][chromaIndex] - 128);
-			//green[lumaIndex] = 1.164*(frame.L[lumaIndex] - 16) - 0.391*(frame.C[0][chromaIndex] - 128) - 0.813*(frame.C[1][chromaIndex] - 128);
-			//blue[lumaIndex] = 1.164*(frame.L[lumaIndex] - 16) + 2.018*(frame.C[0][chromaIndex] - 128);
-
 			red[lumaIndex] = r_shift >> 20;
 			green[lumaIndex] = g_shift >> 20;
 			blue[lumaIndex] = b_shift >> 20;

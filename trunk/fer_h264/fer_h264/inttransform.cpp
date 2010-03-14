@@ -37,27 +37,27 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool intra16x16OrChr
 {
 	int qP;
 
-	const int bitDepth = 8;	// Standard: bitDepth = BitDepthY or BitDepthC depending
+	const int bitDepth = 8;	// Norm: bitDepth = BitDepthY or BitDepthC depending
 							// on whether this process is invoked for luma or chroma
 							// residuals. In the baseline profile, the value of both
 							// of these is always equal to 8.
 
-	// Standard: sMbFlag is true when mb_type is equal to
+	// Norm: sMbFlag is true when mb_type is equal to
 	// SI or SP. This is never the case in baseline since
 	// only I and P slices are allowed.
 
-	// Standard: because sMbFlag is always false in baseline, qP is never
+	// Norm: because sMbFlag is always false in baseline, qP is never
 	// equal to QSy or QSc
 	if (luma)
 	{
-		// Standard: QpBdOffsetY == 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
+		// Norm: QpBdOffsetY == 6 * bit_depth_luma_minus8; bit_depth_luma_minus_8 == 0 in baseline
 		int QP_y = QPy;
 		qP = QP_y;
 	}
 	else
 	{
-		int QpBdOffsetC = 0;	// Standard: = 6 * bit_depth_chroma_minus8; bit_depth_chroma_minus_8 == 0 in baseline
-		int qPoffset = pps.chroma_qp_index_offset;	// Standard: qPoffset = second_chroma_qp_index_offset,
+		int QpBdOffsetC = 0;	// Norm: = 6 * bit_depth_chroma_minus8; bit_depth_chroma_minus_8 == 0 in baseline
+		int qPoffset = pps.chroma_qp_index_offset;	// Norm: qPoffset = second_chroma_qp_index_offset,
 												// second_chroma_qp_index_offset == chroma_qp_index_offset when not
 												// present. It is not present in baseline.
 		int qPi = Clip3(-QpBdOffsetC, 51, QPy + qPoffset);
@@ -97,7 +97,7 @@ void pictureConstruction4x4Luma(int u[4][4], int luma4x4BlkIdx)
 	int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
 	int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
 
-	// Standard: MbAffFrameFlag == 0 in baseline
+	// Norm: MbAffFrameFlag == 0 in baseline
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -117,7 +117,7 @@ void pictureConstructionIntra_16x16Luma(int u[16][16])
 	int x0 = 0;
 	int y0 = 0;
 
-	// Standard: MbAffFrameFlag == 0 in baseline
+	// Norm: MbAffFrameFlag == 0 in baseline
 
 	for (int i = 0; i < 16; i++)
 	{
@@ -138,11 +138,11 @@ void pictureConstructionChroma(int u[8][8], bool Cb)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			int nW = 8, nH = 8;	// Standard: MbWidthC == MbHeightC == 8 in baseline.
+			int nW = 8, nH = 8;	// Norm: MbWidthC == MbHeightC == 8 in baseline.
 			int x0 = 0, y0 = 0;
 
-			// Standard: MbAffFrameFlag == 0 in baseline
-			// Standard: subWidthC == SubHeightC == 2 in baseline
+			// Norm: MbAffFrameFlag == 0 in baseline
+			// Norm: subWidthC == SubHeightC == 2 in baseline
 			if (Cb)
 			{
 				frame.C[0][((yP/2)+y0+i)*frame.Cwidth + (xP/2)+x0+j] = u[i][j];
@@ -178,7 +178,7 @@ void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], 
 		}
 	}
 
-	// Standard: TransformBypassModeFlag == 0 in baseline
+	// Norm: TransformBypassModeFlag == 0 in baseline
 
 	pictureConstruction4x4Luma(u, luma4x4BlkIdx);
 }
@@ -187,6 +187,20 @@ void transformDecoding4x4LumaResidual(int LumaLevel[16][16], int predL[16][16], 
 void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16ACLevel[16][16],int predL[16][16], int QPy)
 {
 	int c[4][4], dcY[4][4], rMb[16][16], r[4][4], u[16][16];
+
+	// Norm: When the current macroblock is coded as P_Skip or B_Skip, all values of LumaLevel, LumaLevel8x8, CbLevel,
+	// CbLevel8x8, CrLevel, CrLevel8x8, ChromaDCLevel, ChromaACLevel are set equal to 0 for the current macroblock.
+	if (MbPartPredMode(mb_type, 0) == P_Skip)
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			Intra16x16DCLevel[i] = 0;
+			for (int j = 0; j < 16; j++)
+			{
+				Intra16x16ACLevel[i][j] = 0;
+			}
+		}
+	}
 
 	transformInverseScan(Intra16x16DCLevel, c);
 	int QP_y = QPy;
@@ -220,13 +234,13 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 		}
 	}
 
-	// Standard: TransformBypassModeFlag == 0 in baseline
+	// Norm: TransformBypassModeFlag == 0 in baseline
 
 	for (int i = 0; i < 16; i++)
 	{
 		for (int j = 0; j < 16; j++)
 		{
-			// Standard:
+			// Norm:
 			// u(i,j) = Clip1Y(predL[j][i] + rMb[j][i])
 			// this is inverted because the first index
 			// corresponds to the x coordinate in the
@@ -238,6 +252,27 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 	pictureConstructionIntra_16x16Luma(u);
 }
 
+// This function is not explicitly defined in the norm.
+// It is a wrapper for the invocation of 4x4 luma residual
+// decoding process which is to be invoked for P_Skip
+// macroblocks with LumaLevel, ChromACLevel and ChromaDCLevel
+// equal to 0, as defined by the norm.
+void transformDecodingP_Skip(int predL[16][16], int predCb[8][8], int predCr[8][8], int QPy)
+{
+	// Norm: When the current macroblock is coded as P_Skip or B_Skip, all values of LumaLevel, LumaLevel8x8, CbLevel,
+	// CbLevel8x8, CrLevel, CrLevel8x8, ChromaDCLevel, ChromaACLevel are set equal to 0 for the current macroblock.
+	int LumaLevel[16][16] = {0};
+	for(int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+	{
+		transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
+	}
+
+	int ChromaDCLevel[4] = {0};
+	int ChromaACLevel[4][16] = {0};
+	transformDecodingChroma(ChromaDCLevel, ChromaACLevel, predCb, QPy, true);
+	transformDecodingChroma(ChromaDCLevel, ChromaACLevel, predCr, QPy, false);
+}
+
 // (8.5.4)
 // ChromaDCLevel corresponds to either ChromaDCLevel[0] or
 // ChromaDCLevel[1] depending on whether the process is
@@ -246,18 +281,32 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 // chroma component.
 void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int predC[8][8], int QPy, bool Cb)
 {
-	int numChroma4x4Blks = 4;	// Standard: = (MbWidthC/4) * (MbHeightC/4);
+	int numChroma4x4Blks = 4;	// Norm: = (MbWidthC/4) * (MbHeightC/4);
 								// MbWidthC == MbHeightC == 8 in baseline.
 
-	// Standard: ChromaArrayType == 1 in baseline.
+	// Norm: When the current macroblock is coded as P_Skip or B_Skip, all values of LumaLevel, LumaLevel8x8, CbLevel,
+	// CbLevel8x8, CrLevel, CrLevel8x8, ChromaDCLevel, ChromaACLevel are set equal to 0 for the current macroblock.
+	if (MbPartPredMode(mb_type, 0) == P_Skip)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			ChromaDCLevel[i] = 0;
+			for (int j = 0; j < 16; j++)
+			{
+				ChromaACLevel[i][j] = 0;
+			}
+		}
+	}
+
+	// Norm: ChromaArrayType == 1 in baseline.
 	int c[2][2];
 	for (int i = 0; i < 4; i++)
 	{
 		c[i/2][i%2] = ChromaDCLevel[i];
 	}
 
-	int QpBdOffsetC = 0;	// Standard: = 6 * bit_depth_chroma_minus8; bit_depth_chroma_minus_8 == 0 in baseline
-	int qPoffset = pps.chroma_qp_index_offset;	// Standard: qPoffset = second_chroma_qp_index_offset,
+	int QpBdOffsetC = 0;	// Norm: = 6 * bit_depth_chroma_minus8; bit_depth_chroma_minus_8 == 0 in baseline
+	int qPoffset = pps.chroma_qp_index_offset;	// Norm: qPoffset = second_chroma_qp_index_offset,
 												// second_chroma_qp_index_offset == chroma_qp_index_offset when not
 												// present. It is not present in baseline.
 	int qPi = Clip3(-QpBdOffsetC, 51, QPy + qPoffset);
@@ -269,7 +318,7 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 	int dcC[2][2];
 	InverseDCChroma(8, qP, c, dcC);
 
-	int rMb[8][8];	// Standard: MbWidthC == MbHeightC == 8;
+	int rMb[8][8];	// Norm: MbWidthC == MbHeightC == 8;
 	for (int chroma4x4BlkIdx = 0; chroma4x4BlkIdx < numChroma4x4Blks; chroma4x4BlkIdx++)
 	{
 		int chromaList[16];
@@ -297,14 +346,14 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 		}
 	}
 	
-	// Standard: TransformBypassModeFlag == 0 in baseline.
+	// Norm: TransformBypassModeFlag == 0 in baseline.
 
-	int u[8][8];	// Standard: MbWidthC == MbHeightC == 8 in baseline.
+	int u[8][8];	// Norm: MbWidthC == MbHeightC == 8 in baseline.
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			// Standard:
+			// Norm:
 			// u(i,j) = Clip1C(predC[j][i] + rMb[j][i])
 			// this is inverted because the first index
 			// corresponds to the x coordinate in the

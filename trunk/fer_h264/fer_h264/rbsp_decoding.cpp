@@ -16,14 +16,12 @@
 
 void RBSP_decode(NALunit nal_unit)
 {
-
 	static int nalBrojac=0;
-
 	static int idr_frame_number=0;
-	printf("Ulaz u RBPS_decode broj %d\n",nalBrojac++);
+
+	printf("Entering RBPS_decode #%d\n",nalBrojac++);
 
 	initRawReader(nal_unit.rbsp_byte, nal_unit.NumBytesInRBSP);
-	initialisationProcess();
 
 	//TYPE 7 = Sequence parameter set TODO: Provjera je li vec postoji SPS
 	//READ SPS
@@ -73,6 +71,9 @@ void RBSP_decode(NALunit nal_unit)
 		//Used later on
 		int mb_skip_run;
 
+		// Prediction samples formed by either intra or inter prediction.
+		int predL[16][16], predCb[8][8], predCr[8][8];
+
 		QPy = shd.SliceQPy;
 		while (moreDataFlag && CurrMbAddr<MbCount)
 		{
@@ -86,28 +87,17 @@ void RBSP_decode(NALunit nal_unit)
 				prevMbSkipped = (mb_skip_run > 0);
 				for(int i=0; i<mb_skip_run; i++ )
 				{
-					//Norm: CurrMbAddr = NextMbAddress( CurrMbAddr )
-					CurrMbAddr++;
-
-					//Current macroblock coordinates
-					mb_pos_x=CurrMbAddr%sps.PicWidthInMbs;
-					mb_pos_y=CurrMbAddr/sps.PicWidthInMbs;
-
-					//This macroblock has a "P_Skip" value of "mb_type"
-					//PITCH=Line size, currently equal to "width"
-
 					mb_type_array[CurrMbAddr]=P_Skip;
 
-					//Transform macroblock-level coordinates to pixel-level coordinates
-					int pixel_pos_x=mb_pos_x*16;
-					int pixel_pos_y=mb_pos_y*16;
+					// Inter prediction:
+					DeriveMVs();
+					Decode(predL, predCr, predCb);
 
-					// BEGIN INTER
-					/*
-					Derive_P_Skip_MVs(mpi,mb_pos_x,mb_pos_y);
-					MotionCompensateMB(this,ref,mpi,mb_pos_x,mb_pos_y);
-					*/
-					//END INTER
+					// Inverse transformation and decoded sample construction:
+					transformDecodingP_Skip(predL, predCb, predCr, QPy);
+
+					//Norm: CurrMbAddr = NextMbAddress( CurrMbAddr )
+					CurrMbAddr++;
 				}
 				
 				if ((CurrMbAddr != firstMbAddr) || (mb_skip_run > 0))
@@ -115,13 +105,6 @@ void RBSP_decode(NALunit nal_unit)
 					moreDataFlag = more_rbsp_data();
 				}
 			}
-
-			//
-			/*if(CurrMbAddr>=MbCount)
-			{
-			return;
-			}
-			*/
 
 			if(moreDataFlag)
 			{ 
@@ -151,8 +134,6 @@ void RBSP_decode(NALunit nal_unit)
 				// mb_type (positive integer value) is equal to "Name of mb_type" (i.e. I_NxN). These are often interchanged in the norm
 				// Everything as described in norm page 119. table 7-11.
 
-				// Prediction samples formed by either intra or inter prediction.
-				int predL[16][16], predCr[8][8], predCb[8][8];
 				//Specific inter prediction?
 				if(mb_type != I_4x4 /*&& mb_type != I_8x8*/ && MbPartPredMode( mb_type, 0 )!=Intra_16x16 && NumMbPart( mb_type )==4 )
 				{
@@ -286,25 +267,6 @@ void RBSP_decode(NALunit nal_unit)
 				{
 
 					mb_qp_delta=expGolomb_SD();
-
-					//BEGIN Kvantizacijski paramteri
-					/*
-					int iCbCr,QPi;
-
-					QPy=(QPy+mb_qp_delta+52)%52;
-					QPi=QPy+pps.chroma_qp_index_offset;
-					QPi=CustomClip(QPi,0,51);
-					if(QPi<30)
-					{
-					QPc=QPi;
-					}
-					else
-					{
-					QPc=QPcTable[QPi-30];
-					}
-					*/
-					//END Kvantizacijski parametri
-
 
 					//Norm: decode residual data.
 					//residual_block_cavlc( coeffLevel, startIdx, endIdx, maxNumCoeff )

@@ -79,7 +79,7 @@ void ScalingFunctions4x4Derivation(int LevelScale[6][4][4])
 		mbIsInterFlag = true;
 	}
 
-	// Standard: separate_colour_plane_flag == 0 in baseline
+	// Norm: separate_colour_plane_flag == 0 in baseline
 	
 	for (int m = 0; m < 6; m++)
 	{
