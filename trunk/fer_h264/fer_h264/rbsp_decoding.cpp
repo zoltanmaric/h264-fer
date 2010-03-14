@@ -116,6 +116,12 @@ void RBSP_decode(NALunit nal_unit)
 				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
 				mb_type = expGolomb_UD();
 
+				// TEST: KITABRINGER!
+				//if ((shd.slice_type == P_SLICE) && (mb_type > 4))
+				//{
+				//	mb_type -= 4;
+				//}
+
 				//Current macroblock coordinates
 				mb_pos_x=CurrMbAddr%sps.PicWidthInMbs;
 				mb_pos_y=CurrMbAddr/sps.PicWidthInMbs;
