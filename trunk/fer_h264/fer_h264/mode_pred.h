@@ -7,7 +7,7 @@
 #define MB_Width 16
 #define MB_Height 16
 
-#define MPI_mb_type(mbAddr) *(mb_type_array+mbAddr)
+#define MPI_mb_type(mbAddr) MbPartPredMode(*(mb_type_array+mbAddr),0)
 #define MPI_mvL0x(mbAddr,subMbIdx) *(mvL0x+16*mbAddr+subMbIdx*4)
 #define MPI_mvL0y(mbAddr,subMbIdx) *(mvL0x+16*mbAddr+subMbIdx*4)
 #define MPI_mvSubL0x_byIdx(mbAddr,subMbIdx,subMbPartIdx) *(mvL0x+16*mbAddr+4*subMbIdx+subMbPartIdx)
@@ -22,8 +22,4 @@ extern int mvL0x[], mvL0y[];
 //int subMvCnt[Frame_Width/MB_Width][Frame_Height/MB_Height], refIdxL0[Frame_Height/MB_Width][Frame_Height/MB_Height];
 extern int subMvCnt[], refIdxL0[];
 
-// in following methods global "MB_pred_info * infos" is used, so it has to be initialized before calling any of these methods
-bool get_neighbour_mv(int org_x, int org_y, int mbPartIdx, int curr_refIdxL0, int * mvNx, int * mvNy, int * refIdxL0N);
-void PredictMV_Luma(int org_x, int org_y, int mbPartIdx);
-void PredictMV(int org_x, int org_y);
 void DeriveMVs();

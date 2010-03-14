@@ -47,7 +47,7 @@ void PredictMV_Luma(int mbPartIdx)
 	bool validA = get_neighbour_mv(org_x-16, org_y, CurrMbAddr-1, 0, curr_refIdxL0, &mvAx, &mvAy, &refIdxL0A);
 	bool validB = get_neighbour_mv(org_x, org_y-16, CurrMbAddr-sps.PicWidthInMbs, 0, curr_refIdxL0, &mvBx, &mvBy, &refIdxL0B);
 	bool validC = get_neighbour_mv(org_x+16, org_y-16, CurrMbAddr-sps.PicWidthInMbs+1, 0, curr_refIdxL0, &mvCx, &mvCy, &refIdxL0C);
-	int curr_mb_type = mb_type;
+	int curr_mb_type = MbPartPredMode(mb_type,0);
 
 	if (curr_mb_type == P_L0_L0_16x8 && mbPartIdx == 0 && mvBx != MV_NA && curr_refIdxL0 == refIdxL0B)
 	{
@@ -113,8 +113,12 @@ void PredictMV_Luma(int mbPartIdx)
 
 void PredictMV()
 {
-	if (mb_type == P_Skip)
+	if (MbPartPredMode(mb_type, 0) == P_Skip)
 	{
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				for (int k = 0; k < 2; k++)
+					mvd_l0[i][j][k] = 0;
 		MPI_subMvCnt(CurrMbAddr) = 1;
 		MPI_refIdxL0(CurrMbAddr) = 0;
 		if (CurrMbAddr < sps.PicWidthInMbs || CurrMbAddr%sps.PicWidthInMbs == 0)

@@ -2,6 +2,7 @@
 #include "mocomp.h"
 #include "ref_frames.h"
 #include "mode_pred.h"
+#include "h264_math.h"
 
 int L_Temp_4x4_refPart[9][9];
 int C_Temp_4x4_refPart[2][3][3];
@@ -22,13 +23,13 @@ void FillTemp_4x4_refPart(frame_type *ref, int org_x, int org_y) {
 	for(y=0; y<3; ++y) {
 		sy=org_y/2+y;
 		if(sy<0) sy=0;
-		if(sy>=frame.Lheight/2) sy=frame.Lheight/2-1;
+		if(sy>=frame.Cheight/2) sy=frame.Cheight/2-1;
 		for(x=0; x<3; ++x) {
 			sx=org_x/2+x;
 			if (sx < 0) sx = 0;
 			if (sx >= frame.Lwidth/2) sx = frame.Lwidth/2-1;
-			C_Temp_4x4_refPart[0][y][x] = ref->C[0][sy*frame.Lwidth+sx];
-			C_Temp_4x4_refPart[1][y][x] = ref->C[1][sy*frame.Lwidth+sx];
+			C_Temp_4x4_refPart[0][y][x] = ref->C[0][sy*frame.Cwidth+sx];
+			C_Temp_4x4_refPart[1][y][x] = ref->C[1][sy*frame.Cwidth+sx];
 		}
 	}
 }
@@ -80,13 +81,13 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 						int subMbPartIdx) {
 	int x,y, org_x,org_y; // org_x and org_y are origin point of 4x4 submbpart in current macroblock
 	int mvx, mvy;
-	org_x = ((subMbIdx & 2)<<2) + ((subMbPartIdx & 2)<<1);
-	org_y = ((subMbIdx & 1)<<3) + ((subMbPartIdx & 1)<<2);
+	org_y = ((subMbIdx & 2)<<2) + ((subMbPartIdx & 2)<<1);
+	org_x = ((subMbIdx & 1)<<3) + ((subMbPartIdx & 1)<<2);
 	mvx = MPI_mvSubL0x_byIdx(mbPartIdx,subMbIdx,subMbPartIdx);
 	mvy = MPI_mvSubL0y_byIdx(mbPartIdx,subMbIdx,subMbPartIdx);
 
 	// Fills temp tables used in fractional interpolation (luma) and linear interpolation (chroma).
-	FillTemp_4x4_refPart(refPic, org_x+(mvx>>2)-2,org_y+(mvy>>2)-2);
+	FillTemp_4x4_refPart(refPic, InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0) + org_x+(mvx>>2)-2,InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1) + org_y+(mvy>>2)-2);
 
 	int frac=(mvy&3)*4+(mvx&3);
 	for(y=0; y<4; ++y)

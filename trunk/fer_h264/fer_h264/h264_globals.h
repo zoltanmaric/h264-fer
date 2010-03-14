@@ -61,7 +61,7 @@ extern mode_pred_info *mpi;
 
 //TODO:
 
-#define NA				-1
+#define NA				0xff
 
 #define P_L0_16x16      0
 #define P_L0_L0_16x8    1
@@ -97,7 +97,7 @@ extern mode_pred_info *mpi;
 #define I_16x16_3_2_1 24
 #define I_PCM 25
 
-#define P_Skip       0xFF
+#define P_Skip		   5
 
 #define P_L0_8x8       0
 #define P_L0_8x4       1
