@@ -63,7 +63,7 @@ int P_and_SP_macroblock_modes[6][7]=
   {2,	P_L0_L0_8x16,	2, Pred_L0, Pred_L0,  8, 16},
   {3,	P_8x8,			4, NA,      NA,       8,  8},
   {4,	P_8x8ref0,		4, NA,      NA,       8,  8},
-  {NA,	P_Skip,			1, Pred_L0, NA,      16, 16}
+  {NA,	P_Skip,			1, P_Skip,  NA,      16, 16}
 };
 
 
