@@ -338,7 +338,7 @@ void RBSP_decode(NALunit nal_unit)
 			}
 		}
 
-		if (shd.slice_type == I_SLICE)
+		if (shd.slice_type%5 == I_SLICE)
 		{
 			// Reference frame list initialisation
 			initialisationProcess();

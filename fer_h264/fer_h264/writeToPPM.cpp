@@ -86,5 +86,10 @@ void writeToPPM()
 	f = fopen(filename,"wt");
 	fprintf(f, "P3\n%d %d\n255\n", frame.Lwidth, frame.Lheight);
 	fwrite(pic, 1, k, f);
+
 	fclose(f);
+	free(red);
+	free(green);
+	free(blue);
+	free(pic);
 }
