@@ -5,27 +5,18 @@
 #include <cstring>
 #include <string>
 ref_pic_type RefPicList0[50000];
-frame_type dpb[50000];
+frame_type dpb;
 int iskoristeno;
 
-void frameDeepCopy(ref_pic_type * ref)
+void frameDeepCopy()
 {
-	ref->frame = &(dpb[iskoristeno++]);
-	ref->frame->Lheight=frame.Lheight;
-	ref->frame->Lwidth=frame.Lwidth;
-	ref->frame->Cheight=frame.Cheight;
-	ref->frame->Cwidth=frame.Cwidth;
+	for (int i = 0; i < frame.Lheight*frame.Lwidth; i++)
+		dpb.L[i]=frame.L[i];
 
-	ref->frame->L=new unsigned char[ref->frame->Lheight*ref->frame->Lwidth];
-	for (int i=0;i<ref->frame->Lheight*ref->frame->Lwidth;i++)
-		ref->frame->L[i]=frame.L[i];
-
-	ref->frame->C[0]=new unsigned char[ref->frame->Cheight*ref->frame->Cwidth];
-	ref->frame->C[1]=new unsigned char[ref->frame->Cheight*ref->frame->Cwidth];
-	for (int i=0;i<ref->frame->Cheight*ref->frame->Cwidth;i++)
+	for (int i = 0; i < frame.Cheight*frame.Cwidth; i++)
 	{
-		ref->frame->C[0][i]=frame.C[0][i];
-		ref->frame->C[1][i]=frame.C[1][i];
+		dpb.C[0][i]=frame.C[0][i];
+		dpb.C[1][i]=frame.C[1][i];
 	}
 }
 
@@ -49,8 +40,20 @@ void decodePictureNumbers()
 
 void initialisationProcess()
 {
+	dpb.Lheight=frame.Lheight;
+	dpb.Lwidth=frame.Lwidth;
+	dpb.Cheight=frame.Cheight;
+	dpb.Cwidth=frame.Cwidth;
+
+	dpb.L = new unsigned char[frame.Lwidth*frame.Lheight];
+	dpb.C[0] = new unsigned char[frame.Cwidth*frame.Cheight];
+	dpb.C[1] = new unsigned char[frame.Cwidth*frame.Cheight];
+
 	for (int refPicIdx = 0; refPicIdx < shd.num_ref_idx_l0_active_minus1+1; refPicIdx++)
+	{
 		RefPicList0[refPicIdx].RefPicPresent = false;
+		RefPicList0[refPicIdx].frame = &dpb;
+	}
 }
 
 int picNumF(int cIdx)
@@ -103,7 +106,7 @@ void modificationProcess()
 				RefPicList0[refIdxL0].FrameNum = shd.frame_num;
 				RefPicList0[refIdxL0].IsLongTerm = false;
 				RefPicList0[refIdxL0].RefPicPresent = true;
-				frameDeepCopy(RefPicList0 + (refIdxL0++));
+				frameDeepCopy();
 
 				int nIdx = refIdxL0;
 				for (int cIdx = refIdxL0; cIdx <= shd.num_ref_idx_l0_active_minus1+1; cIdx++)
@@ -118,7 +121,8 @@ void modificationProcess()
 				RefPicList0[refIdxL0].FrameNum = shd.frame_num;
 				RefPicList0[refIdxL0].IsLongTerm = true;
 				RefPicList0[refIdxL0].RefPicPresent = true;
-				frameDeepCopy(RefPicList0 + (refIdxL0++));
+				//frameDeepCopy(RefPicList0 + (refIdxL0++));
+				frameDeepCopy();
 
 				int nIdx = refIdxL0;
 				for (int cIdx = refIdxL0; cIdx <= shd.num_ref_idx_l0_active_minus1+1; cIdx++)
@@ -147,7 +151,8 @@ void modificationProcess()
 				RefPicList0[refIdxL0].FrameNum = shd.frame_num;
 				RefPicList0[refIdxL0].IsLongTerm = false;
 				RefPicList0[refIdxL0].RefPicPresent = true;
-				frameDeepCopy(RefPicList0 + (refIdxL0++));
+				//frameDeepCopy(RefPicList0 + (refIdxL0++));
+				frameDeepCopy();
 
 				int nIdx = refIdxL0;
 				for (int cIdx = refIdxL0; cIdx <= shd.num_ref_idx_l0_active_minus1+1; cIdx++)

@@ -256,40 +256,6 @@ int ABS(int a)
 
 int init_h264_structures()
 {
-
-
-//TEST INSERT
-
-mpi= new mode_pred_info;
-
-  int x=mpi->MbWidth=mpi->MbPitch=sps.PicWidthInMbs>>4;
-  int y=mpi->MbHeight=sps.FrameHeightInMbs>>4;
-  //mpi->MbMode=malloc(x*y*sizeof(int));
-  // per-chroma block information    (8x8)
-  x=mpi->CbWidth=mpi->CbPitch=sps.PicWidthInMbs>>3;
-  y=mpi->CbHeight=sps.FrameHeightInMbs>>3;
-
-    x=mpi->TbWidth=mpi->TbPitch=sps.PicWidthInMbs>>2;
-  y=mpi->TbHeight=sps.FrameHeightInMbs>>2;
-
- // per-chroma block information    (8x8)
-	x=sps.PicWidthInMbs/8;
-	y=sps.FrameHeightInMbs/8;
-  mpi->TotalCoeffC[0]=(int *)malloc(x*y*sizeof(int));
-  mpi->TotalCoeffC[1]=(int *)malloc(x*y*sizeof(int));
-  // per-transform block information (4x4)
-  x=sps.PicWidthInMbs/4;
-  y=sps.FrameHeightInMbs/4;
-  mpi->TotalCoeffL=(int *)malloc(x*y*sizeof(int));
-
-
-
-
-
-
-
-
-
 	TotalCoeff_luma_array = new int*[sps.PicWidthInMbs];
 	for (int i=0;i<sps.PicWidthInMbs;i++)
 	{
