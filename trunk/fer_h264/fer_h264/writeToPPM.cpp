@@ -62,30 +62,21 @@ void writeToPPM()
 	toRGB();
 
 	char *pic;
-	pic = new char[frame.Lwidth * frame.Lheight * 12 + frame.Lheight];
-	
+	pic = new  char[frame.Lwidth * frame.Lheight * 3 + 17];
 	int pic_size = frame.Lheight * frame.Lwidth;
-	int k = 0;
+	int pos = sprintf(pic, "P6\n%d %d\n255\n", frame.Lwidth, frame.Lheight);
 	for (int i = 0; i < pic_size; i++)
 	{
-		k += sprintf(pic + k, "%d %d %d ", red[i], green[i], blue[i]);
-		
-		if (i % frame.Lwidth == frame.Lwidth - 1)
-		{
-			pic[k++] = '\n';
-		}
+		pic[pos++] = red[i];
+		pic[pos++] = green[i];
+		pic[pos++] = blue[i];
 	}
 
 	FILE *f;
-	char filename[50];
-	int frameCount1, frameCount10, frameCount100;
-	frameCount1 = frameCount % 10;
-	frameCount10 = (frameCount%100)/10;
-	frameCount100 = (frameCount%1000)/100;
-	sprintf(filename, "frame%d%d%d.ppm", frameCount100, frameCount10, frameCount1);
-	f = fopen(filename,"wt");
-	fprintf(f, "P3\n%d %d\n255\n", frame.Lwidth, frame.Lheight);
-	fwrite(pic, 1, k, f);
+	char filename[15];
+	sprintf(filename, "frame%d%d%d.ppm", (frameCount%1000)/100, (frameCount%100)/10, frameCount%10);
+	f = fopen(filename,"wb");
+	fwrite(pic, 1, pos, f);
 
 	fclose(f);
 	free(red);

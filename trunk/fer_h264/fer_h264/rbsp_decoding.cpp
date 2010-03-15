@@ -342,16 +342,13 @@ void RBSP_decode(NALunit nal_unit)
 		{
 			// Reference frame list initialisation
 			initialisationProcess();
+			idr_frame_number++;
 		}
 
 		// Reference frame list modification
 		modificationProcess();
 		
 		writeToPPM();
-
-		idr_frame_number++;
-		
-		int stop = 0;
 	}
 }
 

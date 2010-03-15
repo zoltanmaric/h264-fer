@@ -23,11 +23,11 @@ void FillTemp_4x4_refPart(frame_type *ref, int org_x, int org_y) {
 	for(y=0; y<3; ++y) {
 		sy=org_y/2+y;
 		if(sy<0) sy=0;
-		if(sy>=frame.Cheight/2) sy=frame.Cheight/2-1;
+		if(sy>=frame.Cheight) sy=frame.Cheight-1;
 		for(x=0; x<3; ++x) {
 			sx=org_x/2+x;
 			if (sx < 0) sx = 0;
-			if (sx >= frame.Lwidth/2) sx = frame.Lwidth/2-1;
+			if (sx >= frame.Cwidth) sx = frame.Cwidth-1;
 			C_Temp_4x4_refPart[0][y][x] = ref->C[0][sy*frame.Cwidth+sx];
 			C_Temp_4x4_refPart[1][y][x] = ref->C[1][sy*frame.Cwidth+sx];
 		}
