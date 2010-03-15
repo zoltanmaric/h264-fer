@@ -191,6 +191,7 @@ void DeriveMVs() {
 			{
 				MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) = MPI_mvL0x(CurrMbAddr, i);
 				MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) = MPI_mvL0y(CurrMbAddr, i);
+				int test = 0;
 			}
 		} else {
 			// If current macroblock is 8x8 partitioned, then only mvdx, mvdy is added to predicted MV.
@@ -198,6 +199,7 @@ void DeriveMVs() {
 			{
 				MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) += mvd_l0[i][j][0];
 				MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) += mvd_l0[i][j][1];
+				int test = 0;
 			}
 		}
 	}

@@ -97,7 +97,7 @@ extern mode_pred_info *mpi;
 #define I_16x16_3_2_1 24
 #define I_PCM 25
 
-#define P_Skip		   5
+#define P_Skip		   26
 
 #define P_L0_8x8       0
 #define P_L0_8x4       1
@@ -127,7 +127,7 @@ extern mode_pred_info *mpi;
 #define NAL_UNIT_TYPE_SPS 7
 #define NAL_UNIT_TYPE_PPS 8
 
-extern int P_and_SP_macroblock_modes[6][7];
+extern int P_and_SP_macroblock_modes[32][7];
 extern int I_Macroblock_Modes[27][7];
 extern int P_sub_macroblock_modes[5][6];
 extern int codeNum_to_coded_block_pattern_intra[48];
