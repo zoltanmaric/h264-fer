@@ -188,20 +188,6 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 {
 	int c[4][4], dcY[4][4], rMb[16][16], r[4][4], u[16][16];
 
-	// Norm: When the current macroblock is coded as P_Skip or B_Skip, all values of LumaLevel, LumaLevel8x8, CbLevel,
-	// CbLevel8x8, CrLevel, CrLevel8x8, ChromaDCLevel, ChromaACLevel are set equal to 0 for the current macroblock.
-	if (MbPartPredMode(mb_type, 0) == P_Skip)
-	{
-		for (int i = 0; i < 16; i++)
-		{
-			Intra16x16DCLevel[i] = 0;
-			for (int j = 0; j < 16; j++)
-			{
-				Intra16x16ACLevel[i][j] = 0;
-			}
-		}
-	}
-
 	transformInverseScan(Intra16x16DCLevel, c);
 	int QP_y = QPy;
 
@@ -286,7 +272,7 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 
 	// Norm: When the current macroblock is coded as P_Skip or B_Skip, all values of LumaLevel, LumaLevel8x8, CbLevel,
 	// CbLevel8x8, CrLevel, CrLevel8x8, ChromaDCLevel, ChromaACLevel are set equal to 0 for the current macroblock.
-	if (MbPartPredMode(mb_type, 0) == P_Skip)
+	if (mb_type == P_Skip)
 	{
 		for (int i = 0; i < 4; i++)
 		{

@@ -166,7 +166,7 @@ extern int PicWidthInCbs, PicHeightInCbs;
 //"x" can be only "0" or "1".
 #define MbPartPredMode(mb_type, x)				(((shd.slice_type%5)==P_SLICE)?P_and_SP_macroblock_modes[mb_type][3+x]:I_Macroblock_Modes[mb_type][3])
 #define NumMbPart(mb_type)						P_and_SP_macroblock_modes[mb_type][2]
-#define Intra16x16PredMode						I_Macroblock_Modes[mb_type][4]
+#define Intra16x16PredMode						((shd.slice_type%5)==P_SLICE)?I_Macroblock_Modes[mb_type-5][4]:I_Macroblock_Modes[mb_type][4]
 												
 //Offset +1 at sub_mb_type because the first line in the table is "special". TODO
 #define SubMbPredMode(sub_mb_type)				P_sub_macroblock_modes[sub_mb_type+1][3]
