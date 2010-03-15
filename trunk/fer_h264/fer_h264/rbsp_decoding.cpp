@@ -23,7 +23,7 @@ void RBSP_decode(NALunit nal_unit)
 
 	initRawReader(nal_unit.rbsp_byte, nal_unit.NumBytesInRBSP);
 
-	//TYPE 7 = Sequence parameter set TODO: Provjera je li vec postoji SPS
+	//TYPE 7 = Sequence parameter set TODO: Provjera postoji li veæ SPS
 	//READ SPS
 
 	if (nal_unit.nal_unit_type==NAL_UNIT_TYPE_SEI)
@@ -35,7 +35,7 @@ void RBSP_decode(NALunit nal_unit)
 		fill_sps(&nal_unit);
 		init_h264_structures();
 	}
-	//TYPE 8 = Picture parameter set TODO: Provjera je li vec postoji PPS i SPS
+	//TYPE 8 = Picture parameter set TODO: Provjera postoji li veæ PPS i SPS
 	else if (nal_unit.nal_unit_type==NAL_UNIT_TYPE_PPS)
 	{
 		fill_pps(&nal_unit);
@@ -48,13 +48,7 @@ void RBSP_decode(NALunit nal_unit)
 	//Macroblock skipping is implemented
 	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
 	{
-		// TEST: ÈAROBNI UVJET
-		//if ((idr_frame_number < 3) && (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
-		//{
-		//	return;
-		//}
-
-		//idr_frame_number++;
+		if(nalBrojac < 112) return;
 
 		//Read slice header
 		fill_shd(&nal_unit);
@@ -127,15 +121,8 @@ void RBSP_decode(NALunit nal_unit)
 			{ 
 				// Norm: start macroblock_layer()
 				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
+
 				mb_type = expGolomb_UD();
-
-				//Current macroblock coordinates
-				mb_pos_x=CurrMbAddr%sps.PicWidthInMbs;
-				mb_pos_y=CurrMbAddr/sps.PicWidthInMbs;
-
-				//Store the mb_type at appropriate location in the array
-				//PITCH=Line size, currently equal to "width"
-
 				mb_type_array[CurrMbAddr]=mb_type;
 				
 

@@ -97,7 +97,7 @@ extern mode_pred_info *mpi;
 #define I_16x16_3_2_1 24
 #define I_PCM 25
 
-#define P_Skip		   26
+#define P_Skip		   31
 
 #define P_L0_8x8       0
 #define P_L0_8x4       1
@@ -150,7 +150,7 @@ extern int colour_block_width;
 extern int mb_type;
 
 //mb_type values for all the macroblocks in the current frame/slice/NAL unit
-extern int mb_type_array[100000];
+extern int mb_type_array[10000];
 
 //Picture/Frame dimensions in macroblocks (divided by 16 in both dimensions)
 extern int PicWidthInMbs, PicHeightInMbs;
@@ -164,7 +164,7 @@ extern int PicWidthInCbs, PicHeightInCbs;
 //Macro functions to make the "slice_decode" part of the program look more like the norm :)
 
 //"x" can be only "0" or "1".
-#define MbPartPredMode(mb_type, x)				(((shd.slice_type%5)==P_SLICE)?P_and_SP_macroblock_modes[mb_type][3+x]:I_Macroblock_Modes[mb_type][3])
+#define MbPartPredMode(mb_type, x)				(((shd.slice_type%5)==P_SLICE)?P_and_SP_macroblock_modes[mb_type][3+(x%2)]:I_Macroblock_Modes[mb_type][3])
 #define NumMbPart(mb_type)						P_and_SP_macroblock_modes[mb_type][2]
 #define Intra16x16PredMode						((shd.slice_type%5)==P_SLICE)?I_Macroblock_Modes[mb_type-5][4]:I_Macroblock_Modes[mb_type][4]
 												
@@ -214,9 +214,9 @@ extern int CurrMbAddr;
 
 extern int to_4x4_luma_block[16];
 
-extern int mb_pos_array[100000];
+extern int mb_pos_array[10000];
 
-extern int totalcoeff_array_luma[1000000][16];
-extern int totalcoeff_array_chroma[2][1000000][4];
+extern int totalcoeff_array_luma[10000][16];
+extern int totalcoeff_array_chroma[2][10000][4];
 
 extern int invoked_for_Intra16x16DCLevel, invoked_for_Intra16x16ACLevel, invoked_for_LumaLevel, invoked_for_ChromaACLevel, invoked_for_ChromaDCLevel;

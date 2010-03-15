@@ -200,13 +200,13 @@ int colour_block_width;
 int mb_type;
 
 //mb_type values for all the macroblocks in the current frame/slice/NAL unit
-int mb_type_array[100000];
-int mb_pos_array[100000];
+int mb_type_array[10000];
+int mb_pos_array[10000];
 
 //TODO: Frames with more than 1000000 4x4 blocks 
-int totalcoeff_array_luma[1000000][16];
+int totalcoeff_array_luma[10000][16];
 //TODO: Use less data for each chroma channel :)
-int totalcoeff_array_chroma[2][1000000][4];
+int totalcoeff_array_chroma[2][10000][4];
 
 int invoked_for_Intra16x16DCLevel, invoked_for_Intra16x16ACLevel, invoked_for_LumaLevel, invoked_for_ChromaACLevel, invoked_for_ChromaDCLevel;
 
