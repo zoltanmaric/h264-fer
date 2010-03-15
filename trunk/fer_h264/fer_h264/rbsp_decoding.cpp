@@ -116,12 +116,6 @@ void RBSP_decode(NALunit nal_unit)
 				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
 				mb_type = expGolomb_UD();
 
-				// TEST: KITABRINGER!
-				//if ((shd.slice_type == P_SLICE) && (mb_type > 4))
-				//{
-				//	mb_type -= 4;
-				//}
-
 				//Current macroblock coordinates
 				mb_pos_x=CurrMbAddr%sps.PicWidthInMbs;
 				mb_pos_y=CurrMbAddr/sps.PicWidthInMbs;
@@ -197,7 +191,6 @@ void RBSP_decode(NALunit nal_unit)
 						//Norm:
 						//if( MbPartPredMode( mb_type, 0 ) = = Intra_8x8 )
 						//This if clause has been skipped, because "intra_8x8" is not supported in baseline.
-
 
 						//Norm:
 						//if( ChromaArrayType == 1 || ChromaArrayType == 2 )
@@ -282,7 +275,6 @@ void RBSP_decode(NALunit nal_unit)
 					//residual_block_cavlc( coeffLevel, startIdx, endIdx, maxNumCoeff )
 
 					residual(0, 15);
-
 				}
 				else
 				{

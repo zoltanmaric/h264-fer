@@ -56,14 +56,40 @@ Fifth column:	MbPartPredMode( mb_type, 1 )
 Sixth column:	MbPartWidth( mb_type )
 Seventh column:	MbPartHeight( mb_type )
 */
-int P_and_SP_macroblock_modes[6][7]=
+int P_and_SP_macroblock_modes[32][7]=
 {
   {0,	P_L0_16x16,		1, Pred_L0, NA,      16, 16},
   {1,	P_L0_L0_16x8,	2, Pred_L0, Pred_L0, 16,  8},
   {2,	P_L0_L0_8x16,	2, Pred_L0, Pred_L0,  8, 16},
   {3,	P_8x8,			4, NA,      NA,       8,  8},
   {4,	P_8x8ref0,		4, NA,      NA,       8,  8},
-  {NA,	P_Skip,			1, P_Skip,  NA,      16, 16}
+  {0,	I_4x4,			0,	Intra_4x4,   NA, NA, NA},
+  {1,	I_16x16_0_0_0,	NA,	Intra_16x16,  0,  0,  0},
+  {2,	I_16x16_1_0_0,	NA,	Intra_16x16,  1,  0,  0},
+  {3,	I_16x16_2_0_0,	NA,	Intra_16x16,  2,  0,  0},
+  {4,	I_16x16_3_0_0,	NA,	Intra_16x16,  3,  0,  0},
+  {5,	I_16x16_0_1_0,	NA,	Intra_16x16,  0,  1,  0},
+  {6,	I_16x16_1_1_0,	NA,	Intra_16x16,  1,  1,  0},
+  {7,	I_16x16_2_1_0,	NA,	Intra_16x16,  2,  1,  0},
+  {8,	I_16x16_3_1_0,	NA,	Intra_16x16,  3,  1,  0},
+  {9,	I_16x16_0_2_0,	NA,	Intra_16x16,  0,  2,  0},
+  {10,	I_16x16_1_2_0,	NA,	Intra_16x16,  1,  2,  0},
+  {11,	I_16x16_2_2_0,	NA,	Intra_16x16,  2,  2,  0},
+  {12,	I_16x16_3_2_0,	NA,	Intra_16x16,  3,  2,  0},
+  {13,	I_16x16_0_0_1,	NA,	Intra_16x16,  0,  0, 15},
+  {14,	I_16x16_1_0_1,	NA,	Intra_16x16,  1,  0, 15},
+  {15,	I_16x16_2_0_1,	NA,	Intra_16x16,  2,  0, 15},
+  {16,	I_16x16_3_0_1,	NA,	Intra_16x16,  3,  0, 15},
+  {17,	I_16x16_0_1_1,	NA,	Intra_16x16,  0,  1, 15},
+  {18,	I_16x16_1_1_1,	NA,	Intra_16x16,  1,  1, 15},
+  {19,	I_16x16_2_1_1,	NA,	Intra_16x16,  2,  1, 15},
+  {20,	I_16x16_3_1_1,	NA,	Intra_16x16,  3,  1, 15},
+  {21,	I_16x16_0_2_1,	NA,	Intra_16x16,  0,  2, 15},
+  {22,	I_16x16_1_2_1,	NA,	Intra_16x16,  1,  2, 15},
+  {23,	I_16x16_2_2_1,	NA,	Intra_16x16,  2,  2, 15},
+  {24,	I_16x16_3_2_1,	NA,	Intra_16x16,  3,  2, 15},
+  {25,	I_PCM,			NA,	NA,			  NA, NA, NA},
+  {NA,	P_Skip,			 1, P_Skip,  	  NA, 16, 16}
 };
 
 
