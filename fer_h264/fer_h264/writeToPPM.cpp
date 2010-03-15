@@ -54,40 +54,11 @@ void toRGB()
 	}
 }
 
-void writeToPPM_bringer(int frameCount)
+void writeToPPM()
 {
-	FILE *out;
-
-	char filename[50];
-	sprintf(filename, "frame%d.ppm", frameCount);
-    out=fopen(filename,"w");
-    fprintf(out,"P3\n1920 816\n255\n");
-    int i,j;
-
-    for (i=0;i<816;i++)
-	{
-    for (j=0;j<1920;j++)
-    {
-		B[i][j] = 1.164*(frame.L[i*frame.Lwidth+j]- 16)                   + 2.018*(frame.C[0][(i/2)*frame.Cwidth+(j/2)] - 128);
-		G[i][j] = 1.164*(frame.L[i*frame.Lwidth+j] - 16) - 0.813*(frame.C[1][(i/2)*frame.Cwidth+(j/2)] - 128) - 0.391*(frame.C[0][(i/2)*frame.Cwidth+(j/2)] - 128);
-		R[i][j] = 1.164*(frame.L[i*frame.Lwidth+j] - 16) + 1.596*(frame.C[1][(i/2)*frame.Cwidth+(j/2)] - 128);
-		if (R[i][j]>255) R[i][j]=255;
-		if (G[i][j]>255) G[i][j]=255;
-		if (B[i][j]>255) B[i][j]=255;
-		if (R[i][j]<0) R[i][j]=0;
-		if (G[i][j]<0) G[i][j]=0;
-		if (B[i][j]<0) B[i][j]=0;
-
-		fprintf(out,"%d %d %d ",R[i][j],G[i][j],B[i][j]);
-    }
-		fprintf(out,"\n");
-	}
-    
-    fclose(out);
-}
-
-void writeToPPM(int frameCount)
-{
+	static int frameCount = 0;
+	frameCount++;
+	
 	toRGB();
 
 	char *pic;
@@ -107,7 +78,11 @@ void writeToPPM(int frameCount)
 
 	FILE *f;
 	char filename[50];
-	sprintf(filename, "frame%d.ppm", frameCount);
+	int frameCount1, frameCount10, frameCount100;
+	frameCount1 = frameCount % 10;
+	frameCount10 = (frameCount%100)/10;
+	frameCount100 = (frameCount%1000)/100;
+	sprintf(filename, "frame%d%d%d.ppm", frameCount100, frameCount10, frameCount1);
 	f = fopen(filename,"wt");
 	fprintf(f, "P3\n%d %d\n255\n", frame.Lwidth, frame.Lheight);
 	fwrite(pic, 1, k, f);

@@ -48,6 +48,14 @@ void RBSP_decode(NALunit nal_unit)
 	//Macroblock skipping is implemented
 	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
 	{
+		// TEST: ÈAROBNI UVJET
+		//if ((idr_frame_number < 3) && (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
+		//{
+		//	return;
+		//}
+
+		//idr_frame_number++;
+
 		//Read slice header
 		fill_shd(&nal_unit);
 
@@ -87,6 +95,11 @@ void RBSP_decode(NALunit nal_unit)
 				prevMbSkipped = (mb_skip_run > 0);
 				for(int i=0; i<mb_skip_run; i++ )
 				{
+					if (CurrMbAddr >= MbCount)
+					{
+						break;
+					}
+					
 					mb_type = P_Skip;
 					mb_type_array[CurrMbAddr]=P_Skip;
 
@@ -139,7 +152,8 @@ void RBSP_decode(NALunit nal_unit)
 				// Everything as described in norm page 119. table 7-11.
 
 				//Specific inter prediction?
-				if(mb_type != I_4x4 /*&& mb_type != I_8x8*/ && MbPartPredMode( mb_type, 0 )!=Intra_16x16 && NumMbPart( mb_type )==4 )
+				// Norm: if (mb_type != I_NxN && MbPartPredMode(mb_type,0) != Intra_16x16 && NumMbPart(mb_type) == 4)
+				if(MbPartPredMode(mb_type,0) != Intra_4x4 && MbPartPredMode( mb_type, 0 )!=Intra_16x16 && NumMbPart( mb_type )==4 )
 				{
 					// Norm: start sub_mb_pred(mb_type)
 					int mbPartIdx;
@@ -259,8 +273,16 @@ void RBSP_decode(NALunit nal_unit)
 				//DOES NOT EXIST IN THE NORM!
 				else
 				{
-					CodedBlockPatternChroma=I_Macroblock_Modes[mb_type][5];
-					CodedBlockPatternLuma=I_Macroblock_Modes[mb_type][6];
+					if (shd.slice_type % 5 == I_SLICE)
+					{
+						CodedBlockPatternChroma=I_Macroblock_Modes[mb_type][5];
+						CodedBlockPatternLuma=I_Macroblock_Modes[mb_type][6];
+					}
+					else
+					{
+						CodedBlockPatternChroma=P_and_SP_macroblock_modes[mb_type][5];
+						CodedBlockPatternLuma=P_and_SP_macroblock_modes[mb_type][6];
+					}
 				}				
 
 				CodedBlockPatternLumaArray[CurrMbAddr] = CodedBlockPatternLuma;
@@ -324,16 +346,10 @@ void RBSP_decode(NALunit nal_unit)
 
 		// Reference frame list modification
 		modificationProcess();
-
-		static int intraFrameCounter = 1;
 		
-		writeToPPM(intraFrameCounter++);
+		writeToPPM();
 
 		idr_frame_number++;
-		
-		
-		//if (intraFrameCounter > 3)
-		//	exit(0);
 		
 		int stop = 0;
 	}

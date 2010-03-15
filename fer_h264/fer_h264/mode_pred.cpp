@@ -18,12 +18,12 @@ bool get_neighbour_mv(int org_x, int org_y, int neighbourMbAddr, int mbPartIdx, 
 {
 	*mvNx = MV_NA; *mvNy = MV_NA;
 	if (org_x < 0 || org_y < 0 || org_x >= frame.Lwidth) return true; // not available, but still valid
-	if (   MPI_mb_type(neighbourMbAddr) != P_L0_16x16
-		&& MPI_mb_type(neighbourMbAddr) != P_8x8
-		&& MPI_mb_type(neighbourMbAddr) != P_L0_L0_16x8
-		&& MPI_mb_type(neighbourMbAddr) != P_L0_L0_8x16
-		&& MPI_mb_type(neighbourMbAddr) != P_8x8ref0
-		&& MPI_mb_type(neighbourMbAddr) != P_Skip
+	if (   mb_type_array[neighbourMbAddr] != P_L0_16x16
+		&& mb_type_array[neighbourMbAddr] != P_8x8
+		&& mb_type_array[neighbourMbAddr] != P_L0_L0_16x8
+		&& mb_type_array[neighbourMbAddr] != P_L0_L0_8x16
+		&& mb_type_array[neighbourMbAddr] != P_8x8ref0
+		&& mb_type_array[neighbourMbAddr] != P_Skip
 		|| MPI_refIdxL0(neighbourMbAddr) != curr_refIdxL0) 
 	{
 		*mvNx = 0; *mvNy = 0; *refIdxL0N = -1;
@@ -47,24 +47,23 @@ void PredictMV_Luma(int mbPartIdx)
 	bool validA = get_neighbour_mv(org_x-16, org_y, CurrMbAddr-1, 0, curr_refIdxL0, &mvAx, &mvAy, &refIdxL0A);
 	bool validB = get_neighbour_mv(org_x, org_y-16, CurrMbAddr-sps.PicWidthInMbs, 0, curr_refIdxL0, &mvBx, &mvBy, &refIdxL0B);
 	bool validC = get_neighbour_mv(org_x+16, org_y-16, CurrMbAddr-sps.PicWidthInMbs+1, 0, curr_refIdxL0, &mvCx, &mvCy, &refIdxL0C);
-	int curr_mb_type = MbPartPredMode(mb_type,0);
 
-	if (curr_mb_type == P_L0_L0_16x8 && mbPartIdx == 0 && mvBx != MV_NA && curr_refIdxL0 == refIdxL0B)
+	if (mb_type == P_L0_L0_16x8 && mbPartIdx == 0 && mvBx != MV_NA && curr_refIdxL0 == refIdxL0B)
 	{
 		MPI_mvL0x(CurrMbAddr, mbPartIdx) = mvBx; MPI_mvL0y(CurrMbAddr, mbPartIdx) = mvBy;
 		return;
 	}
-	if (curr_mb_type == P_L0_L0_16x8 && mbPartIdx == 1 && mvAx != MV_NA && curr_refIdxL0 == refIdxL0A)
+	if (mb_type == P_L0_L0_16x8 && mbPartIdx == 1 && mvAx != MV_NA && curr_refIdxL0 == refIdxL0A)
 	{
 		MPI_mvL0x(CurrMbAddr, mbPartIdx) = mvAx; MPI_mvL0y(CurrMbAddr, mbPartIdx) = mvAy;
 		return;
 	}
-	if (curr_mb_type == P_L0_L0_8x16 && mbPartIdx == 0 && mvAx != MV_NA && curr_refIdxL0 == refIdxL0A)
+	if (mb_type == P_L0_L0_8x16 && mbPartIdx == 0 && mvAx != MV_NA && curr_refIdxL0 == refIdxL0A)
 	{
 		MPI_mvL0x(CurrMbAddr, mbPartIdx) = mvAx; MPI_mvL0y(CurrMbAddr, mbPartIdx) = mvAy;
 		return;
 	}
-	if (curr_mb_type == P_L0_L0_8x16 && mbPartIdx == 1 && mvCx != MV_NA && curr_refIdxL0 == refIdxL0C)
+	if (mb_type == P_L0_L0_8x16 && mbPartIdx == 1 && mvCx != MV_NA && curr_refIdxL0 == refIdxL0C)
 	{
 		MPI_mvL0x(CurrMbAddr, mbPartIdx) = mvCx; MPI_mvL0y(CurrMbAddr, mbPartIdx) = mvCy;
 		return;
@@ -99,7 +98,7 @@ void PredictMV_Luma(int mbPartIdx)
 	// if everything is OK, Median of neighbouring partition is used
 	MPI_mvL0x(CurrMbAddr, mbPartIdx) = Median(mvAx, mvBx, mvCx);
 	MPI_mvL0y(CurrMbAddr, mbPartIdx) = Median(mvAy, mvBy, mvCy);
-	if (curr_mb_type == P_8x8 || curr_mb_type == P_8x8ref0)
+	if (mb_type == P_8x8 || mb_type == P_8x8ref0)
 	{
 		// Here should be part for generating predicted MV of 4x4 parts (if defined).
 		// For now it's equal to MV of current macroblock part (8x8 size).
@@ -113,13 +112,12 @@ void PredictMV_Luma(int mbPartIdx)
 
 void PredictMV()
 {
-	if (MbPartPredMode(mb_type, 0) == P_Skip)
+	if (mb_type == P_Skip)
 	{
 		for (int i = 0; i < 4; i++)
 			for (int j = 0; j < 4; j++)
 				for (int k = 0; k < 2; k++)
 					mvd_l0[i][j][k] = 0;
-		MPI_subMvCnt(CurrMbAddr) = 1;
 		MPI_refIdxL0(CurrMbAddr) = 0;
 		if (CurrMbAddr < sps.PicWidthInMbs || CurrMbAddr%sps.PicWidthInMbs == 0)
 		{
@@ -137,10 +135,10 @@ void PredictMV()
 		}
 	} else { // in baseline profile cannot occur B_* MB_TYPE, so, except P_SKIP, normal derivation for luma vector prediction is used
 		PredictMV_Luma(0);
-		if (MPI_subMvCnt(CurrMbAddr) > 1)
+		if (NumMbPart(mb_type) > 1)
 		{
 			PredictMV_Luma(1);
-			if (MPI_subMvCnt(CurrMbAddr) > 2)
+			if (NumMbPart(mb_type) > 2)
 			{
 				PredictMV_Luma(2);
 				PredictMV_Luma(3);
@@ -154,7 +152,7 @@ void DeriveMVs() {
 	// Prediction
 	PredictMV();
 	// Populate every submacroblocks (for example, in 16x8 partition, motion vectors for two more subMBhas to be assigned).
-	if (MPI_subMvCnt(CurrMbAddr) == 1)
+	if (NumMbPart(mb_type) == 1)
 	{
 			MPI_mvL0x(CurrMbAddr, 1) = MPI_mvL0x(CurrMbAddr, 0);
 			MPI_mvL0y(CurrMbAddr, 1) = MPI_mvL0y(CurrMbAddr, 0);
@@ -163,7 +161,7 @@ void DeriveMVs() {
 			MPI_mvL0x(CurrMbAddr, 3) = MPI_mvL0x(CurrMbAddr, 0);
 			MPI_mvL0y(CurrMbAddr, 3) = MPI_mvL0y(CurrMbAddr, 0);
 	}
-	if (MPI_subMvCnt(CurrMbAddr) == 2)
+	if (NumMbPart(mb_type) == 2)
 	{
 		if (MPI_mb_type(CurrMbAddr) == P_L0_L0_16x8) // P_16x8
 		{
@@ -180,12 +178,28 @@ void DeriveMVs() {
 			MPI_mvL0y(CurrMbAddr, 3) = MPI_mvL0y(CurrMbAddr, 1);
 		}
 	}
+
+	// k is the divisor for the subMbPart index of mvd_l0
+	int k;
+	if (NumMbPart(mb_type) == 1)
+	{
+		k = 4;
+	}
+	else if (NumMbPart(mb_type) == 2)
+	{
+		k = 2;
+	}
+	else
+	{
+		k = 1;
+	}
+
 	// Adding given difference
 	for (int i = 0; i < 4; i++)
-	{
-		MPI_mvL0x(CurrMbAddr, i) += mvd_l0[i][0][0];
-		MPI_mvL0y(CurrMbAddr, i) += mvd_l0[i][0][1];
-		if (MPI_subMvCnt(CurrMbAddr) != 4)
+	{		
+		MPI_mvL0x(CurrMbAddr, i) += mvd_l0[i/k][0][0];
+		MPI_mvL0y(CurrMbAddr, i) += mvd_l0[i/k][0][1];
+		if (NumMbPart(mb_type) != 4)
 		{ // If current macroblock isn't 8x8 partitioned, then every 4x4 subpart in submacroblocks has the same MV.
 			for (int j = 0; j < 4; j++)
 			{
@@ -197,8 +211,8 @@ void DeriveMVs() {
 			// If current macroblock is 8x8 partitioned, then only mvdx, mvdy is added to predicted MV.
 			for (int j = 0; j < 4; j++)
 			{
-				MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) += mvd_l0[i][j][0];
-				MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) += mvd_l0[i][j][1];
+				MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) += mvd_l0[i/k][j][0];
+				MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) += mvd_l0[i/k][j][1];
 				int test = 0;
 			}
 		}

@@ -600,6 +600,7 @@ void Intra16x16SamplePrediction(int predL[16][16])
 			int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
 
 			p(x,y) = frame.L[(yM+yW)*frame.Lwidth + (xM+xW)];
+			int test = 0;
 		}
 	}
 
