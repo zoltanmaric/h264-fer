@@ -84,3 +84,26 @@ void writeToPPM()
 	free(blue);
 	free(pic);
 }
+
+void writeToY4M()
+{
+	static unsigned long frameCount = 0;
+	unsigned long fPos;
+
+	frameCount++;
+
+	FILE *f;
+	f = fopen("Bourne.y4m","ab");
+	char *output;
+	output = new char[5000000];
+
+	int pos = 0;
+	if (frameCount == 1)
+	{
+		// Write file header
+		// TEST: C420 may be wrong
+		pos = sprintf(output, "YUV4MPEG2 W%d H%d F30:1 Ip A1:1 C420 ");
+	}
+	// TEST: may need fseek first
+	fPos = ftell(f);
+}
