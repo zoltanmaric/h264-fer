@@ -134,7 +134,8 @@ void getIntra4x4PredMode(int luma4x4BlkIdx, int *mbAddrA, int *mbAddrB)
 	// no checking whether the neighbouring
 	// macroblocks are coded as P-macroblocks
 	bool dcPredModePredictedFlag = false;
-	if ((*mbAddrA == -1) || (*mbAddrB == -1))
+	if ((*mbAddrA == -1) || (*mbAddrB == -1) ||
+		(((*mbAddrA != -1) || (*mbAddrB != -1)) && (pps.constrained_intra_pred_flag == 1)))
 		dcPredModePredictedFlag = true;
 
 	int absIdx = CurrMbAddr * 16 + luma4x4BlkIdx;
@@ -146,7 +147,7 @@ void getIntra4x4PredMode(int luma4x4BlkIdx, int *mbAddrA, int *mbAddrB)
 	}
 	else
 	{
-		if (mb_type_array[*mbAddrA] != I_4x4)		// if the macroblock of the neighbouring
+		if (MbPartPredMode(mb_type_array[*mbAddrA],0) != Intra_4x4)		// if the macroblock of the neighbouring
 		{											// submacroblock is not using 4x4 prediction
 			intraMxMPredModeA = 2;					// dc prediction mode
 		}
@@ -155,7 +156,7 @@ void getIntra4x4PredMode(int luma4x4BlkIdx, int *mbAddrA, int *mbAddrB)
 			int absIdxA = *mbAddrA * 16 + luma4x4BlkIdxA;
 			intraMxMPredModeA = Intra4x4PredMode[absIdxA];
 		}
-		if (mb_type_array[*mbAddrB] != I_4x4)		// if the macroblock of the neighbouring
+		if (MbPartPredMode(mb_type_array[*mbAddrB],0) != Intra_4x4)		// if the macroblock of the neighbouring
 		{											// submacroblock is not using 4x4 prediction
 			intraMxMPredModeB = 2;					// dc prediction mode
 		}
