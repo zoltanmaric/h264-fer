@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdio.h>
 #include "h264_globals.h"
 
 extern int ZigZagReordering[16][2];

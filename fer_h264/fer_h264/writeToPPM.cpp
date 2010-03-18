@@ -1,13 +1,11 @@
-#include <stdlib.h>
-#include <stdio.h>
-
+#include "writeToPPM.h"
 #include "h264_globals.h"
-
-int R[816][1920],G[816][1920],B[816][1920];
 
 int *red;
 int *green;
 int *blue;
+
+FILE *yuvoutput;
 
 void toRGB()
 {
@@ -88,22 +86,43 @@ void writeToPPM()
 void writeToY4M()
 {
 	static unsigned long frameCount = 0;
-	unsigned long fPos;
+	int i;
+	FILE *f;
 
 	frameCount++;
 
-	FILE *f;
-	f = fopen("Bourne.y4m","ab");
 	char *output;
 	output = new char[5000000];
 
-	int pos = 0;
+	unsigned int pos = 0;
 	if (frameCount == 1)
 	{
+		//f = fopen("Bourne.yuv","wb");
+
 		// Write file header
-		// TEST: C420 may be wrong
-		pos = sprintf(output, "YUV4MPEG2 W%d H%d F30:1 Ip A1:1 C420 ");
+		pos = sprintf(output, "YUV4MPEG2 W%d H%d F24000:1001 Ip A1:1 C420 %c", frame.Lwidth, frame.Lheight, 0x0a);
 	}
-	// TEST: may need fseek first
-	fPos = ftell(f);
+	else
+	{
+		//f = fopen("Bourne.yuv","ab");
+	}
+
+	pos += sprintf(&(output[pos]), "FRAME%c", 0x0a);
+	for (i = 0; i < frame.Lwidth * frame.Lheight; i++)
+	{
+		output[pos++] = frame.L[i];
+	}
+	for (i = 0; i < frame.Cwidth * frame.Cheight; i++)
+	{
+		output[pos++] = frame.C[0][i];
+	}
+	for (i = 0; i < frame.Cwidth * frame.Cheight; i++)
+	{
+		output[pos++] = frame.C[1][i];
+	}
+
+	fwrite(output, 1, pos, yuvoutput);
+	//fclose(f);
+	free(output);
+	if (frameCount == 600) exit(0);
 }
