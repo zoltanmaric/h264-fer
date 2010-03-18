@@ -25,12 +25,12 @@ void InverseMacroblockPartitionScan(int mbPartIdx, int *x, int *y)
 	*y = InverseRasterScan(mbPartIdx, P_and_SP_macroblock_modes[mb_type][5], P_and_SP_macroblock_modes[mb_type][6], 16, 1);
 }
 
-// return false if neighbour MV is not valid (different refIdxL0)
 void get_neighbour_mv(int mbAddrN, int mbPartIdx, int * mvNx, int * mvNy, int * refIdxL0N)
 {
-	if (   P_and_SP_macroblock_modes[ mb_type_array[mbAddrN] ][2] == NA) 
+	if (P_and_SP_macroblock_modes[ mb_type_array[mbAddrN] ][2] == NA || P_and_SP_macroblock_modes[ mb_type_array[mbAddrN] ][2] == 0) 
 	{
 		*mvNx = 0; *mvNy = 0; *refIdxL0N = -1;
+		return;
 	} 
 	*mvNx = MPI_mvL0x(mbAddrN, mbPartIdx);
 	*mvNy = MPI_mvL0y(mbAddrN, mbPartIdx);
@@ -67,6 +67,7 @@ void DeriveNeighbourLocation(int xN, int yN, int * mbAddrN, int * xW, int * yW, 
 	if (*yW < 0) 
 	{ 
 		if (CurrMbAddr < frame.Lwidth/16) *validN = false;
+		if (CurrMbAddr % (frame.Lwidth/16) == 0) *validN = false;
 		*yW += 16; 
 		return; 
 	}
@@ -105,7 +106,7 @@ void DeriveNeighbourPartitions(int mbPartIdx, int subMbPartIdx,
 
 	predPartWidth = 16;
 	if (mb_type == P_8x8 || mb_type == P_8x8ref0)
-		predPartWidth = 4;
+		predPartWidth = 8;
 	if (mb_type == P_L0_L0_8x16)
 		predPartWidth = 8;
 
@@ -154,7 +155,11 @@ void PredictMV_Luma(int mbPartIdx)
 	}
 
 	for (int i = 0; i < 3; i++)
-		if (validN[i]) get_neighbour_mv(mbAddrN[i], mbPartIdxN[i], &mvNx[i], &mvNy[i], &refIdxL0N[i]);
+		if (validN[i]) 
+		{
+			//if (mb_type_array[mbAddrN[i]] == P_L0_L0_16x8) mbPartIdxN[i] *= 2;
+			get_neighbour_mv(mbAddrN[i], mbPartIdxN[i], &mvNx[i], &mvNy[i], &refIdxL0N[i]);
+		}
 
 	if (mb_type == P_L0_L0_16x8 && mbPartIdx == 0 && mvNx[1] != MV_NA && curr_refIdxL0 == refIdxL0N[1])
 	{
@@ -176,9 +181,9 @@ void PredictMV_Luma(int mbPartIdx)
 		MPI_mvL0x(CurrMbAddr, mbPartIdx) = mvNx[2]; MPI_mvL0y(CurrMbAddr, mbPartIdx) = mvNy[2];
 		return;
 	}
-	if (mvNx[0] == MV_NA && mvNx[1] == MV_NA)
+	if (mvNx[0] == MV_NA)
 	{
-		mvNx[0] = 0; mvNy[0] = 0; refIdxL0[0] = curr_refIdxL0;
+		mvNx[0] = 0; mvNy[0] = 0; refIdxL0N[0] = curr_refIdxL0;
 	}
 	if (mvNx[1] == MV_NA)
 	{
@@ -227,15 +232,18 @@ void PredictMV()
 				for (int k = 0; k < 2; k++)
 					mvd_l0[i][j][k] = 0;
 		MPI_refIdxL0(CurrMbAddr) = 0;
+
 		if (CurrMbAddr < sps.PicWidthInMbs || CurrMbAddr%sps.PicWidthInMbs == 0)
 		{
 			MPI_mvL0x(CurrMbAddr, 0) = 0;
 			MPI_mvL0y(CurrMbAddr, 0) = 0;
 		} else {
-			int u = MPI_mvL0x(CurrMbAddr-sps.PicWidthInMbs, 0);
-			int u1 = *(mvL0x+16*(CurrMbAddr-sps.PicWidthInMbs));
-			if ((MPI_refIdxL0(CurrMbAddr-sps.PicWidthInMbs) | MPI_mvL0x(CurrMbAddr-sps.PicWidthInMbs, 0) | MPI_mvL0y(CurrMbAddr-sps.PicWidthInMbs, 0)) == 0 ||
-				(MPI_refIdxL0(CurrMbAddr-1) | MPI_mvL0x(CurrMbAddr-1, 0) | MPI_mvL0y(CurrMbAddr-1, 0)) == 0)
+			int u = MPI_mvL0x(CurrMbAddr-sps.PicWidthInMbs, 2);
+			int u1 = MPI_mvL0y(CurrMbAddr-sps.PicWidthInMbs, 2);
+			int u2 = MPI_mvL0x(CurrMbAddr-1, 1);
+			int u3 = MPI_mvL0y(CurrMbAddr-1, 1);
+			if (((P_and_SP_macroblock_modes[mb_type_array[CurrMbAddr-sps.PicWidthInMbs]][2] == NA) | MPI_refIdxL0(CurrMbAddr-sps.PicWidthInMbs) | MPI_mvL0x(CurrMbAddr-sps.PicWidthInMbs, 2) | MPI_mvL0y(CurrMbAddr-sps.PicWidthInMbs, 2)) == 0 ||
+				((P_and_SP_macroblock_modes[mb_type_array[CurrMbAddr-1]][2] == NA) | MPI_refIdxL0(CurrMbAddr-1) | MPI_mvL0x(CurrMbAddr-1, 1) | MPI_mvL0y(CurrMbAddr-1, 1)) == 0)
 			{
 				MPI_mvL0x(CurrMbAddr, 0) = 0;
 				MPI_mvL0y(CurrMbAddr, 0) = 0;
@@ -247,6 +255,7 @@ void PredictMV()
 		}
 	} else { // in baseline profile cannot occur B_* MB_TYPE, so, except P_SKIP, normal derivation for luma vector prediction is used
 		PredictMV_Luma(0);
+		int t_1 = MPI_mvL0x(CurrMbAddr, 0), t_2 = MPI_mvL0y(CurrMbAddr, 0);
 		MPI_mvL0x(CurrMbAddr, 0) += mvd_l0[0][0][0];
 		MPI_mvL0y(CurrMbAddr, 0) += mvd_l0[0][0][1];
 		if (NumMbPart(mb_type) > 1)
@@ -257,9 +266,9 @@ void PredictMV()
 			if (NumMbPart(mb_type) > 2)
 			{
 				PredictMV_Luma(2);
-				PredictMV_Luma(3);
 				MPI_mvL0x(CurrMbAddr, 2) += mvd_l0[2][0][0];
 				MPI_mvL0y(CurrMbAddr, 2) += mvd_l0[2][0][1];
+				PredictMV_Luma(3);
 				MPI_mvL0x(CurrMbAddr, 3) += mvd_l0[3][0][0];
 				MPI_mvL0y(CurrMbAddr, 3) += mvd_l0[3][0][1];
 			}
@@ -327,32 +336,13 @@ void DeriveMVs() {
 		//}
 		bla[i][0][0] = MPI_mvL0x(CurrMbAddr, i);
 		bla[i][0][1] = MPI_mvL0y(CurrMbAddr, i);
-		if (NumMbPart(mb_type) != 4)
-		{ // If current macroblock isn't 8x8 partitioned, then every 4x4 subpart in submacroblocks has the same MV.
-			for (int j = 0; j < 4; j++)
-			{
-				MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) = MPI_mvL0x(CurrMbAddr, i);
-				MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) = MPI_mvL0y(CurrMbAddr, i);
-				bla[i][j][0] = MPI_mvSubL0x_byIdx(CurrMbAddr, i, j);
-				bla[i][j][1] = MPI_mvSubL0y_byIdx(CurrMbAddr, i, j);
-				int test = 0;
-			}
-		} else {
-			// If current macroblock is 8x8 partitioned, then only mvdx, mvdy is added to predicted MV.
-			for (int j = 0; j < 4; j++)
-			{
-				if (mb_type == P_L0_L0_8x16)
-				{
-					MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) += mvd_l0[i%2][j][0];
-					MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) += mvd_l0[i%2][j][1];
-				} else {
-					MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) += mvd_l0[i/k][j][0];
-					MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) += mvd_l0[i/k][j][1];
-				}
-				bla[i][j][0] = MPI_mvSubL0x_byIdx(CurrMbAddr, i, j);
-				bla[i][j][1] = MPI_mvSubL0y_byIdx(CurrMbAddr, i, j);
-				int test = 0;
-			}
+		for (int j = 0; j < 4; j++)
+		{
+			MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) = MPI_mvL0x(CurrMbAddr, i);
+			MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) = MPI_mvL0y(CurrMbAddr, i);
+			bla[i][j][0] = MPI_mvSubL0x_byIdx(CurrMbAddr, i, j);
+			bla[i][j][1] = MPI_mvSubL0y_byIdx(CurrMbAddr, i, j);
+			int test = 0;
 		}
 	}
 	int test2 = 1;
