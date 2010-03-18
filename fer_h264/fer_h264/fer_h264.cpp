@@ -25,7 +25,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			break;
 		}
 
-		RBSP_decode(nu);
+		//RBSP_decode(nu);
 	}		
 
 	fclose(stream);
