@@ -87,7 +87,6 @@ void writeToY4M()
 {
 	static unsigned long frameCount = 0;
 	int i;
-	FILE *f;
 
 	frameCount++;
 
@@ -97,14 +96,8 @@ void writeToY4M()
 	unsigned int pos = 0;
 	if (frameCount == 1)
 	{
-		//f = fopen("Bourne.yuv","wb");
-
 		// Write file header
 		pos = sprintf(output, "YUV4MPEG2 W%d H%d F24000:1001 Ip A1:1 C420 %c", frame.Lwidth, frame.Lheight, 0x0a);
-	}
-	else
-	{
-		//f = fopen("Bourne.yuv","ab");
 	}
 
 	pos += sprintf(&(output[pos]), "FRAME%c", 0x0a);
@@ -122,7 +115,6 @@ void writeToY4M()
 	}
 
 	fwrite(output, 1, pos, yuvoutput);
-	//fclose(f);
 	free(output);
 	if (frameCount == 600) exit(0);
 }

@@ -43,7 +43,7 @@ unsigned long findNALstart(FILE *input, unsigned long fPtr)
 		fseek(input, fPtr, SEEK_SET);
 	}
 
-	if (startPrefixFound == false)
+	if (bytesRead == 0)
 	{
 		return 0;
 	}
@@ -83,7 +83,7 @@ unsigned long findNALend(FILE *input, unsigned long fPtr)
 			}
 		}
 
-		if (startPrefixFound) break;
+		if (startPrefixFound || bytesRead < BUFFER_SIZE) break;
 
 		// Start code not found in this
 		// access, set the new fPtr position.
@@ -178,17 +178,11 @@ NALunit getNAL(FILE *input, unsigned long *fPtr)
 	}
 
 	fseek(input, startPtr, SEEK_SET);
-	int test;
-	if ((test = fread(NALbytes, 1, NumBytesInNALunit, input)) != NumBytesInNALunit)
+	if (fread(NALbytes, 1, NumBytesInNALunit, input) != NumBytesInNALunit)
 	{
-		//perror("Error reading NAL unit from file.\n");
-		//system("pause");
-		//exit(1);
-
-		// TEST: MOZK
-		printf("\nEnd of stream found.\n");
+		perror("Error reading NAL unit from file.\n");
 		system("pause");
-		exit(0);
+		exit(1);
 	}
 
 	*fPtr = endPtr;
