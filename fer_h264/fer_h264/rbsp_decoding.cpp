@@ -46,22 +46,21 @@ void RBSP_decode(NALunit nal_unit)
 	//Macroblock skipping is implemented
 	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
 	{
+		// TEST: tu postavi frejm od kojeg želiš poèet ispisivanje
+		// u ppm. Indeksi su isti ko u h264visi.
 		frameCount++;
 		if (frameCount < 109) return;
-		//if(nalBrojac < 112) return;
 
 		//Read slice header
 		fill_shd(&nal_unit);
 
-		printf("Working on frame number %d...\n", shd.frame_num);
+		printf("Working on frame #%d...\n", frameCount);
 
 		int MbCount=shd.PicSizeInMbs;
 
 		//Norm: firstMbAddr=first_mb_in_slice * ( 1 + MbaffFrameFlag );
 		int firstMbAddr = 0;
 
-		//Norm: CurrMbAddr = firstMbAddr
-		//Already globaly defined
 		CurrMbAddr = firstMbAddr;
 
 		//Norm: moreDataFlag = 1
