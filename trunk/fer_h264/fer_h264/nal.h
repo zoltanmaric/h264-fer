@@ -1,6 +1,5 @@
 #pragma once
-#include <stdio.h>
-#include <stdlib.h>
+#include "stdafx.h"
 
 const unsigned int BUFFER_SIZE = 1024; // the number of bytes read from the file in one access
 

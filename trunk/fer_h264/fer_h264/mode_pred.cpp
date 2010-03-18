@@ -1,6 +1,8 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+//#include <stdlib.h>
+//#include <string.h>
+//#ifndef STDIO
+//#include <stdio.h>
+//#endif
 
 #include "mode_pred.h"
 #include "h264_globals.h"

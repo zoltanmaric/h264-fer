@@ -11,8 +11,6 @@
 #include "mocomp.h"
 #include "mode_pred.h"
 
-#include <stdio.h>
-
 
 void RBSP_decode(NALunit nal_unit)
 {
@@ -335,7 +333,8 @@ void RBSP_decode(NALunit nal_unit)
 		// Reference frame list modification
 		modificationProcess();
 		
-		writeToPPM();
+		//writeToPPM();
+		writeToY4M();
 	}
 }
 
