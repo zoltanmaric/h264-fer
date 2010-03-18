@@ -187,7 +187,6 @@ int codeNum_to_coded_block_pattern_inter[48]=
 int CodedBlockPatternLuma;
 int CodedBlockPatternChroma;
 
-// Zoltan prcka po kodu:
 int *CodedBlockPatternLumaArray;
 int *CodedBlockPatternChromaArray;
 
@@ -241,6 +240,8 @@ int Intra4x4ScanOrder[16][2]={
   { 0, 8},  { 4, 8},  { 0,12},  { 4,12},
   { 8, 8},  {12, 8},  { 8,12},  {12,12}
 };
+
+int frameCount = 0;
 
 // Inter prediction globals
 int **ref_idx_l0_array;

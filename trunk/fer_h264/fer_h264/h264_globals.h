@@ -200,6 +200,9 @@ typedef struct {
 
 extern frame_type frame;
 
+// The absolute frame count starting with 1
+extern int frameCount;
+
 //frame/4 dimenzije
 extern int *Intra4x4PredMode;
 

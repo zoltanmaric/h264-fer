@@ -46,7 +46,9 @@ void RBSP_decode(NALunit nal_unit)
 	//Macroblock skipping is implemented
 	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
 	{
-		if(nalBrojac < 112) return;
+		frameCount++;
+		if (frameCount < 109) return;
+		//if(nalBrojac < 112) return;
 
 		//Read slice header
 		fill_shd(&nal_unit);
@@ -333,8 +335,8 @@ void RBSP_decode(NALunit nal_unit)
 		// Reference frame list modification
 		modificationProcess();
 		
-		//writeToPPM();
-		writeToY4M();
+		writeToPPM();
+		//writeToY4M();
 	}
 }
 
