@@ -52,8 +52,6 @@ void toRGB()
 	}
 }
 
-// startFrame: the first frame that is written to PPM,
-// the index corresponds to that in H264visa
 void writeToPPM()
 {
 	toRGB();
