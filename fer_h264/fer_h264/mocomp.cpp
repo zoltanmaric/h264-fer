@@ -103,22 +103,22 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 	// CB component - iCbCr=0
 	for(y=0; y<2; ++y)
 		for(x=0; x<2; ++x)
-			predCb[org_y+y][org_x+x] =
-			  ((8-xLinear)*(8-yLinear) * C_Temp_4x4_refPart[0][y][x]  +
-				  xLinear *(8-yLinear) * C_Temp_4x4_refPart[0][y][x+1]+
-			   (8-xLinear)*   yLinear  * C_Temp_4x4_refPart[0][y+1][x]  +
-				  xLinear *   yLinear  * C_Temp_4x4_refPart[0][y+1][x+1]+
-				32) >> 6; // Linear interpolation and rounding.
+			predCb[org_y+y][org_x+x] = 0;
+			  //((8-xLinear)*(8-yLinear) * C_Temp_4x4_refPart[0][y][x]  +
+				 // xLinear *(8-yLinear) * C_Temp_4x4_refPart[0][y][x+1]+
+			  // (8-xLinear)*   yLinear  * C_Temp_4x4_refPart[0][y+1][x]  +
+				 // xLinear *   yLinear  * C_Temp_4x4_refPart[0][y+1][x+1]+
+				//32) >> 6; // Linear interpolation and rounding.
 
 	// CR component - iCbCr=1
 	for(y=0; y<2; ++y)
 		for(x=0; x<2; ++x)
-			predCr[org_y+y][org_x+x] =
-			  ((8-xLinear)*(8-yLinear) * C_Temp_4x4_refPart[1][y][x]  +
-				  xLinear *(8-yLinear) * C_Temp_4x4_refPart[1][y][x+1]+
-			   (8-xLinear)*   yLinear  * C_Temp_4x4_refPart[1][y+1][x]  +
-				  xLinear *   yLinear  * C_Temp_4x4_refPart[1][y+1][x+1]+
-				32) >> 6; // Linear interpolation and rounding.
+			predCr[org_y+y][org_x+x] = 0;
+			  //((8-xLinear)*(8-yLinear) * C_Temp_4x4_refPart[1][y][x]  +
+				 // xLinear *(8-yLinear) * C_Temp_4x4_refPart[1][y][x+1]+
+			  // (8-xLinear)*   yLinear  * C_Temp_4x4_refPart[1][y+1][x]  +
+				 // xLinear *   yLinear  * C_Temp_4x4_refPart[1][y+1][x+1]+
+				//32) >> 6; // Linear interpolation and rounding.
 }
 
 // In baseline profile there is only refPicL0 used. There's no weighted prediction.
