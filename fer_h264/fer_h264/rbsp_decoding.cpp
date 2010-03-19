@@ -334,8 +334,8 @@ void RBSP_decode(NALunit nal_unit)
 		// Reference frame list modification
 		modificationProcess();
 		
-		writeToPPM();
-		//writeToY4M();
+		//writeToPPM();
+		writeToY4M();
 	}
 }
 
