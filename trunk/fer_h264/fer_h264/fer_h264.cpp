@@ -12,7 +12,7 @@
 int _tmain(int argc, _TCHAR* argv[])
 {
 	FILE *stream;
-	stream=fopen("drugi.264","rb");
+	stream=fopen("Bourne.264","rb");
 	yuvoutput = fopen("Bourne.yuv","wb");
 
 	unsigned long int ptr=0;
