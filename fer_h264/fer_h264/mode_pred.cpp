@@ -238,12 +238,12 @@ void PredictMV()
 			MPI_mvL0x(CurrMbAddr, 0) = 0;
 			MPI_mvL0y(CurrMbAddr, 0) = 0;
 		} else {
-			int u = MPI_mvL0x(CurrMbAddr-sps.PicWidthInMbs, 2);
-			int u1 = MPI_mvL0y(CurrMbAddr-sps.PicWidthInMbs, 2);
-			int u2 = MPI_mvL0x(CurrMbAddr-1, 1);
-			int u3 = MPI_mvL0y(CurrMbAddr-1, 1);
-			if (((P_and_SP_macroblock_modes[mb_type_array[CurrMbAddr-sps.PicWidthInMbs]][2] == NA) | MPI_refIdxL0(CurrMbAddr-sps.PicWidthInMbs) | MPI_mvL0x(CurrMbAddr-sps.PicWidthInMbs, 2) | MPI_mvL0y(CurrMbAddr-sps.PicWidthInMbs, 2)) == 0 ||
-				((P_and_SP_macroblock_modes[mb_type_array[CurrMbAddr-1]][2] == NA) | MPI_refIdxL0(CurrMbAddr-1) | MPI_mvL0x(CurrMbAddr-1, 1) | MPI_mvL0y(CurrMbAddr-1, 1)) == 0)
+			//int u = MPI_mvL0x(CurrMbAddr-sps.PicWidthInMbs, 2);
+			//int u1 = MPI_mvL0y(CurrMbAddr-sps.PicWidthInMbs, 2);
+			//int u2 = MPI_mvL0x(CurrMbAddr-1, 1);
+			//int u3 = MPI_mvL0y(CurrMbAddr-1, 1);
+			if (((P_and_SP_macroblock_modes[mb_type_array[CurrMbAddr-sps.PicWidthInMbs]][2] == 0) | (P_and_SP_macroblock_modes[mb_type_array[CurrMbAddr-sps.PicWidthInMbs]][2] == NA) | MPI_refIdxL0(CurrMbAddr-sps.PicWidthInMbs) | MPI_mvL0x(CurrMbAddr-sps.PicWidthInMbs, 2) | MPI_mvL0y(CurrMbAddr-sps.PicWidthInMbs, 2)) == 0 ||
+				((P_and_SP_macroblock_modes[mb_type_array[CurrMbAddr-1]][2] == 0) | (P_and_SP_macroblock_modes[mb_type_array[CurrMbAddr-1]][2] == NA) | MPI_refIdxL0(CurrMbAddr-1) | MPI_mvL0x(CurrMbAddr-1, 1) | MPI_mvL0y(CurrMbAddr-1, 1)) == 0)
 			{
 				MPI_mvL0x(CurrMbAddr, 0) = 0;
 				MPI_mvL0y(CurrMbAddr, 0) = 0;
@@ -255,7 +255,7 @@ void PredictMV()
 		}
 	} else { // in baseline profile cannot occur B_* MB_TYPE, so, except P_SKIP, normal derivation for luma vector prediction is used
 		PredictMV_Luma(0);
-		int t_1 = MPI_mvL0x(CurrMbAddr, 0), t_2 = MPI_mvL0y(CurrMbAddr, 0);
+		//int t_1 = MPI_mvL0x(CurrMbAddr, 0), t_2 = MPI_mvL0y(CurrMbAddr, 0);
 		MPI_mvL0x(CurrMbAddr, 0) += mvd_l0[0][0][0];
 		MPI_mvL0y(CurrMbAddr, 0) += mvd_l0[0][0][1];
 		if (NumMbPart(mb_type) > 1)
@@ -322,7 +322,7 @@ void DeriveMVs() {
 	{
 		k = 1;
 	}
-	int bla[4][4][2];
+	//int bla[4][4][2];
 	// Adding given difference
 	for (int i = 0; i < 4; i++)
 	{	
@@ -334,16 +334,16 @@ void DeriveMVs() {
 		//	MPI_mvL0x(CurrMbAddr, i) += mvd_l0[i/k][0][0];
 		//	MPI_mvL0y(CurrMbAddr, i) += mvd_l0[i/k][0][1];
 		//}
-		bla[i][0][0] = MPI_mvL0x(CurrMbAddr, i);
-		bla[i][0][1] = MPI_mvL0y(CurrMbAddr, i);
+		//bla[i][0][0] = MPI_mvL0x(CurrMbAddr, i);
+		//bla[i][0][1] = MPI_mvL0y(CurrMbAddr, i);
 		for (int j = 0; j < 4; j++)
 		{
 			MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) = MPI_mvL0x(CurrMbAddr, i);
 			MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) = MPI_mvL0y(CurrMbAddr, i);
-			bla[i][j][0] = MPI_mvSubL0x_byIdx(CurrMbAddr, i, j);
-			bla[i][j][1] = MPI_mvSubL0y_byIdx(CurrMbAddr, i, j);
-			int test = 0;
+			//bla[i][j][0] = MPI_mvSubL0x_byIdx(CurrMbAddr, i, j);
+			//bla[i][j][1] = MPI_mvSubL0y_byIdx(CurrMbAddr, i, j);
+			//int test = 0;
 		}
 	}
-	int test2 = 1;
+	//int test2 = 1;
 }
