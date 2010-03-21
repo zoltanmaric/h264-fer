@@ -7,25 +7,25 @@
 int L_Temp_4x4_refPart[9][9];
 int C_Temp_4x4_refPart[2][3][3];
 
-void FillTemp_4x4_refPart(frame_type *ref, int org_x, int org_y) {
+void FillTemp_4x4_refPart(frame_type *ref, int org_Lx, int org_Ly, int org_Cx, int org_Cy) {
 	int x,y,sx,sy;
 	for(y=0; y<9; ++y) {
-		sy=org_y+y;
+		sy=org_Ly+y;
 		if(sy<0) sy=0;
 		if(sy >= frame.Lheight) sy=frame.Lheight-1;
 		for(x=0; x<9; ++x) {
-			sx=org_x+x;
+			sx=org_Lx+x;
 			if (sx < 0) sx = 0;
 			if (sx >= frame.Lwidth) sx = frame.Lwidth-1;
 			L_Temp_4x4_refPart[y][x]=ref->L[sy*frame.Lwidth+sx];
 		}
 	}
 	for(y=0; y<3; ++y) {
-		sy=org_y/2+y+1;
+		sy=org_Cy+y;
 		if(sy<0) sy=0;
 		if(sy>=frame.Cheight) sy=frame.Cheight-1;
 		for(x=0; x<3; ++x) {
-			sx=org_x/2+x+1;
+			sx=org_Cx+x;
 			if (sx < 0) sx = 0;
 			if (sx >= frame.Cwidth) sx = frame.Cwidth-1;
 			C_Temp_4x4_refPart[0][y][x] = ref->C[0][sy*frame.Cwidth+sx];
@@ -85,40 +85,40 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 	org_x = ((subMbIdx & 1)<<3) + ((subMbPartIdx & 1)<<2);
 	mvx = MPI_mvSubL0x_byIdx(mbPartIdx,subMbIdx,subMbPartIdx);
 	mvy = MPI_mvSubL0y_byIdx(mbPartIdx,subMbIdx,subMbPartIdx);
-
+	int xAl = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0) + org_x;
+	int yAl = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1) + org_y;
 	// Fills temp tables used in fractional interpolation (luma) and linear interpolation (chroma).
-	FillTemp_4x4_refPart(refPic, InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0) + org_x+(mvx>>2)-2,InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1) + org_y+(mvy>>2)-2);
+	FillTemp_4x4_refPart(refPic, xAl + (mvx>>2) - 2, yAl + (mvy>>2) - 2, xAl/2 + (mvx>>3), yAl/2 + (mvy>>3));
 
 	int frac=(mvy&3)*4+(mvx&3);
 	for(y=0; y<4; ++y)
 		for(x=0; x<4; ++x)
 		{
 			predL[org_y+y][org_x+x] = L_MC_frac_interpol(&(L_Temp_4x4_refPart[y+2][x+2]), frac);
-			int test = 0;
+			//int test = 0;
 		}
 
-	org_x>>=1; org_y>>=1; // Chroma resolution is halved luma resolution.
+	org_x/=2; org_y/=2; // Chroma resolution is halved luma resolution.
     
-	int xLinear=(mvx&7), yLinear=(mvy&7); 
+	int xLinear = mvx&7;
+	int yLinear = mvy&7;
 	// CB component - iCbCr=0
 	for(y=0; y<2; ++y)
 		for(x=0; x<2; ++x)
-			predCb[org_y+y][org_x+x] = 
+			predCb[org_y+y][org_x+x] = //0;
 			  ((8-xLinear)*(8-yLinear) * C_Temp_4x4_refPart[0][y][x]  +
 				  xLinear *(8-yLinear) * C_Temp_4x4_refPart[0][y][x+1]+
 			   (8-xLinear)*   yLinear  * C_Temp_4x4_refPart[0][y+1][x]  +
-				  xLinear *   yLinear  * C_Temp_4x4_refPart[0][y+1][x+1]+
-				32) >> 6; // Linear interpolation and rounding.
+				  xLinear *   yLinear  * C_Temp_4x4_refPart[0][y+1][x+1] + 32) >> 6; // Linear interpolation and rounding.
 
 	// CR component - iCbCr=1
 	for(y=0; y<2; ++y)
 		for(x=0; x<2; ++x)
-			predCr[org_y+y][org_x+x] = 
+			predCr[org_y+y][org_x+x] = //0;
 			  ((8-xLinear)*(8-yLinear) * C_Temp_4x4_refPart[1][y][x]  +
 				  xLinear *(8-yLinear) * C_Temp_4x4_refPart[1][y][x+1]+
 			   (8-xLinear)*   yLinear  * C_Temp_4x4_refPart[1][y+1][x]  +
-				  xLinear *   yLinear  * C_Temp_4x4_refPart[1][y+1][x+1]+
-				32) >> 6; // Linear interpolation and rounding.
+				  xLinear *   yLinear  * C_Temp_4x4_refPart[1][y+1][x+1] + 32) >> 6; // Linear interpolation and rounding.
 }
 
 // In baseline profile there is only refPicL0 used. There's no weighted prediction.
