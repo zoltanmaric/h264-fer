@@ -204,6 +204,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\fileIO.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\h264_globals.cpp"
 				>
 			</File>
@@ -259,10 +263,6 @@
 				RelativePath=".\stdafx.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\writeToPPM.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -271,6 +271,10 @@
 			>
 			<File
 				RelativePath=".\expgolomb.h"
+				>
+			</File>
+			<File
+				RelativePath=".\fileIO.h"
 				>
 			</File>
 			<File
@@ -327,10 +331,6 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
-				RelativePath=".\writeToPPM.h"
 				>
 			</File>
 		</Filter>

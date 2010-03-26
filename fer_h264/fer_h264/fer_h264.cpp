@@ -3,13 +3,12 @@
 
 #include "stdafx.h"
 #include "nal.h"
-#include "writeToPPM.h"
+#include "fileIO.h"
 #include "rbsp_decoding.h"
 #include "rawreader.h"
 #include "h264_globals.h"
 
-
-int _tmain(int argc, _TCHAR* argv[])
+void decode()
 {
 	FILE *stream;
 	stream=fopen("Bourne.264","rb");
@@ -29,7 +28,21 @@ int _tmain(int argc, _TCHAR* argv[])
 	}		
 
 	fclose(stream);
-	fclose(yuvoutput);	
+	fclose(yuvoutput);
+}
+
+void encode()
+{
+	FILE *stream;
+	stream = fopen("big_buck_bunny.264", "wb");
+	yuvinput = fopen("big_buck_bunny.y4m", "rb");
+}
+
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	decode();	
+
 	return 0;
 }
 

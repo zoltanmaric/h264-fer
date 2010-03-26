@@ -1,4 +1,6 @@
-#include "writeToPPM.h"
+#include <string.h>
+
+#include "fileIO.h"
 #include "h264_globals.h"
 
 int *red;
@@ -6,7 +8,9 @@ int *green;
 int *blue;
 
 FILE *yuvoutput;
+FILE *yuvinput;
 
+// DECODING
 void toRGB()
 {
 	red = new int[frame.Lwidth * frame.Lheight];
@@ -82,19 +86,19 @@ void writeToPPM()
 
 void writeToY4M()
 {
-	static unsigned long frameCount = 0;
+	//static unsigned long frameCount = 0;
+	static bool firstFrame = true;
 	int i;
-
-	frameCount++;
 
 	char *output;
 	output = new char[5000000];
 
 	unsigned int pos = 0;
-	if (frameCount == 1)
+	if (firstFrame)
 	{
 		// Write file header
 		pos = sprintf(output, "YUV4MPEG2 W%d H%d F24000:1001 Ip A1:1 C420 %c", frame.Lwidth, frame.Lheight, 0x0a);
+		firstFrame = false;
 	}
 
 	pos += sprintf(&(output[pos]), "FRAME%c", 0x0a);
@@ -114,4 +118,44 @@ void writeToY4M()
 	fwrite(output, 1, pos, yuvoutput);
 	free(output);
 	if (frameCount == 600) exit(0);
+}
+
+
+// ENCODING:
+void readFromY4M()
+{
+	static bool firstFrame = true;
+	int i;
+	char frameString[50];
+
+	sprintf(frameString, "%cFRAME", 0x0a);
+
+	char *input;
+	input = new char[1000];
+
+	unsigned int pos = 0;
+	if (firstFrame)
+	{
+		fread(input, 1, 1000, yuvinput);
+		
+		//pos = strstr(input, " W") + 2;
+		sscanf(&input[pos], "%d", &frame.Lwidth);
+
+		//pos = strstr(input, " H") + 2;
+		sscanf(&input[pos], "%d", &frame.Lheight);
+
+		// TODO: handle chroma for non-4:2:0 subsampling
+		frame.Cwidth = frame.Lwidth >> 1;
+		frame.Cheight = frame.Lheight >> 1;
+
+		// TODO: handle interlaced frames
+		//pos = strstr(input, frameString) + 6;
+		fseek(yuvinput, pos, SEEK_SET);
+		firstFrame = false;
+	}
+
+	int frameSize = frame.Lwidth*frame.Lheight + 2*frame.Cwidth*frame.Cheight;
+	input = new char[frameSize];
+	fread(input, 1, frameSize, yuvinput);
+
 }
