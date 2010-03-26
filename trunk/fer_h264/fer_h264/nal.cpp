@@ -120,7 +120,8 @@ NALunit parseNAL(unsigned char *NALbytes, unsigned int NumBytesInNALunit)
 		exit(1);
 	}
 
-	nal_unit.rbsp_byte = (unsigned char*) malloc(NumBytesInNALunit);
+	nal_unit.rbsp_byte = new unsigned char[NumBytesInNALunit];
+	//nal_unit.rbsp_byte = (unsigned char*) malloc(NumBytesInNALunit);
 	if (nal_unit.rbsp_byte == NULL)
 	{
 		perror("Error allocating memory for RBSP.");

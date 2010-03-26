@@ -6,3 +6,5 @@ extern FILE *yuvinput;
 
 void writeToPPM();
 void writeToY4M();
+
+int readFromY4M();

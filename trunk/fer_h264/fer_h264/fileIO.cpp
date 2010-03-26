@@ -122,40 +122,102 @@ void writeToY4M()
 
 
 // ENCODING:
-void readFromY4M()
+
+// Returns the offset of the start of the
+// next frame in the input buffer
+unsigned int findStartOfFrame(char *input)
+{
+	unsigned int pos, temp, bufSize;
+	char frameString[6];
+	sprintf(frameString, "FRAME");
+
+	bufSize = frame.Lwidth * frame.Lheight + (frame.Cwidth*frame.Cheight << 1) + 1000;
+
+	pos = (unsigned int)(strstr(input, frameString) - input) + 5;
+
+	//pos = (unsigned int)(memchr(&input[pos], 0x0a, 1000) - input) + 1;
+	//memchr(
+	pos = ((unsigned int)memchr(&input[pos], 0x0a, 1000) - (unsigned int)input) + 1;
+
+	// frame parameters are not allowed
+
+	// skip frame parameters
+	//while(input[pos] == 0x20)
+	//{
+	//	temp = ((unsigned int)memchr(&input[pos], 0x0a, 1000) - (unsigned int)input) + 1;
+	//	if (temp > bufSize)
+	//	{
+	//		break;
+	//	}
+	//	else
+	//	{
+	//		pos = temp;
+	//	}
+	//}
+
+	return pos;
+}
+
+int readFromY4M()
 {
 	static bool firstFrame = true;
 	int i;
-	char frameString[50];
-
-	sprintf(frameString, "%cFRAME", 0x0a);
-
 	char *input;
-	input = new char[1000];
 
-	unsigned int pos = 0;
+	unsigned int pos;
 	if (firstFrame)
 	{
+		input = new char[1000];
 		fread(input, 1, 1000, yuvinput);
 		
-		//pos = strstr(input, " W") + 2;
+		// strstr returns a pointer, not the offset inside the
+		// string, so I am converting it
+		pos = (unsigned int)(strstr(input, " W") - input) + 2;
 		sscanf(&input[pos], "%d", &frame.Lwidth);
 
-		//pos = strstr(input, " H") + 2;
+		pos = (unsigned int)(strstr(input, " H") - input) + 2;
 		sscanf(&input[pos], "%d", &frame.Lheight);
 
 		// TODO: handle chroma for non-4:2:0 subsampling
 		frame.Cwidth = frame.Lwidth >> 1;
 		frame.Cheight = frame.Lheight >> 1;
 
+		frame.L = new unsigned char[frame.Lwidth*frame.Lheight];
+		frame.C[0] = new unsigned char[frame.Cwidth*frame.Cheight];
+		frame.C[1] = new unsigned char[frame.Cwidth*frame.Cheight];
+
 		// TODO: handle interlaced frames
-		//pos = strstr(input, frameString) + 6;
+		pos = findStartOfFrame(input);
 		fseek(yuvinput, pos, SEEK_SET);
+		
+		free(input);
 		firstFrame = false;
 	}
 
-	int frameSize = frame.Lwidth*frame.Lheight + 2*frame.Cwidth*frame.Cheight;
-	input = new char[frameSize];
-	fread(input, 1, frameSize, yuvinput);
+	int lumaSize = frame.Lwidth*frame.Lheight;
+	int chromaSize = frame.Cwidth*frame.Cheight;
+	int bufSize = lumaSize + (chromaSize << 1) + 1000;	// == lumaSize + 2*chromaSize + 1000
+	
+	input = new char[bufSize]; 
+	
+	int test = ftell(yuvinput);
+	
+	if (fread(input, 1, bufSize, yuvinput) < bufSize)
+	{
+		return -1;
+	}
 
+	pos = 0;
+	memcpy(frame.L, input, lumaSize);
+	pos += lumaSize;
+
+	memcpy(frame.C[0], &input[pos], chromaSize);
+	pos += chromaSize;
+
+	memcpy(frame.C[1], &input[pos], chromaSize);
+	pos = findStartOfFrame(input);
+
+	fseek(yuvinput, pos - bufSize, SEEK_CUR);
+	free(input);
+	return 0;
 }
