@@ -1,19 +1,22 @@
 #include "nal.h"
 
+unsigned char NALbytes[500000];
+FILE *stream;
+
 // Returns the address of the subsequent NAL unit in the 
 // input file.
 // Returns 0 if end of stream found.
 // fPtr - the current position in the input file
-unsigned long findNALstart(FILE *input, unsigned long fPtr)
+unsigned long findNALstart(unsigned long fPtr)
 {
 	unsigned char buffer[BUFFER_SIZE];		// the buffer for the bytes read
 	unsigned int bytesRead;
 	bool startPrefixFound;
 
-	fseek(input, fPtr, SEEK_SET);
+	fseek(stream, fPtr, SEEK_SET);
 
 	// read BUFFER_SIZE bytes from the file:
-	while (bytesRead = fread(buffer, 1, BUFFER_SIZE, input))
+	while (bytesRead = fread(buffer, 1, BUFFER_SIZE, stream))
 	{
 		startPrefixFound = false;
 		for (unsigned int i = 0; i < bytesRead - 3; i++)
@@ -30,7 +33,7 @@ unsigned long findNALstart(FILE *input, unsigned long fPtr)
 							startPrefixFound = true;
 							// set the file pointer to after the prefix:
 							fPtr += i + 4;
-							fseek(input, fPtr, SEEK_SET);
+							fseek(stream, fPtr, SEEK_SET);
 							break;
 						}
 					}
@@ -43,7 +46,7 @@ unsigned long findNALstart(FILE *input, unsigned long fPtr)
 		// start code not found in this
 		// access, set the new fPtr position:
 		fPtr += BUFFER_SIZE - 3;
-		fseek(input, fPtr, SEEK_SET);
+		fseek(stream, fPtr, SEEK_SET);
 	}
 
 	if (bytesRead == 0)
@@ -58,16 +61,16 @@ unsigned long findNALstart(FILE *input, unsigned long fPtr)
 // last byte of this NAL (the address of a
 // subsequent NAL start code)
 // fPtr - the current position in the input file
-unsigned long findNALend(FILE *input, unsigned long fPtr)
+unsigned long findNALend(unsigned long fPtr)
 {
 	unsigned char buffer[BUFFER_SIZE];		// the buffer for the bytes read
 	unsigned int bytesRead;
 	bool startPrefixFound;
 
-	fseek(input, fPtr, SEEK_SET);
+	fseek(stream, fPtr, SEEK_SET);
 
 	// read BUFFER_SIZE bytes from the file:
-	while (bytesRead = fread(buffer, 1, BUFFER_SIZE, input))
+	while (bytesRead = fread(buffer, 1, BUFFER_SIZE, stream))
 	{
 		startPrefixFound = false;
 		for (unsigned int i = 0; i < bytesRead - 2; i++)
@@ -83,7 +86,7 @@ unsigned long findNALend(FILE *input, unsigned long fPtr)
 						startPrefixFound = true;
 						// set the file pointer to before the prefix:
 						fPtr += i;
-						fseek(input, fPtr, SEEK_SET);
+						fseek(stream, fPtr, SEEK_SET);
 						break;
 					}
 				}
@@ -98,7 +101,7 @@ unsigned long findNALend(FILE *input, unsigned long fPtr)
 		// if it's on the border between two
 		// file accesses
 		fPtr += BUFFER_SIZE - 2;
-		fseek(input, fPtr, SEEK_SET);
+		fseek(stream, fPtr, SEEK_SET);
 	}
 
 	if (startPrefixFound == false)
@@ -114,7 +117,7 @@ unsigned long findNALend(FILE *input, unsigned long fPtr)
 // the H.264 specification.
 // *NALbytes: an array of bytes representing
 // one NAL unit read from the input stream.
-void parseNAL(unsigned char *NALbytes, unsigned int NumBytesInNALunit, NALunit &nal_unit)
+void parseNAL(unsigned int NumBytesInNALunit, NALunit &nal_unit)
 {
 	nal_unit.forbidden_zero_bit = (bool) (NALbytes[0] >> 7);
 	nal_unit.nal_ref_idc = (NALbytes[0] & 0x7f) >> 5;
@@ -157,9 +160,9 @@ void parseNAL(unsigned char *NALbytes, unsigned int NumBytesInNALunit, NALunit &
 	}
 }
 
-void getNAL(FILE *input, unsigned long *fPtr, NALunit &nu)
+void getNAL(unsigned long *fPtr, NALunit &nu)
 {
-	unsigned long startPtr = findNALstart(input, *fPtr);
+	unsigned long startPtr = findNALstart(*fPtr);
 
 	if (startPtr == 0)
 	{
@@ -169,23 +172,15 @@ void getNAL(FILE *input, unsigned long *fPtr, NALunit &nu)
 		exit(0);	// the 0 error code indicates that this is not an error
 	}
 
-	unsigned long endPtr = findNALend(input, startPtr);
+	unsigned long endPtr = findNALend(startPtr);
 	unsigned int NumBytesInNALunit = endPtr - startPtr;
 
 	printf("\n\n====================================================\n");
 	printf("NAL start found at %d (0x%x)\n", startPtr, startPtr);
 	printf("NAL size = %d (0x%x)\n\n", NumBytesInNALunit, NumBytesInNALunit);
 
-	unsigned char NALbytes[500000];
-	if (NALbytes == NULL)
-	{
-		perror("Error allocating memory for NAL unit.\n");
-		system("pause");
-		exit(1);
-	}
-
-	fseek(input, startPtr, SEEK_SET);
-	if (fread(NALbytes, 1, NumBytesInNALunit, input) != NumBytesInNALunit)
+	fseek(stream, startPtr, SEEK_SET);
+	if (fread(NALbytes, 1, NumBytesInNALunit, stream) != NumBytesInNALunit)
 	{
 		perror("Error reading NAL unit from file.\n");
 		system("pause");
@@ -194,5 +189,42 @@ void getNAL(FILE *input, unsigned long *fPtr, NALunit &nu)
 
 	*fPtr = endPtr;
 
-	parseNAL(NALbytes, NumBytesInNALunit, nu);
+	parseNAL(NumBytesInNALunit, nu);
+}
+
+// ENCODING:
+
+void writeNAL(unsigned long *fPtr, NALunit nu, unsigned int numBytesInRBSP)
+{
+	unsigned int pos = 0;
+	// start code prefix:
+	NALbytes[pos++] = 0;
+	NALbytes[pos++] = 0;
+	NALbytes[pos++] = 0;
+	NALbytes[pos++] = 1;
+
+	NALbytes[pos++] = (nu.forbidden_zero_bit << 7) | (nu.nal_ref_idc << 5) | (nu.nal_unit_type & 31);
+
+	int zeroCounter = 0;
+	for(int i = 0; i < numBytesInRBSP; i++)
+	{
+		if (zeroCounter == 2)
+		{
+			NALbytes[pos++] = 3;	// insert emulation prevention byte
+			zeroCounter = 0;
+		}
+
+		NALbytes[pos++] = nu.rbsp_byte[i];
+
+		if (nu.rbsp_byte[i] == 0)
+		{
+			zeroCounter++;
+		}
+		else
+		{
+			zeroCounter = 0;
+		}		
+	}
+
+	fwrite(NALbytes, 1, pos, stream);
 }

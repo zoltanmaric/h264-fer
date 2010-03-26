@@ -127,7 +127,7 @@ void writeToY4M()
 // next frame in the input buffer
 unsigned int findStartOfFrame(char *input)
 {
-	unsigned int pos, temp, bufSize;
+	unsigned int pos, bufSize;
 	char frameString[6];
 	sprintf(frameString, "FRAME");
 
@@ -161,7 +161,6 @@ unsigned int findStartOfFrame(char *input)
 int readFromY4M()
 {
 	static bool firstFrame = true;
-	int i;
 	char *input;
 
 	unsigned int pos;
