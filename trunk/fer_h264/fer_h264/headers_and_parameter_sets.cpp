@@ -52,9 +52,14 @@ void dec_ref_pic_marking(bool IdrPicFlag)
 		if (shd.adaptive_ref_pic_marking_mode_flag)
 		{
 			int i = 0, j = 0, k = 0, l = 0, m = 0;
+
+			// Because the last "operation" is number 0
+			number_of_mmc_operations=-1;
 			do
 			{
 				shd.memory_management_control_operation[i] =expGolomb_UD();
+
+				number_of_mmc_operations++;
 
 				if (shd.memory_management_control_operation[i] == 1 ||
 					shd.memory_management_control_operation[i] == 3)
