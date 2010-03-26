@@ -11,13 +11,16 @@
 void decode()
 {
 	FILE *stream;
-	stream=fopen("Bourne.264","rb");
+	stream=fopen("bourne.264","rb");
 	yuvoutput = fopen("Bourne.yuv","wb");
+
+	NALunit nu;
+	nu.rbsp_byte = new unsigned char[500000];
 
 	unsigned long int ptr=0;
 	while(1)
 	{
-		NALunit nu = getNAL(stream, &ptr);
+		getNAL(stream, &ptr, nu);
 
 		if (nu.NumBytesInRBSP==0)
 		{
@@ -25,7 +28,6 @@ void decode()
 		}
 
 		RBSP_decode(nu);
-		free(nu.rbsp_byte);
 	}		
 
 	fclose(stream);
@@ -51,7 +53,6 @@ void encode()
 int _tmain(int argc, _TCHAR* argv[])
 {
 	decode();
-
 	//encode();
 
 	return 0;
