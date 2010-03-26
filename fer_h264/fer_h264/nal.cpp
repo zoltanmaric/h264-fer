@@ -1,6 +1,9 @@
 #include "nal.h"
 
+// Returns the address of the subsequent NAL unit in the 
+// input file.
 // Returns 0 if end of stream found.
+// fPtr - the current position in the input file
 unsigned long findNALstart(FILE *input, unsigned long fPtr)
 {
 	unsigned char buffer[BUFFER_SIZE];		// the buffer for the bytes read
@@ -51,6 +54,10 @@ unsigned long findNALstart(FILE *input, unsigned long fPtr)
 	return fPtr;
 }
 
+// Returns the address of the position after the
+// last byte of this NAL (the address of a
+// subsequent NAL start code)
+// fPtr - the current position in the input file
 unsigned long findNALend(FILE *input, unsigned long fPtr)
 {
 	unsigned char buffer[BUFFER_SIZE];		// the buffer for the bytes read
@@ -102,9 +109,13 @@ unsigned long findNALend(FILE *input, unsigned long fPtr)
 	return fPtr;
 }
 
-NALunit parseNAL(unsigned char *NALbytes, unsigned int NumBytesInNALunit)
+// This function implements quite literally the
+// NAL unit syntax found in chapter 7.3.1 of
+// the H.264 specification.
+// *NALbytes: an array of bytes representing
+// one NAL unit read from the input stream.
+void parseNAL(unsigned char *NALbytes, unsigned int NumBytesInNALunit, NALunit &nal_unit)
 {
-	NALunit nal_unit;
 	nal_unit.forbidden_zero_bit = (bool) (NALbytes[0] >> 7);
 	nal_unit.nal_ref_idc = (NALbytes[0] & 0x7f) >> 5;
 	nal_unit.nal_unit_type = NALbytes[0] & 0x1f;
@@ -120,8 +131,6 @@ NALunit parseNAL(unsigned char *NALbytes, unsigned int NumBytesInNALunit)
 		exit(1);
 	}
 
-	nal_unit.rbsp_byte = new unsigned char[NumBytesInNALunit];
-	//nal_unit.rbsp_byte = (unsigned char*) malloc(NumBytesInNALunit);
 	if (nal_unit.rbsp_byte == NULL)
 	{
 		perror("Error allocating memory for RBSP.");
@@ -146,10 +155,9 @@ NALunit parseNAL(unsigned char *NALbytes, unsigned int NumBytesInNALunit)
 			nal_unit.rbsp_byte[nal_unit.NumBytesInRBSP++] = NALbytes[i];
 		}
 	}
-	return nal_unit;
 }
 
-NALunit getNAL(FILE *input, unsigned long *fPtr)
+void getNAL(FILE *input, unsigned long *fPtr, NALunit &nu)
 {
 	unsigned long startPtr = findNALstart(input, *fPtr);
 
@@ -168,9 +176,7 @@ NALunit getNAL(FILE *input, unsigned long *fPtr)
 	printf("NAL start found at %d (0x%x)\n", startPtr, startPtr);
 	printf("NAL size = %d (0x%x)\n\n", NumBytesInNALunit, NumBytesInNALunit);
 
-	unsigned char *NALbytes;
-	//NALbytes = (unsigned char*) malloc(NumBytesInNALunit);
-	NALbytes = new unsigned char[NumBytesInNALunit];
+	unsigned char NALbytes[500000];
 	if (NALbytes == NULL)
 	{
 		perror("Error allocating memory for NAL unit.\n");
@@ -188,7 +194,5 @@ NALunit getNAL(FILE *input, unsigned long *fPtr)
 
 	*fPtr = endPtr;
 
-	NALunit nu = parseNAL(NALbytes, NumBytesInNALunit);
-	free(NALbytes);
-	return nu;
+	parseNAL(NALbytes, NumBytesInNALunit, nu);
 }
