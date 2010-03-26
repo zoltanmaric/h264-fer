@@ -3,6 +3,8 @@
 
 const unsigned int BUFFER_SIZE = 500000; // the number of bytes read from the file in one access
 
+extern FILE *stream;
+
 typedef struct
 {
 	bool forbidden_zero_bit;
@@ -13,4 +15,6 @@ NALunit;
 
 // Returns the NAL unit data in a NALunit structure.
 // fPtr - the current position in the input file
-void getNAL(FILE *input, unsigned long *fPtr, NALunit &nu);
+void getNAL(unsigned long *fPtr, NALunit &nu);
+
+void writeNAL(unsigned long *fPtr, NALunit nu);
