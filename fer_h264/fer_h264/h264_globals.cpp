@@ -9,6 +9,7 @@ int LumaACLevel[16][16];
 int ChromaDCLevelX[2][4];
 int ChromaACLevelX[2][4][16];
 
+int number_of_mmc_operations;
 
 mode_pred_info *mpi=NULL;
 
