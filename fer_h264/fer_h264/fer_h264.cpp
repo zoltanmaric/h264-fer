@@ -25,6 +25,7 @@ void decode()
 		}
 
 		RBSP_decode(nu);
+		free(nu.rbsp_byte);
 	}		
 
 	fclose(stream);
@@ -36,12 +37,22 @@ void encode()
 	FILE *stream;
 	stream = fopen("big_buck_bunny.264", "wb");
 	yuvinput = fopen("big_buck_bunny.y4m", "rb");
+	yuvoutput = fopen("Bourne.yuv","wb");
+
+	frameCount = 0;
+	while (readFromY4M() != -1)
+	{		
+		frameCount++;
+		writeToY4M();
+	}
 }
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	decode();	
+	decode();
+
+	//encode();
 
 	return 0;
 }
