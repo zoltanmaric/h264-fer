@@ -6,7 +6,7 @@
 #include "rawreader.h"
 #include "intra.h"
 #include "inttransform.h"
-#include "writeToPPM.h"
+#include "fileIO.h"
 #include "ref_frames.h"
 #include "mocomp.h"
 #include "mode_pred.h"
@@ -49,7 +49,11 @@ void RBSP_decode(NALunit nal_unit)
 		// TEST: tu postavi frejm od kojeg želiš poèet ispisivanje
 		// u ppm. Indeksi su isti ko u h264visi.
 		frameCount++;
-		if (frameCount < 109) return;
+		if (frameCount < 109)
+		{	
+			//frameCount++;
+			return;
+		}
 
 		//Read slice header
 		fill_shd(&nal_unit);

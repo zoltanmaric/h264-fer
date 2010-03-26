@@ -241,7 +241,7 @@ int Intra4x4ScanOrder[16][2]={
   { 8, 8},  {12, 8},  { 8,12},  {12,12}
 };
 
-int frameCount = 0;
+unsigned long frameCount = 0;
 
 // Inter prediction globals
 int **ref_idx_l0_array;
