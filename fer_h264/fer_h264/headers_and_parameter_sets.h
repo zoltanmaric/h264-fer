@@ -384,3 +384,7 @@ extern struct SH_data shd;
 void fill_sps(NALunit *);
 void fill_pps(NALunit *);
 void fill_shd(NALunit *);
+
+void shd_write(struct SH_data *shd_write, struct SPS_data *sps_write, NALunit *nal_unit_write);
+void sps_write(struct SPS_data *sps_write);
+void pps_write(struct PPS_data *pps_write);
