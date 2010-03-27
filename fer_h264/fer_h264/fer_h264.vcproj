@@ -314,6 +314,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\rbsp_decoding.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ref_frames.h"
 				>
 			</File>

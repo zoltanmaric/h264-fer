@@ -85,12 +85,12 @@ void dec_ref_pic_marking_write(bool IdrPicFlag, struct SH_data *shd_write)
 			int i = 0, j = 0, k = 0, l = 0, m = 0;
 
 			// Because the last "operation" is number 0
-			number_of_mmc_operations=-1;
+			//number_of_mmc_operations=-1;
 			do
 			{
 				expGolomb_UC(shd_write->memory_management_control_operation[i]);
 
-				number_of_mmc_operations++;
+				//number_of_mmc_operations++;
 
 				if (shd_write->memory_management_control_operation[i] == 1 || shd_write->memory_management_control_operation[i] == 3)
 				{
@@ -129,12 +129,12 @@ void dec_ref_pic_marking(bool IdrPicFlag)
 			int i = 0, j = 0, k = 0, l = 0, m = 0;
 
 			// Because the last "operation" is number 0
-			number_of_mmc_operations=-1;
+			//number_of_mmc_operations=-1;
 			do
 			{
 				shd.memory_management_control_operation[i] =expGolomb_UD();
 
-				number_of_mmc_operations++;
+				//number_of_mmc_operations++;
 
 				if (shd.memory_management_control_operation[i] == 1 ||
 					shd.memory_management_control_operation[i] == 3)
@@ -301,11 +301,34 @@ void fill_shd(NALunit *nal_unit)
 /// Writing sequence parameter set
 /////////////////////////////////////////////////
 
-void sps_write(struct SPS_data *sps_write)
+void sps_write()
 {
+	sps.profile_idc = 66;
+	sps.constraint_set0_flag = 1;
+	sps.constraint_set1_flag = 1;
+	sps.constraint_set2_flag = 0;
+	sps.reserved_zero_5bits = 0;
+	sps.level_idc = 41;
+	sps.seq_parameter_set_id = 0;
+	sps.offset_for_non_ref_pic = 0;
+	sps.offset_for_top_to_bottom_field = 0;
+	sps.num_ref_frames_in_pic_order_cnt_cycle = 0;
+	sps.mb_adaptive_frame_field_flag = 0;
+	//sps.offset_for_ref_frame
+	sps.log2_max_frame_num = 9;
+	sps.pic_order_cnt_type = 0;
+	sps.log2_max_pic_order_cnt_lsb = 10;
+	sps.delta_pic_order_always_zero_flag = 0;
+	sps.max_num_ref_frames = 1;
+	sps.gaps_in_frame_num_value_allowed_flag = 0;
+	sps.frame_mbs_only_flag = 1;
+	sps.direct_8x8_inference_flag = 1;
+	sps.frame_cropping_flag = 0;
+	sps.vui_parameters_present_flag = 0;
+
 	unsigned char buffer[4];
 	
-	UINT_to_RBSP_size_known(sps_write->profile_idc, 8, buffer);
+	UINT_to_RBSP_size_known(sps.profile_idc, 8, buffer);
 	writeRawBits(8, buffer);
 
 	writeFlag(sps.constraint_set0_flag);
@@ -313,43 +336,43 @@ void sps_write(struct SPS_data *sps_write)
 	writeFlag(sps.constraint_set2_flag);
 	writeZeros(5);
 
-	UINT_to_RBSP_size_known(sps_write->level_idc, 8, buffer);
+	UINT_to_RBSP_size_known(sps.level_idc, 8, buffer);
 	writeRawBits(8, buffer);
 
-	expGolomb_UC(sps_write->seq_parameter_set_id);
-	expGolomb_UC(sps_write->log2_max_frame_num-4);
-	expGolomb_UC(sps_write->pic_order_cnt_type);
+	expGolomb_UC(sps.seq_parameter_set_id);
+	expGolomb_UC(sps.log2_max_frame_num-4);
+	expGolomb_UC(sps.pic_order_cnt_type);
 
-	if (sps_write->pic_order_cnt_type==0)
+	if (sps.pic_order_cnt_type==0)
 	{
-		expGolomb_UC(sps_write->log2_max_pic_order_cnt_lsb-4);
+		expGolomb_UC(sps.log2_max_pic_order_cnt_lsb-4);
 	}
-	else if (sps_write->pic_order_cnt_type==1)
+	else if (sps.pic_order_cnt_type==1)
 	{
-		writeFlag(sps_write->delta_pic_order_always_zero_flag);
-		expGolomb_SC(sps_write->offset_for_non_ref_pic);
-		expGolomb_SC(sps_write->offset_for_top_to_bottom_field);
-		expGolomb_UC(sps_write->num_ref_frames_in_pic_order_cnt_cycle);
-		for(int i=0; i<sps_write->num_ref_frames_in_pic_order_cnt_cycle; i++)
+		writeFlag(sps.delta_pic_order_always_zero_flag);
+		expGolomb_SC(sps.offset_for_non_ref_pic);
+		expGolomb_SC(sps.offset_for_top_to_bottom_field);
+		expGolomb_UC(sps.num_ref_frames_in_pic_order_cnt_cycle);
+		for(int i=0; i<sps.num_ref_frames_in_pic_order_cnt_cycle; i++)
 		{
-			expGolomb_SC(sps_write->offset_for_ref_frame[i]);
+			expGolomb_SC(sps.offset_for_ref_frame[i]);
 		}
 	}
 
-	expGolomb_UC(sps_write->max_num_ref_frames);
-	writeFlag(sps_write->gaps_in_frame_num_value_allowed_flag);
-	expGolomb_UC(sps_write->PicWidthInMbs-1);
-	expGolomb_UC(sps_write->PicHeightInMapUnits-1);
-	writeFlag(sps_write->frame_mbs_only_flag);
+	expGolomb_UC(sps.max_num_ref_frames);
+	writeFlag(sps.gaps_in_frame_num_value_allowed_flag);
+	expGolomb_UC(sps.PicWidthInMbs-1);
+	expGolomb_UC(sps.PicHeightInMapUnits-1);
+	writeFlag(sps.frame_mbs_only_flag);
 
-	if (sps_write->frame_mbs_only_flag)
+	if (sps.frame_mbs_only_flag)
 	{
-		writeFlag(sps_write->mb_adaptive_frame_field_flag);
+		writeFlag(sps.mb_adaptive_frame_field_flag);
 	}
 
-	writeFlag(sps_write->direct_8x8_inference_flag);
-	writeFlag(sps_write->frame_cropping_flag);
-	writeFlag(sps_write->vui_parameters_present_flag);
+	writeFlag(sps.direct_8x8_inference_flag);
+	writeFlag(sps.frame_cropping_flag);
+	writeFlag(sps.vui_parameters_present_flag);
 	
 }
 
@@ -438,27 +461,43 @@ void fill_sps(NALunit *nal_unit)
 /// Writing picture parameter set
 /////////////////////////////////////////////////
 
-void pps_write(struct PPS_data *pps_write)
+void pps_write()
 {
 	unsigned char buffer[4];
 
-	expGolomb_UC(pps_write->pic_parameter_set_id);
-	expGolomb_UC(pps_write->seq_parameter_set_id);
-	writeFlag(pps_write->entropy_coding_mode_flag);
-	writeFlag(pps_write->bottom_field_pic_order_in_frame);
-	expGolomb_UC(pps_write->num_slice_groups-1);
-	expGolomb_UC(pps_write->num_ref_idx_l0_active-1);
-	expGolomb_UC(pps_write->num_ref_idx_l1_active-1);
-	writeFlag(pps_write->weighted_pred_flag);
+	pps.pic_parameter_set_id = 0;
+	pps.seq_parameter_set_id = 0;
+	pps.entropy_coding_mode_flag = 0;
+	pps.num_slice_groups = 1;
+	pps.bottom_field_pic_order_in_frame = 0;
+	pps.num_ref_idx_l0_active = 1;
+	pps.num_ref_idx_l1_active = 1;
+	pps.weighted_pred_flag = 0;
+	pps.weighted_bipred_idc = 0;
+	pps.pic_init_qp = 26;
+	pps.pic_init_qs = 26;
+	pps.chroma_qp_index_offset = 0;
+	pps.deblocking_filter_control_present_flag = 0;
+	pps.constrained_intra_pred_flag = 0;
+	pps.redundant_pic_cnt_present_flag = 0;
 
-	UINT_to_RBSP_size_known(pps_write->num_ref_idx_l1_active,2,buffer);
+	expGolomb_UC(pps.pic_parameter_set_id);
+	expGolomb_UC(pps.seq_parameter_set_id);
+	writeFlag(pps.entropy_coding_mode_flag);
+	writeFlag(pps.bottom_field_pic_order_in_frame);
+	expGolomb_UC(pps.num_slice_groups-1);
+	expGolomb_UC(pps.num_ref_idx_l0_active-1);
+	expGolomb_UC(pps.num_ref_idx_l1_active-1);
+	writeFlag(pps.weighted_pred_flag);
+
+	UINT_to_RBSP_size_known(pps.num_ref_idx_l1_active,2,buffer);
 	writeRawBits(2,buffer);
-	expGolomb_SC(pps_write->pic_init_qp-26);
-	expGolomb_SC(pps_write->pic_init_qs-26);
-	expGolomb_SC(pps_write->chroma_qp_index_offset);
-	writeFlag(pps_write->deblocking_filter_control_present_flag);
-	writeFlag(pps_write->constrained_intra_pred_flag);
-	writeFlag(pps_write->redundant_pic_cnt_present_flag);
+	expGolomb_SC(pps.pic_init_qp-26);
+	expGolomb_SC(pps.pic_init_qs-26);
+	expGolomb_SC(pps.chroma_qp_index_offset);
+	writeFlag(pps.deblocking_filter_control_present_flag);
+	writeFlag(pps.constrained_intra_pred_flag);
+	writeFlag(pps.redundant_pic_cnt_present_flag);
 
 }
 
