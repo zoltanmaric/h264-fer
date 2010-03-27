@@ -3,31 +3,72 @@
 
 //Coder functions
 
-void expGolomb_UC(unsigned int codeNum)
+void golombRice_SC(int codeNum, unsigned int VLCNum)
 {
-	//"prefix_length" is equal to "suffix_length"
-	unsigned int prefix_length=0;
-
-	unsigned int upper_boundary=1;
-
-	unsigned int suffix;
-
-	while (codeNum<upper_boundary)
+	unsigned int offset;
+	unsigned int prefix_length,suffix;
+	
+	unsigned char buffer[4];
+	
+	if (codeNum<0)
 	{
-		prefix_length++;
-		upper_boundary=(upper_boundary*2)+1;
+		offset=(-codeNum-1)*2+1;
+	}
+	else
+	{
+		offset=(codeNum-1)*2;
 	}
 
-	suffix=codeNum-(1<<prefix_length)+1;
 
-	unsigned char suffixRbspValue[4];
+	suffix=offset%(1<<VLCNum);
 
-	UINT_to_RBSP_size_known(suffix, prefix_length, suffixRbspValue);
+	prefix_length=offset/(1<<VLCNum);
 
 	writeZeros(prefix_length);
 	writeOnes(1);
-	writeRawBits(prefix_length, suffixRbspValue);
 
+	if (VLCNum!=0)
+	{
+		UINT_to_RBSP_size_known(suffix,VLCNum,buffer);
+		writeRawBits(VLCNum,buffer);
+	}
+}
+
+void expGolomb_UC(unsigned int codeNum)
+{
+	//"prefix_length" is equal to "suffix_length"
+	unsigned int prefix_length=1;
+
+	unsigned int upper_boundary=2;
+	unsigned int lower_boundary=1;
+	unsigned int temp_boundary;
+
+	unsigned int suffix;
+
+	if (codeNum==0)
+	{
+		writeOnes(1);
+	}
+	else
+	{
+		while (codeNum>upper_boundary)
+		{
+			prefix_length++;
+			temp_boundary=upper_boundary;
+			upper_boundary=(lower_boundary*2)+1;
+			lower_boundary=temp_boundary+1;
+		}
+
+		suffix=codeNum-(1<<prefix_length)+1;
+
+		unsigned char suffixRbspValue[4];
+
+		UINT_to_RBSP_size_known(suffix, prefix_length, suffixRbspValue);
+
+		writeZeros(prefix_length);
+		writeOnes(1);
+		writeRawBits(prefix_length, suffixRbspValue);
+	}
 }
 
 void expGolomb_SC(unsigned int codeNum)
