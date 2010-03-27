@@ -42,6 +42,19 @@ void encode()
 	frameCount = 0;
 	NALunit nu;
 	nu.rbsp_byte = new unsigned char[500000];
+
+	nu.forbidden_zero_bit = 0;
+
+	// write sequence parameter set:
+	nu.nal_ref_idc = 1;			// non-zero for sps
+	nu.nal_unit_type = NAL_UNIT_TYPE_SPS;
+	RBSP_encode(nu);
+
+	// write picture paramater set:
+	nu.nal_ref_idc = 1;			// non-zero for pps
+	nu.nal_unit_type = NAL_UNIT_TYPE_PPS;
+	RBSP_encode(nu);
+
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;

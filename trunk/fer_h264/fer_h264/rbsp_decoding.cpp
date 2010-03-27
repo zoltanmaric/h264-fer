@@ -11,7 +11,6 @@
 #include "mocomp.h"
 #include "mode_pred.h"
 
-
 void RBSP_decode(NALunit nal_unit)
 {
 	static int nalBrojac=0;
@@ -344,3 +343,32 @@ void RBSP_decode(NALunit nal_unit)
 }
 
 
+
+
+// ENCODING:
+
+// 7.3.2.11
+void RBSP_trailing_bits()
+{
+	writeOnes(1);
+	if (RBSP_current_bit != 0)
+	{
+		writeZeros(8 - RBSP_current_bit);
+	}
+}
+
+void RBSP_encode(NALunit &nal_unit)
+{
+	initRawWriter(nal_unit.rbsp_byte, 500000);
+
+	if (nal_unit.nal_unit_type == NAL_UNIT_TYPE_SPS)
+	{
+		sps_write();
+		RBSP_trailing_bits();
+	}
+	else if (nal_unit.nal_unit_type == NAL_UNIT_TYPE_PPS)
+	{
+		pps_write();
+		RBSP_trailing_bits();
+	}
+}
