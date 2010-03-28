@@ -365,10 +365,12 @@ void RBSP_encode(NALunit &nal_unit)
 	{
 		sps_write();
 		RBSP_trailing_bits();
+		nal_unit.NumBytesInRBSP = RBSP_current_byte;
 	}
 	else if (nal_unit.nal_unit_type == NAL_UNIT_TYPE_PPS)
 	{
 		pps_write();
 		RBSP_trailing_bits();
+		nal_unit.NumBytesInRBSP = RBSP_current_byte;
 	}
 }

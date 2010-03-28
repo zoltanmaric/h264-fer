@@ -158,6 +158,34 @@ unsigned int findStartOfFrame(char *input)
 	return pos;
 }
 
+void loadY4MHeader()
+{
+	char input[1000];
+	fread(input, 1, 1000, yuvinput);
+	
+	// strstr returns a pointer, not the offset inside the
+	// string, so I am converting it
+	int pos = (unsigned int)(strstr(input, " W") - input) + 2;
+	sscanf(&input[pos], "%d", &frame.Lwidth);
+
+	pos = (unsigned int)(strstr(input, " H") - input) + 2;
+	sscanf(&input[pos], "%d", &frame.Lheight);
+
+	// TODO: handle chroma for non-4:2:0 subsampling
+	frame.Cwidth = frame.Lwidth >> 1;
+	frame.Cheight = frame.Lheight >> 1;
+
+	frame.L = new unsigned char[frame.Lwidth*frame.Lheight];
+	frame.C[0] = new unsigned char[frame.Cwidth*frame.Cheight];
+	frame.C[1] = new unsigned char[frame.Cwidth*frame.Cheight];
+
+	// TODO: handle interlaced frames
+	pos = findStartOfFrame(input);
+	fseek(yuvinput, pos, SEEK_SET);
+	
+	//free(input);
+}
+
 int readFromY4M()
 {
 	static bool firstFrame = true;
@@ -166,30 +194,30 @@ int readFromY4M()
 	unsigned int pos;
 	if (firstFrame)
 	{
-		input = new char[1000];
-		fread(input, 1, 1000, yuvinput);
-		
-		// strstr returns a pointer, not the offset inside the
-		// string, so I am converting it
-		pos = (unsigned int)(strstr(input, " W") - input) + 2;
-		sscanf(&input[pos], "%d", &frame.Lwidth);
+		//input = new char[1000];
+		//fread(input, 1, 1000, yuvinput);
+		//
+		//// strstr returns a pointer, not the offset inside the
+		//// string, so I am converting it
+		//pos = (unsigned int)(strstr(input, " W") - input) + 2;
+		//sscanf(&input[pos], "%d", &frame.Lwidth);
 
-		pos = (unsigned int)(strstr(input, " H") - input) + 2;
-		sscanf(&input[pos], "%d", &frame.Lheight);
+		//pos = (unsigned int)(strstr(input, " H") - input) + 2;
+		//sscanf(&input[pos], "%d", &frame.Lheight);
 
-		// TODO: handle chroma for non-4:2:0 subsampling
-		frame.Cwidth = frame.Lwidth >> 1;
-		frame.Cheight = frame.Lheight >> 1;
+		//// TODO: handle chroma for non-4:2:0 subsampling
+		//frame.Cwidth = frame.Lwidth >> 1;
+		//frame.Cheight = frame.Lheight >> 1;
 
-		frame.L = new unsigned char[frame.Lwidth*frame.Lheight];
-		frame.C[0] = new unsigned char[frame.Cwidth*frame.Cheight];
-		frame.C[1] = new unsigned char[frame.Cwidth*frame.Cheight];
+		//frame.L = new unsigned char[frame.Lwidth*frame.Lheight];
+		//frame.C[0] = new unsigned char[frame.Cwidth*frame.Cheight];
+		//frame.C[1] = new unsigned char[frame.Cwidth*frame.Cheight];
 
-		// TODO: handle interlaced frames
-		pos = findStartOfFrame(input);
-		fseek(yuvinput, pos, SEEK_SET);
-		
-		free(input);
+		//// TODO: handle interlaced frames
+		//pos = findStartOfFrame(input);
+		//fseek(yuvinput, pos, SEEK_SET);
+		//
+		//free(input);
 		firstFrame = false;
 	}
 
@@ -205,18 +233,20 @@ int readFromY4M()
 	{
 		return -1;
 	}
+	else
+	{
+		pos = 0;
+		memcpy(frame.L, input, lumaSize);
+		pos += lumaSize;
 
-	pos = 0;
-	memcpy(frame.L, input, lumaSize);
-	pos += lumaSize;
+		memcpy(frame.C[0], &input[pos], chromaSize);
+		pos += chromaSize;
 
-	memcpy(frame.C[0], &input[pos], chromaSize);
-	pos += chromaSize;
+		memcpy(frame.C[1], &input[pos], chromaSize);
+		pos = findStartOfFrame(input);
 
-	memcpy(frame.C[1], &input[pos], chromaSize);
-	pos = findStartOfFrame(input);
-
-	fseek(yuvinput, pos - bufSize, SEEK_CUR);
-	free(input);
-	return 0;
+		fseek(yuvinput, pos - bufSize, SEEK_CUR);
+		free(input);
+		return 0;
+	}
 }

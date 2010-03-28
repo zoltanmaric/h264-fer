@@ -73,7 +73,7 @@ void expGolomb_UC(unsigned int codeNum)
 
 void expGolomb_SC(unsigned int codeNum)
 {
-	if (codeNum<0)
+	if (codeNum<=0)
 	{
 		codeNum=(-codeNum)*2;
 	}

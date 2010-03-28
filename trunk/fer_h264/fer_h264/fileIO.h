@@ -8,3 +8,4 @@ void writeToPPM();
 void writeToY4M();
 
 int readFromY4M();
+void loadY4MHeader();

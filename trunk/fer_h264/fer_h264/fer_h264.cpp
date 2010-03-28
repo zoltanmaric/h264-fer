@@ -45,15 +45,21 @@ void encode()
 
 	nu.forbidden_zero_bit = 0;
 
+	loadY4MHeader();
+
 	// write sequence parameter set:
 	nu.nal_ref_idc = 1;			// non-zero for sps
 	nu.nal_unit_type = NAL_UNIT_TYPE_SPS;
 	RBSP_encode(nu);
 
+	writeNAL(nu);
+
 	// write picture paramater set:
 	nu.nal_ref_idc = 1;			// non-zero for pps
 	nu.nal_unit_type = NAL_UNIT_TYPE_PPS;
 	RBSP_encode(nu);
+
+	writeNAL(nu);
 
 	while (readFromY4M() != -1)
 	{		
