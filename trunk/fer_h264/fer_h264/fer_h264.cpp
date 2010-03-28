@@ -64,10 +64,10 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		//writeToY4M();
+
+		writeToY4M();
 	}
 }
-
 
 int _tmain(int argc, _TCHAR* argv[])
 {

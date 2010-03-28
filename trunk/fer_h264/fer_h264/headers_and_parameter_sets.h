@@ -385,6 +385,6 @@ void fill_sps(NALunit *);
 void fill_pps(NALunit *);
 void fill_shd(NALunit *);
 
-void shd_write(struct SH_data *shd_write, struct SPS_data *sps_write, NALunit *nal_unit_write);
+void shd_write(NALunit &nal_unit);
 void sps_write();
 void pps_write();
