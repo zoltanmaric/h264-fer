@@ -65,7 +65,7 @@ void encode()
 	{		
 		frameCount++;
 
-		writeToY4M();
+		//writeToY4M();
 	}
 }
 
