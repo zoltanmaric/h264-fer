@@ -372,5 +372,24 @@ void RBSP_encode(NALunit &nal_unit)
 		pps_write();
 		RBSP_trailing_bits();
 		nal_unit.NumBytesInRBSP = RBSP_current_byte;
+		// TEST: ovo stoji samo dok imamo samo intra frejmove
+		shd.idr_pic_id = 0;
+	}
+	else if ((nal_unit.nal_unit_type == NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type == NAL_UNIT_TYPE_NOT_IDR))
+	{
+		if (nal_unit.nal_unit_type == NAL_UNIT_TYPE_IDR)
+		{
+			shd.slice_type = I_SLICE;
+			shd.frame_num = 0;
+			// TEST: ovo stoji samo dok imamo samo intra frejmove
+			shd.idr_pic_id++;
+		}
+		else
+		{
+			shd.slice_type = P_SLICE;
+			shd.frame_num++;
+		}
+
+		shd_write(nal_unit);
 	}
 }

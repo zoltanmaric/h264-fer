@@ -10,28 +10,30 @@ struct SH_data shd;
 
 // (7.3.3.1) Reference picture list modification syntax
 
-void ref_pic_list_modification_write(struct SH_data *shd_write)
-{
-	if((shd_write->slice_type%5)!=I_SLICE && (shd_write->slice_type%5)!=SI_SLICE)
-	{
-		writeFlag(shd_write->ref_pic_list_modification_flag_l0);
+void ref_pic_list_modification_write()
+{	
+	shd.ref_pic_list_modification_flag_l0 = 0;	// no changes in reference picture lists yet
 
-		if (shd_write->ref_pic_list_modification_flag_l0==1)
+	if((shd.slice_type%5)!=I_SLICE && (shd.slice_type%5)!=SI_SLICE)
+	{
+		writeFlag(shd.ref_pic_list_modification_flag_l0);
+
+		if (shd.ref_pic_list_modification_flag_l0==1)
 		{
 			int i = 0, j = 0, k = 0;
 			do
 			{
-				expGolomb_UC(shd_write->modification_of_pic_nums_idc[i]);
+				expGolomb_UC(shd.modification_of_pic_nums_idc[i]);
 
-				if (shd_write->modification_of_pic_nums_idc[i] == 0 || shd_write->modification_of_pic_nums_idc[i] == 1)
+				if (shd.modification_of_pic_nums_idc[i] == 0 || shd.modification_of_pic_nums_idc[i] == 1)
 				{
-					expGolomb_UC(shd_write->abs_diff_pic_num_minus1[j++]);
+					expGolomb_UC(shd.abs_diff_pic_num_minus1[j++]);
 				}
-				else if (shd_write->modification_of_pic_nums_idc[i] == 2)
+				else if (shd.modification_of_pic_nums_idc[i] == 2)
 				{
-					expGolomb_UC(shd_write->long_term_pic_num[k++]);
+					expGolomb_UC(shd.long_term_pic_num[k++]);
 				}
-			} while (shd_write->modification_of_pic_nums_idc[i++] != 3);
+			} while (shd.modification_of_pic_nums_idc[i++] != 3);
 		}
 	}
 
@@ -68,19 +70,23 @@ void ref_pic_list_modification()
 }
 
 // (7.3.3.3) Decoded reference picture marking syntax
-
-void dec_ref_pic_marking_write(bool IdrPicFlag, struct SH_data *shd_write)
+void dec_ref_pic_marking_write(bool IdrPicFlag)
 {
+	// inferred values:
+	shd.no_output_of_prior_pics_flag = 0;	// pictures are output in decoding order
+	shd.long_term_reference_flag = 0;		// no long term reference pictures yet
+	shd.adaptive_ref_pic_marking_mode_flag = 0;	// no adaptive ref pic marking yet
+
 	if (IdrPicFlag)
 	{
-		writeFlag(shd_write->no_output_of_prior_pics_flag);
-		writeFlag(shd_write->long_term_reference_flag);
+		writeFlag(shd.no_output_of_prior_pics_flag);
+		writeFlag(shd.long_term_reference_flag);
 	}
 	else
 	{
-		writeFlag(shd_write->adaptive_ref_pic_marking_mode_flag);
+		writeFlag(shd.adaptive_ref_pic_marking_mode_flag);
 
-		if (shd_write->adaptive_ref_pic_marking_mode_flag)
+		if (shd.adaptive_ref_pic_marking_mode_flag)
 		{
 			int i = 0, j = 0, k = 0, l = 0, m = 0;
 
@@ -88,27 +94,27 @@ void dec_ref_pic_marking_write(bool IdrPicFlag, struct SH_data *shd_write)
 			//number_of_mmc_operations=-1;
 			do
 			{
-				expGolomb_UC(shd_write->memory_management_control_operation[i]);
+				expGolomb_UC(shd.memory_management_control_operation[i]);
 
 				//number_of_mmc_operations++;
 
-				if (shd_write->memory_management_control_operation[i] == 1 || shd_write->memory_management_control_operation[i] == 3)
+				if (shd.memory_management_control_operation[i] == 1 || shd.memory_management_control_operation[i] == 3)
 				{
-					expGolomb_UC(shd_write->difference_of_pic_nums_minus1[j++]);
+					expGolomb_UC(shd.difference_of_pic_nums_minus1[j++]);
 				}
-				if (shd_write->memory_management_control_operation[i] == 2)
+				if (shd.memory_management_control_operation[i] == 2)
 				{
-					expGolomb_UC(shd_write->long_term_pic_num[k++]);
+					expGolomb_UC(shd.long_term_pic_num[k++]);
 				}
-				if (shd_write->memory_management_control_operation[i] == 3 || shd_write->memory_management_control_operation[i] == 6)
+				if (shd.memory_management_control_operation[i] == 3 || shd.memory_management_control_operation[i] == 6)
 				{
-					expGolomb_UC(shd_write->long_term_frame_idx[l++]);
+					expGolomb_UC(shd.long_term_frame_idx[l++]);
 				}
-				if (shd_write->memory_management_control_operation[i] == 4)
+				if (shd.memory_management_control_operation[i] == 4)
 				{
-					expGolomb_UC(shd_write->max_long_term_frame_idx_plus1[m++]);
+					expGolomb_UC(shd.max_long_term_frame_idx_plus1[m++]);
 				}
-			} while (shd_write->memory_management_control_operation[i++] != 0);
+			} while (shd.memory_management_control_operation[i++] != 0);
 		}
 	}
 }
@@ -163,28 +169,35 @@ void dec_ref_pic_marking(bool IdrPicFlag)
 //Writing slice header
 //////////////////////////////////////////////////////////////////
 
-void shd_write(struct SH_data *shd_write, struct SPS_data *sps_write, NALunit *nal_unit_write)
+void shd_write(NALunit &nal_unit)
 {
+	// inferred values:
+	shd.first_mb_in_slice = 0;
+	shd.pic_parameter_set_id = 0;	// always zero because there's only one pps
+	shd.pic_order_cnt_lsb = 0;
+	shd.num_ref_idx_active_override_flag = 0;	// no changes in the reference picture list order yet
+	shd.slice_qp_delta = -14;		// inferred quantization parameter
+
 	unsigned char buffer[4];
 
-	expGolomb_UC(shd_write->first_mb_in_slice);
-	expGolomb_UC(shd_write->slice_type);
-	expGolomb_UC(shd_write->pic_parameter_set_id);
+	expGolomb_UC(shd.first_mb_in_slice);
+	expGolomb_UC(shd.slice_type);
+	expGolomb_UC(shd.pic_parameter_set_id);
 
-	UINT_to_RBSP_size_known(shd_write->frame_num,sps_write->log2_max_frame_num,buffer);
-	writeRawBits(sps_write->log2_max_frame_num,buffer); 
+	UINT_to_RBSP_size_known(shd.frame_num,sps.log2_max_frame_num,buffer);
+	writeRawBits(sps.log2_max_frame_num,buffer); 
 
-	if(nal_unit_write->nal_unit_type==5)
+	if(nal_unit.nal_unit_type==5)
 	{
-		expGolomb_UC(shd_write->idr_pic_id);
+		expGolomb_UC(shd.idr_pic_id);
 	}
 
-	UINT_to_RBSP_size_known(shd_write->pic_order_cnt_lsb,sps_write->log2_max_pic_order_cnt_lsb,buffer);
-	writeRawBits(sps_write->log2_max_pic_order_cnt_lsb,buffer);
+	UINT_to_RBSP_size_known(shd.pic_order_cnt_lsb,sps.log2_max_pic_order_cnt_lsb,buffer);
+	writeRawBits(sps.log2_max_pic_order_cnt_lsb,buffer);
 
-	if((shd_write->slice_type%5)==P_SLICE || (shd_write->slice_type%5)==B_SLICE || (shd_write->slice_type%5)==SP_SLICE)
+	if((shd.slice_type%5)==P_SLICE || (shd.slice_type%5)==B_SLICE || (shd.slice_type%5)==SP_SLICE)
 	{
-		if (shd_write->num_ref_idx_active_override_flag==1)
+		if (shd.num_ref_idx_active_override_flag==1)
 		{
 			writeOnes(1);
 		}
@@ -193,23 +206,23 @@ void shd_write(struct SH_data *shd_write, struct SPS_data *sps_write, NALunit *n
 			writeZeros(1);
 		}
 		
-		if (shd_write->num_ref_idx_active_override_flag==1)
+		if (shd.num_ref_idx_active_override_flag==1)
 		{
-			expGolomb_UC(shd_write->num_ref_idx_l0_active_minus1);
+			expGolomb_UC(shd.num_ref_idx_l0_active_minus1);
 		}
 
 	}
 
 	//TODO: check upper if-clause and the function below - double reading/writing?
-	ref_pic_list_modification_write(shd_write);
+	ref_pic_list_modification_write();
 
-	if(nal_unit_write->nal_ref_idc!=0)
+	if(nal_unit.nal_ref_idc!=0)
 	{
-		bool IdrPicFlag = (nal_unit_write->nal_unit_type == 5);
-		dec_ref_pic_marking_write(IdrPicFlag, shd_write);
+		bool IdrPicFlag = (nal_unit.nal_unit_type == 5);
+		dec_ref_pic_marking_write(IdrPicFlag);
 	}
 
-	expGolomb_SC(shd_write->slice_qp_delta);
+	expGolomb_SC(shd.slice_qp_delta);
 
 	//Deblocking filter flag is inferred as NOT PRESENT.
 	//This is copy-paste from shd reading functions
