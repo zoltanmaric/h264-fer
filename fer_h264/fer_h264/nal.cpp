@@ -194,7 +194,7 @@ void getNAL(unsigned long *fPtr, NALunit &nu)
 
 // ENCODING:
 
-void writeNAL(unsigned long *fPtr, NALunit nu, unsigned int numBytesInRBSP)
+void writeNAL(NALunit nu)
 {
 	unsigned int pos = 0;
 	// start code prefix:
@@ -206,7 +206,7 @@ void writeNAL(unsigned long *fPtr, NALunit nu, unsigned int numBytesInRBSP)
 	NALbytes[pos++] = (nu.forbidden_zero_bit << 7) | (nu.nal_ref_idc << 5) | (nu.nal_unit_type & 31);
 
 	int zeroCounter = 0;
-	for(int i = 0; i < numBytesInRBSP; i++)
+	for(int i = 0; i < nu.NumBytesInRBSP; i++)
 	{
 		if (zeroCounter == 2)
 		{

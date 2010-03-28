@@ -326,6 +326,10 @@ void sps_write()
 	sps.frame_cropping_flag = 0;
 	sps.vui_parameters_present_flag = 0;
 
+	// TODO: handle non-multiple-of-16 frame dimensions
+	sps.PicWidthInMbs = frame.Lwidth << 4;	// == /16
+	sps.PicHeightInMapUnits = frame.Lheight << 4;
+
 	unsigned char buffer[4];
 	
 	UINT_to_RBSP_size_known(sps.profile_idc, 8, buffer);

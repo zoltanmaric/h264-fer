@@ -17,4 +17,4 @@ NALunit;
 // fPtr - the current position in the input file
 void getNAL(unsigned long *fPtr, NALunit &nu);
 
-void writeNAL(unsigned long *fPtr, NALunit nu);
+void writeNAL(NALunit nu);
