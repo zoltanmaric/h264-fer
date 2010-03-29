@@ -195,7 +195,7 @@ int init_h264_structures_encoder();
 typedef struct {
   int Lwidth,Lheight;
   int Cwidth,Cheight;
-  unsigned char *L, *C[2];
+  unsigned char **L, **C[2];
 } frame_type;
 
 extern frame_type frame;

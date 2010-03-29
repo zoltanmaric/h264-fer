@@ -10,6 +10,10 @@ int *blue;
 FILE *yuvoutput;
 FILE *yuvinput;
 
+// The dimensions of the input frames (may not be multiples of 16)
+int inputWidth;
+int inputHeight;
+
 // DECODING
 void toRGB()
 {
@@ -26,9 +30,9 @@ void toRGB()
 		{
 			lumaIndex = i*frame.Lwidth + j;
 			chromaIndex = (i/2)*frame.Cwidth + (j/2);
-			y_shift = (frame.L[lumaIndex] - 16) << 10;
-			cb_shift = (frame.C[0][chromaIndex] - 128) << 10;
-			cr_shift = (frame.C[1][chromaIndex] - 128) << 10;
+			y_shift = (frame.L[i][j] - 16) << 10;
+			cb_shift = (frame.C[0][i/2][j/2] - 128) << 10;
+			cr_shift = (frame.C[1][i/2][j/2] - 128) << 10;
 
 			// 1.164 << 10 == 1192
 			// 1.596 << 10 == 1634
@@ -88,7 +92,7 @@ void writeToY4M()
 {
 	//static unsigned long frameCount = 0;
 	static bool firstFrame = true;
-	int i;
+	int i, j;
 
 	char *output;
 	output = new char[5000000];
@@ -102,22 +106,30 @@ void writeToY4M()
 	}
 
 	pos += sprintf(&(output[pos]), "FRAME%c", 0x0a);
-	for (i = 0; i < frame.Lwidth * frame.Lheight; i++)
+	for (i = 0; i < frame.Lheight; i++)
 	{
-		output[pos++] = frame.L[i];
+		for (j = 0; j < frame.Lwidth; j++)
+		{
+			output[pos++] = frame.L[i][j];
+		}
 	}
-	for (i = 0; i < frame.Cwidth * frame.Cheight; i++)
+	for (i = 0; i < frame.Cheight; i++)
 	{
-		output[pos++] = frame.C[0][i];
+		for (j = 0; j < frame.Cwidth; j++)
+		{
+			output[pos++] = frame.C[0][i][j];
+		}
 	}
-	for (i = 0; i < frame.Cwidth * frame.Cheight; i++)
+	for (i = 0; i < frame.Cheight; i++)
 	{
-		output[pos++] = frame.C[1][i];
+		for (j = 0; j < frame.Cwidth; j++)
+		{
+			output[pos++] = frame.C[1][i][j];
+		}
 	}
 
 	fwrite(output, 1, pos, yuvoutput);
 	free(output);
-	if (frameCount == 600) exit(0);
 }
 
 
@@ -162,18 +174,18 @@ void loadY4MHeader()
 	// strstr returns a pointer, not the offset inside the
 	// string, so I am converting it
 	int pos = (unsigned int)(strstr(input, " W") - input) + 2;
-	sscanf(&input[pos], "%d", &frame.Lwidth);
+	sscanf(&input[pos], "%d", &inputWidth);
 
 	pos = (unsigned int)(strstr(input, " H") - input) + 2;
-	sscanf(&input[pos], "%d", &frame.Lheight);
+	sscanf(&input[pos], "%d", &inputHeight);
+
+	// Crop frame dimensions to multiples of 16:
+	frame.Lwidth = inputWidth & 0xfffffff0;
+	frame.Lheight = inputHeight & 0xfffffff0;
 
 	// TODO: handle chroma for non-4:2:0 subsampling
 	frame.Cwidth = frame.Lwidth >> 1;
 	frame.Cheight = frame.Lheight >> 1;
-
-	frame.L = new unsigned char[frame.Lwidth*frame.Lheight];
-	frame.C[0] = new unsigned char[frame.Cwidth*frame.Cheight];
-	frame.C[1] = new unsigned char[frame.Cwidth*frame.Cheight];
 
 	// TODO: handle interlaced frames
 	pos = findStartOfFrame(input);
@@ -188,33 +200,111 @@ int readFromY4M()
 {
 	static bool firstFrame = true;
 	char *input;
+	int i, j, k, l;
 
-	int lumaSize = frame.Lwidth*frame.Lheight;
-	int chromaSize = frame.Cwidth*frame.Cheight;
+	int lumaSize = inputWidth*inputHeight;
+	int chromaSize = lumaSize >> 2;
 	int bufSize = lumaSize + (chromaSize << 1) + 1000;	// == lumaSize + 2*chromaSize + 1000
 	
 	input = new char[bufSize];
 
 	int test = ftell(yuvinput);
 	
-	if (fread(input, 1, bufSize, yuvinput) < bufSize)
+	if (fread(input, 1, bufSize, yuvinput) < (lumaSize + (chromaSize << 1)))
 	{
 		free(input);
 		return -1;
 	}
 	else
 	{
-		memcpy(frame.L, input, lumaSize);
-		unsigned int pos = lumaSize;
+		int cropTop = (inputHeight - frame.Lheight) >> 1;
+		int cropBottom = cropTop + frame.Lheight;
+		int cropLeft = (inputWidth - frame.Lwidth) >> 1;
+		int cropRight = cropLeft + frame.Lwidth;
 
-		memcpy(frame.C[0], &input[pos], chromaSize);
+		k = 0;
+		for (i = 0; i < inputHeight; i++)
+		{
+			if ((i >= cropTop) && (i < cropBottom))
+			{
+				l = 0;
+				for (j = 0; j < inputWidth; j++)
+				{
+					if ((j >= cropLeft) && (j < cropRight))
+					{
+						frame.L[k][l] = input[i*inputWidth + j];
+						l++;
+					}
+				}
+				k++;
+			}
+		}
+		unsigned int  pos = lumaSize;
+
+		cropTop >>= 1;
+		cropBottom >>= 1;
+		cropLeft >>= 1;
+		cropRight >>= 1;
+
+		int inputHeightC = inputHeight >> 1;
+		int inputWidthC = inputWidth >> 1;
+
+		k = 0;
+		for (i = 0; i < inputHeightC; i++)
+		{
+			if ((i >= cropTop) && (i < cropBottom))
+			{
+				l = 0;
+				for (j = 0; j < inputWidthC; j++)
+				{
+					if ((j >= cropLeft) && (j < cropRight))
+					{
+						frame.C[0][k][l] = input[pos + i*inputWidthC + j];
+						//frame.C[0][k][l] = 0;
+						l++;
+					}
+				}
+				k++;
+			}
+		}
+
 		pos += chromaSize;
+		
+		k = 0;
+		for (i = 0; i < inputHeightC; i++)
+		{
+			if ((i >= cropTop) && (i < cropBottom))
+			{
+				l = 0;
+				for (j = 0; j < inputWidthC; j++)
+				{
+					if ((j >= cropLeft) && (j < cropRight))
+					{
+						frame.C[1][k][l] = input[pos + i*inputWidthC + j];
+						//frame.C[1][k][l] = 0;
+						l++;
+					}
+				}
+				k++;
+			}
+		}
 
-		memcpy(frame.C[1], &input[pos], chromaSize);
 		pos = findStartOfFrame(input);
-
 		fseek(yuvinput, pos - bufSize, SEEK_CUR);
 		free(input);
 		return 0;
+
+		//memcpy(frame.L, input, lumaSize);
+		//unsigned int pos = lumaSize;
+
+		//memcpy(frame.C[0], &input[pos], chromaSize);
+		//pos += chromaSize;
+
+		//memcpy(frame.C[1], &input[pos], chromaSize);
+		//pos = findStartOfFrame(input);
+
+		//fseek(yuvinput, pos - bufSize, SEEK_CUR);
+		//free(input);
+		//return 0;
 	}
 }

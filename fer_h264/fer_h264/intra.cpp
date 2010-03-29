@@ -451,7 +451,7 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int intra4x4PredMode, int pred4
 			int xM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
 			int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
 
-			p[i] = frame.L[(yM + yW) * frame.Lwidth + (xM + xW)];
+			p[i] = frame.L[yM + yW][xM + xW];
 			int test = 0;
 		}
 	}
@@ -622,7 +622,7 @@ void Intra16x16SamplePrediction(int predL[16][16], int Intra16x16PredMode)
 			int xM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
 			int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
 
-			p(x,y) = frame.L[(yM+yW)*frame.Lwidth + (xM+xW)];
+			p(x,y) = frame.L[yM+yW][xM+xW];
 			int test = 0;
 		}
 	}
@@ -819,9 +819,9 @@ void IntraChromaSamplePrediction(int predCr[8][8], int predCb[8][8])
 			int yM = (yL >> 4)*MbHeightC + (yL % 2);
 
 			// Chrominance blue:
-			pCb(x,y) = (frame.C[0])[(yM+yW)*frame.Cwidth + (xM+xW)];
+			pCb(x,y) = frame.C[0][yM+yW][xM+xW];
 			// Chrominance red:
-			pCr(x,y) = (frame.C[1])[(yM+yW)*frame.Cwidth + (xM+xW)];
+			pCr(x,y) = frame.C[1][yM+yW][xM+xW];
 		}
 	}
 
@@ -909,7 +909,7 @@ int sadLuma16x16(int predL[16][16])
 	{
 		for (int j = 0; j < 16; j++)
 		{
-			sad += ABS(frame.L[(yP+i)*frame.Lwidth + (xP+j)] - predL[i][j]);
+			sad += ABS(frame.L[yP+i][xP+j] - predL[i][j]);
 		}
 	}
 
@@ -932,7 +932,7 @@ int sadLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			sad += ABS(frame.L[(yP+y0+i)*frame.Lwidth + (xP+x0+j)] - pred4x4L[i][j]);
+			sad += ABS(frame.L[yP+y0+i][xP+x0+j] - pred4x4L[i][j]);
 		}
 	}
 
@@ -954,8 +954,8 @@ int sadChroma(int predCb[8][8], int predCr[8][8])
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			sad += ABS(frame.C[0][(yP+i)*frame.Cwidth + (xP+j)] - predCb[i][j]);
-			sad += ABS(frame.C[1][(yP+i)*frame.Cwidth + (xP+j)] - predCr[i][j]);
+			sad += ABS(frame.C[0][yP+i][xP+j] - predCb[i][j]);
+			sad += ABS(frame.C[1][yP+i][xP+j] - predCr[i][j]);
 		}
 	}
 	return sad;	// I am disappoint.
