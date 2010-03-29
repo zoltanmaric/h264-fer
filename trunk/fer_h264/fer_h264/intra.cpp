@@ -1069,7 +1069,8 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			sad4x4 = sadLuma4x4(pred4x4L, luma4x4BlkIdx);
 			if (sad4x4 < min4x4)
 			{
-				Intra4x4PredMode[luma4x4BlkIdx] = intra4x4PredMode;
+				int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;
+				Intra4x4PredMode[absIdx] = intra4x4PredMode;
 				setIntra4x4PredMode(luma4x4BlkIdx);
 				min4x4 = sad4x4;
 				if (min4x4 == 0)
@@ -1113,6 +1114,31 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		}
 	}
 
+	// Store the chosen prediction result in predL[16][16]
+	if (Intra16x16PredMode == -1)
+	{
+		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+		{
+			int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;				
+			Intra4x4SamplePrediction(luma4x4BlkIdx, Intra4x4PredMode[absIdx], pred4x4L);
+
+			int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
+			int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
+
+			for (int y = 0; y < 4; y++)
+			{
+				for (int x = 0; x < 4; x++)
+				{
+					predL[y0+y][x0+x] = pred4x4L[y][x];
+				}
+			}
+		}
+	}
+	else
+	{
+		Intra16x16SamplePrediction(predL, Intra16x16PredMode);
+	}
+
 	min = INT_MAX;
 	int finalPredMode;
 	for (int i = 0; i < 4; i++)
@@ -1137,7 +1163,10 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			}
 		}
 	}
+
+	// Store the chosen prediction result in predCb and predCr
 	intra_chroma_pred_mode = finalPredMode;
+	IntraChromaSamplePrediction(predCr, predCb);
 
 	return Intra16x16PredMode;
 }
