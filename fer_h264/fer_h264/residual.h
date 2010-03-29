@@ -29,6 +29,27 @@ extern int coeffLevel_chroma_AC[2][4][16];
 extern int **TotalCoeff_luma_array;
 extern int ***TotalCoeff_chroma_array;
 
+//Additional data needed for each post-transform block which is to be written to RBSP as residual data
+//Filled in at transform/quantization level
+struct additional_level_data
+{
+	int TotalCoeff;
+	int TrailingOnes;
+	int total_zeros;
+	int run[16];
+};
+
+struct complete_additional_level_data
+{
+	struct additional_level_data Intra16x16DC;
+	struct additional_level_data Intra16x16AC[16];
+	struct additional_level_data LumaLevel[16];
+	struct additional_level_data ChromaDC[2];
+	struct additional_level_data ChromaACLevel[2][4];
+};
+
+extern struct complete_additional_level_data CALD;
+
 //CAVLC tables used in residual decoding.
 
 struct cavlc_table_item
@@ -71,3 +92,6 @@ int residual_block(int *coeffLevel, int maxNumCoeff, int nC);
 void residual(int startIdx, int endIdx);
 void residual_luma(int i16x16DClevel[16], int i16x16AClevel[16][16], int level[16][16], int startIdx, int endIdx);
 void residual_block_cavlc(int ChromaDCLevel[16], int, int, int);
+
+void residual_luma_write(int i16x16DClevel[16], int i16x16AClevel[16][16], int level[16][16], int startIdx, int endIdx);
+void residual_block_cavlc_write(int coeffLevel[16], int startIdx, int endIdx, int maxNumCoeff, struct additional_level_data);
