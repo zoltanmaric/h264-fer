@@ -70,6 +70,10 @@ void encode()
 		nu.nal_unit_type = NAL_UNIT_TYPE_IDR;
 		RBSP_encode(nu);
 
+		writeNAL(nu);
+
+		if (frameCount == 10) break;
+
 		//writeToY4M();
 	}
 }

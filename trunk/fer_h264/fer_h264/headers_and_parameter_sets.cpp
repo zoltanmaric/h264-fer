@@ -177,7 +177,7 @@ void shd_write(NALunit &nal_unit)
 	shd.pic_order_cnt_lsb = 0;
 	shd.num_ref_idx_active_override_flag = 0;	// no changes in the reference picture list order yet
 	shd.slice_qp_delta = -14;		// inferred quantization parameter
-	shd.PicSizeInMbs = frame.Lwidth * frame.Lheight;
+	shd.PicSizeInMbs = frame.Lwidth * frame.Lheight >> 8;
 
 	unsigned char buffer[4];
 

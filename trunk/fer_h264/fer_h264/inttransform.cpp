@@ -103,7 +103,7 @@ void pictureConstruction4x4Luma(int u[4][4], int luma4x4BlkIdx)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			frame.L[(yP+y0+i)*frame.Lwidth + (xP+x0+j)] = u[i][j];
+			frame.L[yP+y0+i][xP+x0+j] = u[i][j];
 		}
 	}
 }
@@ -123,7 +123,7 @@ void pictureConstructionIntra_16x16Luma(int u[16][16])
 	{
 		for (int j = 0; j < 16; j++)
 		{
-			frame.L[(yP+y0+i)*frame.Lwidth + (xP+x0+j)] = u[i][j];
+			frame.L[yP+y0+i][xP+x0+j] = u[i][j];
 		}
 	}
 }
@@ -145,11 +145,11 @@ void pictureConstructionChroma(int u[8][8], bool Cb)
 			// Norm: subWidthC == SubHeightC == 2 in baseline
 			if (Cb)
 			{
-				frame.C[0][((yP/2)+y0+i)*frame.Cwidth + (xP/2)+x0+j] = u[i][j];
+				frame.C[0][(yP/2)+y0+i][(xP/2)+x0+j] = u[i][j];
 			}
 			else
 			{
-				frame.C[1][((yP/2)+y0+i)*frame.Cwidth + (xP/2)+x0+j] = u[i][j];
+				frame.C[1][(yP/2)+y0+i][(xP/2)+x0+j] = u[i][j];
 			}
 		}
 	}

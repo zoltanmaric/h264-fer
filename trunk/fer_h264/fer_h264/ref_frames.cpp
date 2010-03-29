@@ -10,13 +10,21 @@ int iskoristeno;
 
 void frameDeepCopy()
 {
-	for (int i = 0; i < frame.Lheight*frame.Lwidth; i++)
-		dpb.L[i]=frame.L[i];
-
-	for (int i = 0; i < frame.Cheight*frame.Cwidth; i++)
+	for (int i = 0; i < frame.Lheight; i++)
 	{
-		dpb.C[0][i]=frame.C[0][i];
-		dpb.C[1][i]=frame.C[1][i];
+		for (int j = 0; j < frame.Lwidth; j++)
+		{
+			dpb.L[i][j]=frame.L[i][j];
+		}
+	}
+
+	for (int i = 0; i < frame.Cheight; i++)
+	{
+		for (int j = 0; j < frame.Cwidth; j++)
+		{
+			dpb.C[0][i][j]=frame.C[0][i][j];
+			dpb.C[1][i][j]=frame.C[1][i][j];
+		}
 	}
 }
 
@@ -45,9 +53,20 @@ void initialisationProcess()
 	dpb.Cheight=frame.Cheight;
 	dpb.Cwidth=frame.Cwidth;
 
-	dpb.L = new unsigned char[frame.Lwidth*frame.Lheight];
-	dpb.C[0] = new unsigned char[frame.Cwidth*frame.Cheight];
-	dpb.C[1] = new unsigned char[frame.Cwidth*frame.Cheight];
+	dpb.L = new unsigned char*[frame.Lheight];
+	for (int i = 0; i < frame.Lheight; i++)
+	{
+		dpb.L[i] = new unsigned char[frame.Lwidth];
+	}
+
+	dpb.C[0] = new unsigned char*[frame.Cheight];
+	dpb.C[1] = new unsigned char*[frame.Cheight];
+
+	for (int i = 0; i < frame.Cheight; i++)
+	{
+		dpb.C[0][i] = new unsigned char[frame.Cwidth];
+		dpb.C[1][i] = new unsigned char[frame.Cwidth];
+	}
 
 	for (int refPicIdx = 0; refPicIdx < shd.num_ref_idx_l0_active_minus1+1; refPicIdx++)
 	{
