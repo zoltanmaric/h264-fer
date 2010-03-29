@@ -94,8 +94,8 @@ void pictureConstruction4x4Luma(int u[4][4], int luma4x4BlkIdx)
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
 
-	int x0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
-	int y0 = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) + InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
+	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
+	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
 
 	// Norm: MbAffFrameFlag == 0 in baseline
 

@@ -177,6 +177,7 @@ void shd_write(NALunit &nal_unit)
 	shd.pic_order_cnt_lsb = 0;
 	shd.num_ref_idx_active_override_flag = 0;	// no changes in the reference picture list order yet
 	shd.slice_qp_delta = -14;		// inferred quantization parameter
+	shd.PicSizeInMbs = frame.Lwidth * frame.Lheight;
 
 	unsigned char buffer[4];
 
@@ -340,8 +341,10 @@ void sps_write()
 	sps.vui_parameters_present_flag = 0;
 
 	// TODO: handle non-multiple-of-16 frame dimensions
-	sps.PicWidthInMbs = frame.Lwidth << 4;	// == /16
-	sps.PicHeightInMapUnits = frame.Lheight << 4;
+	sps.PicWidthInMbs = frame.Lwidth >> 4;	// == /16
+	PicWidthInMbs = sps.PicWidthInMbs;
+	sps.PicHeightInMapUnits = frame.Lheight >> 4;
+	sps.FrameHeightInMbs = sps.PicHeightInMapUnits;
 
 	unsigned char buffer[4];
 	

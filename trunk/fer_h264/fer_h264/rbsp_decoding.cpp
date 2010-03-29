@@ -364,6 +364,7 @@ void RBSP_encode(NALunit &nal_unit)
 	if (nal_unit.nal_unit_type == NAL_UNIT_TYPE_SPS)
 	{
 		sps_write();
+		init_h264_structures_encoder();
 		RBSP_trailing_bits();
 		nal_unit.NumBytesInRBSP = RBSP_current_byte;
 	}
@@ -391,5 +392,37 @@ void RBSP_encode(NALunit &nal_unit)
 		}
 
 		shd_write(nal_unit);
+
+		int predL[16][16], predCb[8][8], predCr[8][8];
+		int intra16x16PredMode;
+		for (CurrMbAddr = 0; CurrMbAddr < shd.PicSizeInMbs; CurrMbAddr++)
+		{
+			intra16x16PredMode = intraPredictionEncoding(predL, predCr, predCb);
+
+			// intra4x4 prediction
+			if (intra16x16PredMode == -1)
+			{
+				mb_type = I_4x4;
+				mb_type_array[CurrMbAddr] = I_4x4;
+				expGolomb_UC(mb_type);
+
+				for(int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+				{
+					writeFlag(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]);
+					if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == false)
+					{
+						unsigned char buffer[4];
+						RBSPtoUINT(buffer, rem_intra4x4_pred_mode[luma4x4BlkIdx]);
+						writeRawBits(3, buffer);
+					}
+				}
+			}
+			// intra16x16 prediction
+			else
+			{
+			
+			}
+			expGolomb_UC(intra_chroma_pred_mode);
+		}
 	}
 }

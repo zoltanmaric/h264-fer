@@ -194,6 +194,8 @@ int readFromY4M()
 	int bufSize = lumaSize + (chromaSize << 1) + 1000;	// == lumaSize + 2*chromaSize + 1000
 	
 	input = new char[bufSize];
+
+	int test = ftell(yuvinput);
 	
 	if (fread(input, 1, bufSize, yuvinput) < bufSize)
 	{

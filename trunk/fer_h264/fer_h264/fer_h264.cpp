@@ -65,6 +65,11 @@ void encode()
 	{		
 		frameCount++;
 
+		// TEST: Creating intra frames only
+		nu.nal_ref_idc = 1;		// non-zero for i-slices
+		nu.nal_unit_type = NAL_UNIT_TYPE_IDR;
+		RBSP_encode(nu);
+
 		//writeToY4M();
 	}
 }
