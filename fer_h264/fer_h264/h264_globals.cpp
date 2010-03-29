@@ -244,6 +244,8 @@ int Intra4x4ScanOrder[16][2]={
 
 unsigned long frameCount = 0;
 
+frame_type frame;
+
 // Inter prediction globals
 int **ref_idx_l0_array;
 int mvd_l0[4][4][2];
@@ -347,7 +349,11 @@ int init_h264_structures()
 	return 0;
 }
 
-frame_type frame;
+int init_h264_structures_encoder()
+{
+	Intra4x4PredMode = new int[frame.Lwidth*frame.Lheight*16];
+	return 0;
+}
 
 //frame/4 dimenzije
 int *Intra4x4PredMode;
