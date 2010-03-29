@@ -420,7 +420,8 @@ void RBSP_encode(NALunit &nal_unit)
 			// intra16x16 prediction
 			else
 			{
-			
+				// TODO: choose mb_type according to intra16x16PredMode
+				// and Luma and Chroma array types.
 			}
 			expGolomb_UC(intra_chroma_pred_mode);
 		}
