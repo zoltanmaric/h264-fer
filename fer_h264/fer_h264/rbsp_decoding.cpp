@@ -10,6 +10,7 @@
 #include "ref_frames.h"
 #include "mocomp.h"
 #include "mode_pred.h"
+#include "quantizationTransform.h"
 
 void RBSP_decode(NALunit nal_unit)
 {
@@ -423,6 +424,7 @@ void RBSP_encode(NALunit &nal_unit)
 				// TODO: choose mb_type according to intra16x16PredMode
 				// and Luma and Chroma array types.
 			}
+			quantizationTransform(predL, predCb, predCr);
 			expGolomb_UC(intra_chroma_pred_mode);
 		}
 	}

@@ -240,6 +240,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\quantizationTransform.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\rawreader.cpp"
 				>
 			</File>
@@ -307,6 +311,10 @@
 			</File>
 			<File
 				RelativePath=".\nal.h"
+				>
+			</File>
+			<File
+				RelativePath=".\quantizationTransform.h"
 				>
 			</File>
 			<File
