@@ -2,6 +2,8 @@
 #include "quantizationTransform.h"
 #include "residual.h"
 #include "h264_globals.h"
+#include "h264_math.h"
+#include "headers_and_parameter_sets.h"
 
 //Multiplication factors for quantization
 int MF[6][4][4] = 
@@ -264,17 +266,28 @@ void forwardDCChroma (int qP, int dcC[2][2], int c[2][2], bool Intra)
 	quantisationChromaDC(f, qP, c, Intra);
 }
 
-void transformScan(int c[4][4], int list[16])
+void transformScan(int c[4][4], int list[16], bool Intra16x16AC)
 {
-	for (int i = 0; i < 16; i++)
+	if (Intra16x16AC)
 	{
-		int x = ZigZagReordering[i][0];
-		int y = ZigZagReordering[i][1];
-		list[i] = c[x][y];
+		for (int i = 1; i < 16; i++)
+		{
+			int x = ZigZagReordering[i][0];
+			int y = ZigZagReordering[i][1];
+			list[i] = c[x][y];
+		}
+	}
+	else {
+		for (int i = 0; i < 16; i++)
+		{
+			int x = ZigZagReordering[i][0];
+			int y = ZigZagReordering[i][1];
+			list[i] = c[x][y];
+		}
 	}
 }
 
-void quantisationTransform(int predL[16][16], predCb[8][8], predCr[8][8])
+void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8])
 {
 	int diffL4x4[4][4];
 	int DCLuma[4][4];
@@ -292,8 +305,8 @@ void quantisationTransform(int predL[16][16], predCb[8][8], predCr[8][8])
 		for (int i = 0; i < 4; i++)
 		{
 			for (int j = 0; j < 4; j++)
-			{
-				diffL4x4[i][j] = frame.L[(yP + y0 + i) * frame.Lwidth + (xP + x0 + j)] - predL[y0 + i][x0 + j];				
+			{				
+				diffL4x4[i][j] = frame.L[yP + y0 + i][xP + x0 + j] - predL[y0 + i][x0 + j];
 			}
 		}
 
@@ -301,14 +314,19 @@ void quantisationTransform(int predL[16][16], predCb[8][8], predCr[8][8])
 
 		if (MbPartPredMode(mb_type , 0) == Intra_16x16)
 		{
-			DCLuma[y0/4][x0/4] = diffL4x4[0][0];
+			DCLuma[y0/4][x0/4] = rLuma[0][0];			
+			transformScan(rLuma, Intra16x16ACLevel[luma4x4BlkIdx], true);
+		}
+		else
+		{
+			transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
 		}
 	}
 
 	if (MbPartPredMode(mb_type , 0) == Intra_16x16)
 	{
 		forwardDCLumaIntra(QPy, DCLuma, rDCLuma);
-		transformScan(rDCLuma, Intra16x16DCLevel);
+		transformScan(rDCLuma, Intra16x16DCLevel, false);		
 	}
 
 }
