@@ -240,7 +240,7 @@ void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
 	}
 }
 
-void forwardResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool luma, bool Intra)
+void forwardResidual(int qP, int c[4][4], int r[4][4], bool luma, bool Intra)
 {
 	int d[4][4];
 
@@ -310,7 +310,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			}
 		}
 
-		forwardResidual(8, QPy, diffL4x4, rLuma, true, true);
+		forwardResidual(QPy, diffL4x4, rLuma, true, true);
 
 		if (MbPartPredMode(mb_type , 0) == Intra_16x16)
 		{
