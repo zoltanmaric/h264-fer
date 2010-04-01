@@ -399,6 +399,7 @@ void RBSP_encode(NALunit &nal_unit)
 		for (CurrMbAddr = 0; CurrMbAddr < shd.PicSizeInMbs; CurrMbAddr++)
 		{
 			intra16x16PredMode = intraPredictionEncoding(predL, predCr, predCb);
+			quantizationTransform(predL, predCb, predCr);
 
 			// intra4x4 prediction
 			if (intra16x16PredMode == -1)
@@ -417,15 +418,32 @@ void RBSP_encode(NALunit &nal_unit)
 						writeRawBits(3, buffer);
 					}
 				}
+				
+				expGolomb_UC(intra_chroma_pred_mode);
+				// TEST: Assume all residual is zero.
+				// coded_block_pattern = 0 => codeNum = 3				
+				expGolomb_UC(3);
 			}
 			// intra16x16 prediction
 			else
 			{
 				// TODO: choose mb_type according to intra16x16PredMode
 				// and Luma and Chroma array types.
+
+				// TEST: Assume all residual is zero.
+				mb_type = intra16x16PredMode + 1;
+				mb_type_array[CurrMbAddr] = mb_type;
+				expGolomb_UC(mb_type);
+
+				expGolomb_UC(intra_chroma_pred_mode);
 			}
-			quantizationTransform(predL, predCb, predCr);
-			expGolomb_UC(intra_chroma_pred_mode);
+
+			// TEST: Assume all residual is zero.
+			// mb_qp_delta = 0;
+			expGolomb_SC(0);
+			
+			// Test: Assume nC = 0..2 and TotalCoef and TrailingOnes = 0
+			writeFlag(1);	// coeff_token = 1
 		}
 	}
 }
