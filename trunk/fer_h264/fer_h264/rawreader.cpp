@@ -29,16 +29,13 @@ void initRawWriter(unsigned char *RBSP_write, unsigned int size)
 }
 
 //No return value, since the size of the "uint_number" (in bits) is known to caller
+// rbsp_result must be previously allocated
 void UINT_to_RBSP_size_known(unsigned long int uint_number, unsigned int size, unsigned char rbsp_result[4])
 {
-	unsigned char *new_rbsp_result=new unsigned char[4];
-
-	new_rbsp_result[0]=(uint_number>>24)&0xFF;
-	new_rbsp_result[1]=(uint_number>>16)&0xFF;
-	new_rbsp_result[2]=(uint_number>>8)&0xFF;
-	new_rbsp_result[3]=(uint_number)&0xFF;
-
-	rbsp_result=new_rbsp_result;
+	rbsp_result[0]=(uint_number>>24)&0xFF;
+	rbsp_result[1]=(uint_number>>16)&0xFF;
+	rbsp_result[2]=(uint_number>>8)&0xFF;
+	rbsp_result[3]=(uint_number)&0xFF;
 }
 
 //Return value is the size of "uint_number" in bits

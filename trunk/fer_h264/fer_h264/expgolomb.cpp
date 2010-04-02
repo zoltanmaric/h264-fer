@@ -54,9 +54,12 @@ void expGolomb_UC(unsigned int codeNum)
 		while (codeNum>upper_boundary)
 		{
 			prefix_length++;
-			temp_boundary=upper_boundary;
-			upper_boundary=(lower_boundary*2)+1;
-			lower_boundary=temp_boundary+1;
+			lower_boundary = upper_boundary + 1;
+			upper_boundary = lower_boundary << 1;
+			
+			//temp_boundary=upper_boundary;
+			//upper_boundary=(lower_boundary*2)+1;
+			//lower_boundary=temp_boundary+1;
 		}
 
 		suffix=codeNum-(1<<prefix_length)+1;
@@ -71,7 +74,7 @@ void expGolomb_UC(unsigned int codeNum)
 	}
 }
 
-void expGolomb_SC(unsigned int codeNum)
+void expGolomb_SC(int codeNum)
 {
 	if (codeNum<=0)
 	{
