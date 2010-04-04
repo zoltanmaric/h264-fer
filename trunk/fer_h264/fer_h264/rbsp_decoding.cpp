@@ -415,7 +415,6 @@ void RBSP_encode(NALunit &nal_unit)
 					{
 						unsigned char buffer[4];
 						UINT_to_RBSP_size_known(rem_intra4x4_pred_mode[luma4x4BlkIdx], 3, buffer);
-						//RBSPtoUINT(buffer, rem_intra4x4_pred_mode[luma4x4BlkIdx]);
 						writeRawBits(3, buffer);
 					}
 				}
