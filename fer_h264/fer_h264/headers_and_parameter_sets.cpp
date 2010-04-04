@@ -385,7 +385,7 @@ void sps_write()
 	expGolomb_UC(sps.PicHeightInMapUnits-1);
 	writeFlag(sps.frame_mbs_only_flag);
 
-	if (sps.frame_mbs_only_flag)
+	if (!sps.frame_mbs_only_flag)
 	{
 		writeFlag(sps.mb_adaptive_frame_field_flag);
 	}

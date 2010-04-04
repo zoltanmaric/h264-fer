@@ -28,17 +28,18 @@ void initRawWriter(unsigned char *RBSP_write, unsigned int size)
 	RBSP_write_data=RBSP_write;
 }
 
-//No return value, since the size of the "uint_number" (in bits) is known to caller
-// rbsp_result must be previously allocated
+// No return value, since the size of the "uint_number" (in bits) is known to caller
+// rbsp_result byte 0 is the LSB and byte 3 is the MSB
 void UINT_to_RBSP_size_known(unsigned long int uint_number, unsigned int size, unsigned char rbsp_result[4])
 {
-	rbsp_result[0]=(uint_number>>24)&0xFF;
-	rbsp_result[1]=(uint_number>>16)&0xFF;
-	rbsp_result[2]=(uint_number>>8)&0xFF;
-	rbsp_result[3]=(uint_number)&0xFF;
+	rbsp_result[3]=(uint_number>>24)&0xFF;
+	rbsp_result[2]=(uint_number>>16)&0xFF;
+	rbsp_result[1]=(uint_number>>8)&0xFF;
+	rbsp_result[0]=(uint_number)&0xFF;
 }
 
-//Return value is the size of "uint_number" in bits
+// Return value is the size of "uint_number" in bits
+// rbsp_result byte 0 is the LSB and byte 3 is the MSB
 unsigned int UINT_to_RBSP_size_unknown(unsigned long int uint_number, unsigned char rbsp_result[4])
 {
 	int rbsp_length=0;
@@ -51,11 +52,10 @@ unsigned int UINT_to_RBSP_size_unknown(unsigned long int uint_number, unsigned c
 	}
 	else
 	{
-
-		new_rbsp_result[0]=(uint_number>>24)&0xFF;
-		new_rbsp_result[1]=(uint_number>>16)&0xFF;
-		new_rbsp_result[2]=(uint_number>>8)&0xFF;
-		new_rbsp_result[3]=(uint_number)&0xFF;
+		new_rbsp_result[3]=(uint_number>>24)&0xFF;
+		new_rbsp_result[2]=(uint_number>>16)&0xFF;
+		new_rbsp_result[1]=(uint_number>>8)&0xFF;
+		new_rbsp_result[0]=(uint_number)&0xFF;
 
 
 		//Let's count the number of bits that make this integer (important only for return value)
@@ -160,12 +160,12 @@ bool writeRawBits(int N, unsigned char *data_to_write)
 		{
 			RBSP_write_data[RBSP_write_current_byte]=data_to_write[count/8];
 			count+=8;
-			RBSP_current_byte++;
+			RBSP_write_current_byte++;
 			continue;
 		}
 
 		//Classic bit by bit loading
-		RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1) + ((data_to_write[count/8]>>(7-(count%8)))&1);
+		RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1) + ((data_to_write[count/8]>>((N-count-1)%8))&1);
 		RBSP_write_current_bit++;
 		if (RBSP_write_current_bit==8)
 		{

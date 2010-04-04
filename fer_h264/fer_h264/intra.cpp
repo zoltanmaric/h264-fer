@@ -1014,6 +1014,8 @@ void setIntra4x4PredMode(int luma4x4BlkIdx)
 	}
 	else
 	{
+		prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] = false;
+
 		if (Intra4x4PredMode[absIdx] < predIntra4x4PredMode)
 		{
 			rem_intra4x4_pred_mode[luma4x4BlkIdx] = Intra4x4PredMode[absIdx];
@@ -1082,9 +1084,9 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 				if (((intra4x4PredMode == 0) && (luma4x4BlkIdxB == -1)) ||
 					((intra4x4PredMode == 1) && (luma4x4BlkIdxA == -1)) ||
 					((intra4x4PredMode == 3) && (luma4x4BlkIdxB == -1)) ||
-					((intra4x4PredMode == 4) && (luma4x4BlkIdxB == -1)) ||
-					((intra4x4PredMode == 5) && (luma4x4BlkIdxB == -1)) ||
-					((intra4x4PredMode == 6) && (luma4x4BlkIdxB == -1)) ||
+					((intra4x4PredMode == 4) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
+					((intra4x4PredMode == 5) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
+					((intra4x4PredMode == 6) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
 					((intra4x4PredMode == 7) && (luma4x4BlkIdxB == -1)) ||
 					((intra4x4PredMode == 8) && (luma4x4BlkIdxA == -1)))
 				{

@@ -46,14 +46,14 @@ void RBSP_decode(NALunit nal_unit)
 	//Macroblock skipping is implemented
 	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
 	{
-		// TEST: tu postavi frejm od kojeg želiš poèet ispisivanje
-		// u ppm. Indeksi su isti ko u h264visi.
 		frameCount++;
-		if (frameCount < 109)
-		{	
-			//frameCount++;
-			return;
-		}
+		// TEST: tu postavi frejm od kojeg želiš poèet ispisivanje
+		// u ppm ili yuv. Indeksi su isti ko u h264visi.
+		//if (frameCount < 109)
+		//{	
+		//	//frameCount++;
+		//	return;
+		//}
 
 		//Read slice header
 		fill_shd(&nal_unit);
@@ -352,9 +352,9 @@ void RBSP_decode(NALunit nal_unit)
 void RBSP_trailing_bits()
 {
 	writeOnes(1);
-	if (RBSP_current_bit != 0)
+	if (RBSP_write_current_bit != 0)
 	{
-		writeZeros(8 - RBSP_current_bit);
+		writeZeros(8 - RBSP_write_current_bit);
 	}
 }
 
@@ -367,15 +367,15 @@ void RBSP_encode(NALunit &nal_unit)
 		sps_write();
 		init_h264_structures_encoder();
 		RBSP_trailing_bits();
-		nal_unit.NumBytesInRBSP = RBSP_current_byte;
+		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;
 	}
 	else if (nal_unit.nal_unit_type == NAL_UNIT_TYPE_PPS)
 	{
 		pps_write();
 		RBSP_trailing_bits();
-		nal_unit.NumBytesInRBSP = RBSP_current_byte;
+		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;
 		// TEST: ovo stoji samo dok imamo samo intra frejmove
-		shd.idr_pic_id = 0;
+		shd.idr_pic_id = -1;
 	}
 	else if ((nal_unit.nal_unit_type == NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type == NAL_UNIT_TYPE_NOT_IDR))
 	{
@@ -414,7 +414,8 @@ void RBSP_encode(NALunit &nal_unit)
 					if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == false)
 					{
 						unsigned char buffer[4];
-						RBSPtoUINT(buffer, rem_intra4x4_pred_mode[luma4x4BlkIdx]);
+						UINT_to_RBSP_size_known(rem_intra4x4_pred_mode[luma4x4BlkIdx], 3, buffer);
+						//RBSPtoUINT(buffer, rem_intra4x4_pred_mode[luma4x4BlkIdx]);
 						writeRawBits(3, buffer);
 					}
 				}
@@ -445,5 +446,7 @@ void RBSP_encode(NALunit &nal_unit)
 			// Test: Assume nC = 0..2 and TotalCoef and TrailingOnes = 0
 			writeFlag(1);	// coeff_token = 1
 		}
+		RBSP_trailing_bits();
+		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;
 	}
 }
