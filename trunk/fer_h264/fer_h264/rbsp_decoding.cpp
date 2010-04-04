@@ -405,9 +405,25 @@ void RBSP_encode(NALunit &nal_unit)
 			if (intra16x16PredMode == -1)
 			{
 				mb_type = I_4x4;
-				mb_type_array[CurrMbAddr] = I_4x4;
-				expGolomb_UC(mb_type);
+				mb_type_array[CurrMbAddr] = mb_type;
+			}
+			// intra16x16 prediction
+			else
+			{
+				// TODO: choose mb_type according to intra16x16PredMode
+				// and Luma and Chroma coded block patterns
 
+				// TEST: Assume all residual is zero.
+				mb_type = intra16x16PredMode + 1;
+				mb_type_array[CurrMbAddr] = mb_type;
+			}
+
+			// Norm: start macroblock_layer()
+			expGolomb_UC(mb_type);
+
+			// Norm: start mb_pred()
+			if (MbPartPredMode(mb_type, 0) == Intra_4x4)
+			{
 				for(int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 				{
 					writeFlag(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]);
@@ -419,31 +435,36 @@ void RBSP_encode(NALunit &nal_unit)
 					}
 				}
 				
-				expGolomb_UC(intra_chroma_pred_mode);
+			}
+
+			expGolomb_UC(intra_chroma_pred_mode);
+			// Norm: end mb_pred()
+
+			// TEST: Assume all residual is zero.
+			CodedBlockPatternLuma = 0;
+			CodedBlockPatternChroma = 0;
+
+			if (MbPartPredMode(mb_type, 0) != Intra_16x16)
+			{
 				// TEST: Assume all residual is zero.
 				// coded_block_pattern = 0 => codeNum = 3				
 				expGolomb_UC(3);
 			}
-			// intra16x16 prediction
-			else
+
+			if ((CodedBlockPatternLuma > 0) || (CodedBlockPatternChroma > 0) ||
+				(MbPartPredMode(mb_type, 0) == Intra_16x16))
 			{
-				// TODO: choose mb_type according to intra16x16PredMode
-				// and Luma and Chroma array types.
+				// mb_qp_delta = 0;
+				expGolomb_SC(0);
 
-				// TEST: Assume all residual is zero.
-				mb_type = intra16x16PredMode + 1;
-				mb_type_array[CurrMbAddr] = mb_type;
-				expGolomb_UC(mb_type);
-
-				expGolomb_UC(intra_chroma_pred_mode);
+				// Norm: start residual(0,15)
+				// Test: Assume nC = 0..2 and TotalCoef and TrailingOnes = 0
+				writeFlag(1);	// coeff_token = 1
+				// Norm: end residual(0,15)
+				// Norm: end macroblock_layer()
 			}
 
-			// TEST: Assume all residual is zero.
-			// mb_qp_delta = 0;
-			expGolomb_SC(0);
 			
-			// Test: Assume nC = 0..2 and TotalCoef and TrailingOnes = 0
-			writeFlag(1);	// coeff_token = 1
 		}
 		RBSP_trailing_bits();
 		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;

@@ -208,10 +208,14 @@ void writeNAL(NALunit nu)
 	int zeroCounter = 0;
 	for(int i = 0; i < nu.NumBytesInRBSP; i++)
 	{
-		if (zeroCounter == 2)
+		if (zeroCounter >= 2)
 		{
-			NALbytes[pos++] = 3;	// insert emulation prevention byte
-			zeroCounter = 0;
+			if ((nu.rbsp_byte[i] == 0x00) || (nu.rbsp_byte[i] == 0x01) ||
+				(nu.rbsp_byte[i] == 0x02) || (nu.rbsp_byte[i] == 0x03))
+			{
+				NALbytes[pos++] = 3;	// insert emulation prevention byte
+				zeroCounter = 0;
+			}
 		}
 
 		NALbytes[pos++] = nu.rbsp_byte[i];
