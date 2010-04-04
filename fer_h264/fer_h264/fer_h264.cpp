@@ -72,7 +72,7 @@ void encode()
 
 		writeNAL(nu);
 
-		if (frameCount == 10) break;
+		if (frameCount == 30) break;
 
 		//writeToY4M();
 	}
