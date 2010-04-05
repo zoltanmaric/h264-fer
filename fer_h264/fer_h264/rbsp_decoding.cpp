@@ -520,8 +520,10 @@ void RBSP_encode(NALunit &nal_unit)
 				expGolomb_SC(0);
 
 				// Norm: start residual(0,15)
+				residual_write();
+
 				// Test: Assume nC = 0..2 and TotalCoef and TrailingOnes = 0
-				writeFlag(1);	// coeff_token = 1
+				// writeFlag(1);	// coeff_token = 1
 				// Norm: end residual(0,15)
 				// Norm: end macroblock_layer()
 			}
