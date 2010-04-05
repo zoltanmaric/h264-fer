@@ -376,6 +376,9 @@ int init_h264_structures_encoder()
 		frame.C[1][i] = new unsigned char[frame.Cwidth];
 	}
 
+	CodedBlockPatternLumaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];
+	CodedBlockPatternChromaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];
+
 	return 0;
 }
 

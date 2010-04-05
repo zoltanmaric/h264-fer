@@ -93,5 +93,6 @@ void residual(int startIdx, int endIdx);
 void residual_luma(int i16x16DClevel[16], int i16x16AClevel[16][16], int level[16][16], int startIdx, int endIdx);
 void residual_block_cavlc(int ChromaDCLevel[16], int, int, int);
 
+void residual_write();
 void residual_luma_write(int i16x16DClevel[16], int i16x16AClevel[16][16], int level[16][16], int startIdx, int endIdx);
 void residual_block_cavlc_write(int coeffLevel[16], int startIdx, int endIdx, int maxNumCoeff, struct additional_level_data);
