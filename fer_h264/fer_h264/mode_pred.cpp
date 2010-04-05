@@ -267,28 +267,20 @@ void PredictMV()
 		PredictMV_Luma(0);
 		//int t_1 = MPI_mvL0x(CurrMbAddr, 0), t_2 = MPI_mvL0y(CurrMbAddr, 0);
 		MPI_mvL0x(CurrMbAddr, 0) += mvd_l0[0][0][0];
-		if (maxMvd < mvd_l0[0][0][0]) maxMvd = mvd_l0[0][0][0];
 		MPI_mvL0y(CurrMbAddr, 0) += mvd_l0[0][0][1];
-		if (maxMvd < mvd_l0[0][0][0]) maxMvd = mvd_l0[0][0][1];
 		if (NumMbPart(mb_type) > 1)
 		{
 			PredictMV_Luma(1);
 			MPI_mvL0x(CurrMbAddr, 1) += mvd_l0[1][0][0];
-		if (maxMvd < mvd_l0[0][0][0]) maxMvd = mvd_l0[1][0][0];
 			MPI_mvL0y(CurrMbAddr, 1) += mvd_l0[1][0][1];
-		if (maxMvd < mvd_l0[0][0][0]) maxMvd = mvd_l0[1][0][1];
 			if (NumMbPart(mb_type) > 2)
 			{
 				PredictMV_Luma(2);
 				MPI_mvL0x(CurrMbAddr, 2) += mvd_l0[2][0][0];
-		if (maxMvd < mvd_l0[0][0][0]) maxMvd = mvd_l0[2][0][0];
 				MPI_mvL0y(CurrMbAddr, 2) += mvd_l0[2][0][1];
-		if (maxMvd < mvd_l0[0][0][0]) maxMvd = mvd_l0[2][0][1];
 				PredictMV_Luma(3);
 				MPI_mvL0x(CurrMbAddr, 3) += mvd_l0[3][0][0];
-		if (maxMvd < mvd_l0[0][0][0]) maxMvd = mvd_l0[3][0][0];
 				MPI_mvL0y(CurrMbAddr, 3) += mvd_l0[3][0][1];
-		if (maxMvd < mvd_l0[0][0][0]) maxMvd = mvd_l0[3][0][1];
 			}
 		}
 	}
