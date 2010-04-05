@@ -18,6 +18,7 @@ int subMvCnt[100000], refIdxL0[100000];
 
 int pomocna;
 
+
 // (6.4.2.1)
 void InverseMacroblockPartitionScan(int mbPartIdx, int *x, int *y)
 {
@@ -181,9 +182,13 @@ void PredictMV_Luma(int mbPartIdx)
 		MPI_mvL0x(CurrMbAddr, mbPartIdx) = mvNx[2]; MPI_mvL0y(CurrMbAddr, mbPartIdx) = mvNy[2];
 		return;
 	}
-	if (mvNx[0] == MV_NA)
+	if (mvNx[0] == MV_NA && mvNx[1] == MV_NA)
 	{
 		mvNx[0] = 0; mvNy[0] = 0; refIdxL0N[0] = curr_refIdxL0;
+	}
+	if (mvNx[0] == MV_NA && mvNx[1] != MV_NA)
+	{
+		mvNx[0] = mvNx[1]; mvNy[0] = mvNy[1]; refIdxL0N[0] = refIdxL0N[1];
 	}
 	if (mvNx[1] == MV_NA)
 	{
@@ -223,14 +228,19 @@ void PredictMV_Luma(int mbPartIdx)
 	}
 }
 
+void ClearMVD()
+{
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			for (int k = 0; k < 2; k++)
+				mvd_l0[i][j][k] = 0;
+}
+
 void PredictMV()
 {
 	if (mb_type == P_Skip)
 	{
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
-				for (int k = 0; k < 2; k++)
-					mvd_l0[i][j][k] = 0;
+		ClearMVD();
 		MPI_refIdxL0(CurrMbAddr) = 0;
 
 		if (CurrMbAddr < sps.PicWidthInMbs || CurrMbAddr%sps.PicWidthInMbs == 0)
@@ -322,7 +332,7 @@ void DeriveMVs() {
 	{
 		k = 1;
 	}
-	//int bla[4][4][2];
+	int bla[4][4][2];
 	// Adding given difference
 	for (int i = 0; i < 4; i++)
 	{	
@@ -334,16 +344,19 @@ void DeriveMVs() {
 		//	MPI_mvL0x(CurrMbAddr, i) += mvd_l0[i/k][0][0];
 		//	MPI_mvL0y(CurrMbAddr, i) += mvd_l0[i/k][0][1];
 		//}
-		//bla[i][0][0] = MPI_mvL0x(CurrMbAddr, i);
-		//bla[i][0][1] = MPI_mvL0y(CurrMbAddr, i);
+		bla[i][0][0] = MPI_mvL0x(CurrMbAddr, i);
+		bla[i][0][1] = MPI_mvL0y(CurrMbAddr, i);
 		for (int j = 0; j < 4; j++)
 		{
 			MPI_mvSubL0x_byIdx(CurrMbAddr, i, j) = MPI_mvL0x(CurrMbAddr, i);
 			MPI_mvSubL0y_byIdx(CurrMbAddr, i, j) = MPI_mvL0y(CurrMbAddr, i);
-			//bla[i][j][0] = MPI_mvSubL0x_byIdx(CurrMbAddr, i, j);
-			//bla[i][j][1] = MPI_mvSubL0y_byIdx(CurrMbAddr, i, j);
-			//int test = 0;
+			bla[i][j][0] = MPI_mvSubL0x_byIdx(CurrMbAddr, i, j);
+			bla[i][j][1] = MPI_mvSubL0y_byIdx(CurrMbAddr, i, j);
+			int test = 0;
 		}
 	}
-	//int test2 = 1;
+	if (CurrMbAddr == 2880)
+	{
+		int test2 = 1;
+	}
 }

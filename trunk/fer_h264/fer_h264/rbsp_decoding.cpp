@@ -49,12 +49,12 @@ void RBSP_decode(NALunit nal_unit)
 		frameCount++;
 		// TEST: tu postavi frejm od kojeg želiš poèet ispisivanje
 		// u ppm ili yuv. Indeksi su isti ko u h264visi.
-		//if (frameCount < 109)
+		//if (frameCount < 399)
 		//{	
 		//	//frameCount++;
 		//	return;
 		//}
-
+		
 		//Read slice header
 		fill_shd(&nal_unit);
 
@@ -78,10 +78,13 @@ void RBSP_decode(NALunit nal_unit)
 
 		// Prediction samples formed by either intra or inter prediction.
 		int predL[16][16], predCb[8][8], predCr[8][8];
-
 		QPy = shd.SliceQPy;
 		while (moreDataFlag && CurrMbAddr<MbCount)
 		{
+			for (int i = 0; i < 4; i++)
+				ChromaDCLevel[0][i] = ChromaDCLevel[1][i] = 0;
+			for (int i = 0; i < 16; i++)
+				LumaDCLevel[i] = 0;
 			if ((shd.slice_type%5)!=I_SLICE && (shd.slice_type%5)!=SI_SLICE)
 			{
 
@@ -126,8 +129,7 @@ void RBSP_decode(NALunit nal_unit)
 				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
 
 				mb_type = expGolomb_UD();
-				mb_type_array[CurrMbAddr]=mb_type;
-				
+				mb_type_array[CurrMbAddr]=mb_type;		
 
 				//Transform macroblock-level coordinates to pixel-level coordinates
 				int pixel_pos_x=mb_pos_x*16;
@@ -277,7 +279,10 @@ void RBSP_decode(NALunit nal_unit)
 
 				CodedBlockPatternLumaArray[CurrMbAddr] = CodedBlockPatternLuma;
 				CodedBlockPatternChromaArray[CurrMbAddr] = CodedBlockPatternChroma;
-
+					if (CurrMbAddr == 1530)
+					{
+						int blabla = 1;
+					}
 				if(CodedBlockPatternLuma>0 || CodedBlockPatternChroma>0 || MbPartPredMode(mb_type,0)==Intra_16x16)
 				{
 
@@ -333,13 +338,14 @@ void RBSP_decode(NALunit nal_unit)
 			// Reference frame list initialisation
 			initialisationProcess();
 			idr_frame_number++;
+
 		}
 
 		// Reference frame list modification
 		modificationProcess();
 		
-		//writeToPPM();
-		writeToY4M();
+		writeToPPM();
+		//writeToY4M();
 	}
 }
 
