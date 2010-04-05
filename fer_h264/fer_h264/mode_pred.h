@@ -21,4 +21,7 @@ extern int mvL0x[], mvL0y[];
 //int subMvCnt[Frame_Width/MB_Width][Frame_Height/MB_Height], refIdxL0[Frame_Height/MB_Width][Frame_Height/MB_Height];
 extern int subMvCnt[], refIdxL0[];
 
+//int ValidMVD;
+
+void ClearMVD();
 void DeriveMVs();
