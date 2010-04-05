@@ -344,8 +344,8 @@ void RBSP_decode(NALunit nal_unit)
 		// Reference frame list modification
 		modificationProcess();
 		
-		writeToPPM();
-		//writeToY4M();
+		//writeToPPM();
+		writeToY4M();
 	}
 }
 
@@ -402,48 +402,104 @@ void RBSP_encode(NALunit &nal_unit)
 
 		int predL[16][16], predCb[8][8], predCr[8][8];
 		int intra16x16PredMode;
+		int mb_skip_run = 0;
 		for (CurrMbAddr = 0; CurrMbAddr < shd.PicSizeInMbs; CurrMbAddr++)
 		{
-			intra16x16PredMode = intraPredictionEncoding(predL, predCr, predCb);
-			quantizationTransform(predL, predCb, predCr);
-
-			// intra4x4 prediction
-			if (intra16x16PredMode == -1)
+			if ((shd.slice_type != I_SLICE) && (shd.slice_type != SI_SLICE))
 			{
-				mb_type = I_4x4;
-				mb_type_array[CurrMbAddr] = mb_type;
+				// TODO: perform inter prediction
+				// mb_type = nesto
+				if (mb_type == P_Skip)
+				{
+					mb_skip_run++;
+					continue;
+				}
+				expGolomb_UC(mb_skip_run);
+				mb_skip_run = 0;
+
+				quantizationTransform(predL, predCb, predCr);
 			}
-			// intra16x16 prediction
 			else
 			{
-				// TODO: choose mb_type according to intra16x16PredMode
-				// and Luma and Chroma coded block patterns
+				intra16x16PredMode = intraPredictionEncoding(predL, predCr, predCb);
+				quantizationTransform(predL, predCb, predCr);
 
-				// TEST: Assume all residual is zero.
-				mb_type = intra16x16PredMode + 1;
-				mb_type_array[CurrMbAddr] = mb_type;
+				// intra4x4 prediction
+				if (intra16x16PredMode == -1)
+				{
+					mb_type = I_4x4;
+					mb_type_array[CurrMbAddr] = mb_type;
+				}
+				// intra16x16 prediction
+				else
+				{
+					// TODO: choose mb_type according to intra16x16PredMode
+					// and Luma and Chroma coded block patterns
+
+					// TEST: Assume all residual is zero.
+					mb_type = intra16x16PredMode + 1;
+					mb_type_array[CurrMbAddr] = mb_type;
+				}
 			}
 
 			// Norm: start macroblock_layer()
 			expGolomb_UC(mb_type);
 
-			// Norm: start mb_pred()
-			if (MbPartPredMode(mb_type, 0) == Intra_4x4)
+			if ((mb_type != I_4x4) && (MbPartPredMode(mb_type,0) != Intra_16x16) && (NumMbPart(mb_type) == 4))
 			{
-				for(int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+				// Norm: start sub_mb_pred()
+				int mbPartIdx;
+				// TODO: dogovori s Prugoveèkim novu globalnu varijablu sub_mb_type
+				int sub_mb_type[4];
+				for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
 				{
-					writeFlag(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]);
-					if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == false)
+					
+					expGolomb_UC(sub_mb_type[mbPartIdx]);
+				}
+				// Norm: currently there is no support for reference picture list
+				// modifications in the encoder
+
+				for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
+				{
+					for (int subMbPartIdx = 0; subMbPartIdx < NumSubMbPart(sub_mb_type[mbPartIdx]); subMbPartIdx++)
 					{
-						unsigned char buffer[4];
-						UINT_to_RBSP_size_known(rem_intra4x4_pred_mode[luma4x4BlkIdx], 3, buffer);
-						writeRawBits(3, buffer);
+						expGolomb_SC(mvd_l0[mbPartIdx][subMbPartIdx][0]);
+						expGolomb_SC(mvd_l0[mbPartIdx][subMbPartIdx][1]);
 					}
 				}
-				
+				// Norm: end sub_mb_pred()
 			}
 
-			expGolomb_UC(intra_chroma_pred_mode);
+			// Norm: start mb_pred()
+			if ((MbPartPredMode(mb_type,0) == Intra_4x4) || (MbPartPredMode(mb_type,0) == Intra_16x16))
+			{
+				if (MbPartPredMode(mb_type, 0) == Intra_4x4)
+				{
+					for(int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+					{
+						writeFlag(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]);
+						if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == false)
+						{
+							unsigned char buffer[4];
+							UINT_to_RBSP_size_known(rem_intra4x4_pred_mode[luma4x4BlkIdx], 3, buffer);
+							writeRawBits(3, buffer);
+						}
+					}
+					
+				}
+
+				expGolomb_UC(intra_chroma_pred_mode);
+			}
+			else
+			{
+				// Norm: currently there is no support for reference picture list
+				// modifications in the encoder
+				for (int mbPartIdx = 0; mbPartIdx < NumMbPart(mb_type); mbPartIdx++)
+				{
+					expGolomb_SC(mvd_l0[mbPartIdx][0][0]);
+					expGolomb_SC(mvd_l0[mbPartIdx][0][1]);
+				}
+			}
 			// Norm: end mb_pred()
 
 			// TEST: Assume all residual is zero.
