@@ -65,9 +65,17 @@ void encode()
 	{		
 		frameCount++;
 
+		nu.nal_ref_idc = 1;		// non-zero for reference
+
 		// TEST: Creating intra frames only
-		nu.nal_ref_idc = 1;		// non-zero for i-slices
-		nu.nal_unit_type = NAL_UNIT_TYPE_IDR;
+		if(frameCount % 30 == 1)
+		{
+			nu.nal_unit_type = NAL_UNIT_TYPE_IDR;
+		}
+		else
+		{
+			nu.nal_unit_type = NAL_UNIT_TYPE_NOT_IDR;
+		}
 		RBSP_encode(nu);
 
 		writeNAL(nu);
