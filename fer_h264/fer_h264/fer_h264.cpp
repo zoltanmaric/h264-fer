@@ -65,6 +65,8 @@ void encode()
 	{		
 		frameCount++;
 
+		printf("Frame #%d\n", frameCount);
+
 		nu.nal_ref_idc = 1;		// non-zero for reference
 
 		// TEST: Creating intra frames only
@@ -80,16 +82,20 @@ void encode()
 
 		writeNAL(nu);
 
-		if (frameCount == 30) break;
+		if (frameCount == 5) break;
 
 		//writeToY4M();
 	}
+
+	fclose(stream);
+	fclose(yuvinput);
+	fclose(yuvoutput);
 }
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//decode();
-	encode();
+	decode();
+	//encode();
 
 	return 0;
 }

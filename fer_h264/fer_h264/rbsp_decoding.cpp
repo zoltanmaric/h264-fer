@@ -342,8 +342,8 @@ void RBSP_decode(NALunit nal_unit)
 		// Reference frame list modification
 		modificationProcess();
 		
-		//writeToPPM();
-		writeToY4M();
+		writeToPPM();
+		//writeToY4M();
 	}
 }
 
@@ -403,6 +403,7 @@ void RBSP_encode(NALunit &nal_unit)
 			if ((shd.slice_type != I_SLICE) && (shd.slice_type != SI_SLICE))
 			{
 				interEncoding(predL, predCr, predCb);
+				mb_type_array[CurrMbAddr] = mb_type;
 				if (mb_type == P_Skip)
 				{
 					mb_skip_run++;
@@ -412,6 +413,7 @@ void RBSP_encode(NALunit &nal_unit)
 				mb_skip_run = 0;
 
 				quantizationTransform(predL, predCb, predCr);
+
 			}
 			else
 			{
@@ -422,7 +424,6 @@ void RBSP_encode(NALunit &nal_unit)
 				if (intra16x16PredMode == -1)
 				{
 					mb_type = I_4x4;
-					mb_type_array[CurrMbAddr] = mb_type;
 				}
 				// intra16x16 prediction
 				else
@@ -431,9 +432,9 @@ void RBSP_encode(NALunit &nal_unit)
 					// and Luma and Chroma coded block patterns
 
 					// TEST: Assume all residual is zero.
-					mb_type = intra16x16PredMode + 1;
-					mb_type_array[CurrMbAddr] = mb_type;
+					mb_type = intra16x16PredMode + 1;					
 				}
+				mb_type_array[CurrMbAddr] = mb_type;
 			}
 
 			// Norm: start macroblock_layer()
@@ -500,8 +501,16 @@ void RBSP_encode(NALunit &nal_unit)
 			if (MbPartPredMode(mb_type, 0) != Intra_16x16)
 			{
 				// TEST: Assume all residual is zero.
-				// coded_block_pattern = 0 => codeNum = 3				
-				expGolomb_UC(3);
+				if (shd.slice_type == I_SLICE)
+				{
+					// coded_block_pattern = 0 => codeNum = 3 for intra				
+					expGolomb_UC(3);
+				}
+				else
+				{
+					// coded_block_pattern = 0 => codeNum = 0 for inter		
+					expGolomb_UC(0);
+				}
 			}
 
 			if ((CodedBlockPatternLuma > 0) || (CodedBlockPatternChroma > 0) ||
