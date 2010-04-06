@@ -103,12 +103,16 @@ void DeriveNeighbourPartitions(int mbPartIdx, int subMbPartIdx,
 	int xA, xB, xC, xD, yA, yB, yC, yD, xW, yW;
 
 	InverseMacroblockPartitionScan(mbPartIdx, &x, &y);
-	/*if (mb_type == P_8x8 || mb_type == P_8x8ref0)
-		inverse_4x4_luma_block_scanning_process(subMbPartIdx, &xS, &yS);*/
+	if (mb_type == P_8x8 || mb_type == P_8x8ref0)
+		inverse_4x4_luma_block_scanning_process(subMbPartIdx, &xS, &yS);
 
 	predPartWidth = 16;
 	if (mb_type == P_8x8 || mb_type == P_8x8ref0)
+	{
 		predPartWidth = 8;
+		if (sub_mb_type[mbPartIdx] == P_L0_4x4 || sub_mb_type[mbPartIdx] == P_L0_4x8)
+			predPartWidth = 4;
+	}
 	if (mb_type == P_L0_L0_8x16)
 		predPartWidth = 8;
 
@@ -135,7 +139,95 @@ void DeriveNeighbourPartitions(int mbPartIdx, int subMbPartIdx,
 		derivation_process_for_macroblock_and_submb_partition(xW, yW, mb_type_array[*mbAddrD], mbPartIdxD, subMbPartIdxD);
 }
 
-// 8.4.1.3, subMB not supported, refIdxL0 already assigned in mpi
+void PredictMV_LumaSubMB(int mbPartIdx, int subMbPartIdx)
+{
+	int curr_refIdxL0 = MPI_refIdxL0(CurrMbAddr);
+	int mvNx[4], mvNy[4], refIdxL0N[3];
+	int mbAddrN[4], mbPartIdxN[4], subMbPartIdxN[4];
+	int _sub_mb_type = sub_mb_type[subMbPartIdx];
+	bool validN[4];
+	for (int i = 0; i < 3; i++) { mvNx[i] = mvNy[i] = MV_NA; refIdxL0N[i] = -1; }
+	DeriveNeighbourPartitions(mbPartIdx, subMbPartIdx, 
+							&mbAddrN[0], &mbPartIdxN[0], &subMbPartIdxN[0], &validN[0],
+							&mbAddrN[1], &mbPartIdxN[1], &subMbPartIdxN[1], &validN[1],
+							&mbAddrN[2], &mbPartIdxN[2], &subMbPartIdxN[2], &validN[2],
+							&mbAddrN[3], &mbPartIdxN[3], &subMbPartIdxN[3], &validN[3]);
+	if (!validN[2])
+	{
+		validN[2] = validN[3];
+		mbAddrN[2] = mbAddrN[3];
+		mbPartIdxN[2] = mbPartIdxN[3];
+		subMbPartIdxN[2] = subMbPartIdxN[3];
+	}
+
+	for (int i = 0; i < 3; i++)
+		if (validN[i]) 
+			get_neighbour_mv(mbAddrN[i], mbPartIdxN[i], &mvNx[i], &mvNy[i], &refIdxL0N[i]);
+
+	if (_sub_mb_type == P_L0_8x4 && subMbPartIdx == 0 && mvNx[1] != MV_NA && curr_refIdxL0 == refIdxL0N[1])
+	{
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNx[1]; 
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNy[1];
+		return;
+	}
+	if (_sub_mb_type == P_L0_8x4 && subMbPartIdx == 1 && mvNx[0] != MV_NA && curr_refIdxL0 == refIdxL0N[0])
+	{
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNx[0]; 
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNy[0];
+		return;
+	}
+	if (_sub_mb_type == P_L0_4x8 && subMbPartIdx == 0 && mvNx[0] != MV_NA && curr_refIdxL0 == refIdxL0N[0])
+	{
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNx[0]; 
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNy[0];
+		return;
+	}
+	if (_sub_mb_type == P_L0_4x8 && subMbPartIdx == 1 && mvNx[2] != MV_NA && curr_refIdxL0 == refIdxL0N[2])
+	{
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNx[2]; 
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNy[2];
+		return;
+	}
+	if (mvNx[0] == MV_NA && mvNx[1] == MV_NA)
+	{
+		mvNx[0] = 0; mvNy[0] = 0; refIdxL0N[0] = curr_refIdxL0;
+	}
+	if (mvNx[0] == MV_NA && mvNx[1] != MV_NA)
+	{
+		mvNx[0] = 0; mvNy[0] = 0; refIdxL0N[0] = -1;
+	}
+	if (mvNx[1] == MV_NA)
+	{
+		mvNx[1] = mvNx[0]; mvNy[1] = mvNy[0]; refIdxL0N[1] = refIdxL0N[0];
+	}
+	if (mvNx[2] == MV_NA)
+	{
+		mvNx[2] = mvNx[0]; mvNy[2] = mvNy[0]; refIdxL0N[2] = refIdxL0N[0];
+	}
+	if (refIdxL0N[0] == curr_refIdxL0 && refIdxL0N[1] != curr_refIdxL0 && refIdxL0N[2] != curr_refIdxL0)
+	{
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNx[0]; 
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNy[0];
+		return;
+	}
+	if (refIdxL0N[0] != curr_refIdxL0 && refIdxL0N[1] == curr_refIdxL0 && refIdxL0N[2] != curr_refIdxL0)
+	{
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNx[1]; 
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNy[1];
+		return;
+	}
+	if (refIdxL0N[0] != curr_refIdxL0 && refIdxL0N[1] != curr_refIdxL0 && refIdxL0N[2] == curr_refIdxL0)
+	{
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNx[2]; 
+		MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = mvNy[2];
+		return;
+	}
+	// if everything is OK, Median of neighbouring partition is used
+	MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = Median(mvNx[0], mvNx[1], mvNx[2]);
+	MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, subMbPartIdx) = Median(mvNy[0], mvNy[1], mvNy[2]);
+}
+
+// 8.4.1.3 refIdxL0 already assigned in mpi
 void PredictMV_Luma(int mbPartIdx)
 {
 	int curr_refIdxL0 = MPI_refIdxL0(CurrMbAddr);
@@ -219,12 +311,40 @@ void PredictMV_Luma(int mbPartIdx)
 	MPI_mvL0y(CurrMbAddr, mbPartIdx) = Median(mvNy[0], mvNy[1], mvNy[2]);
 	if (mb_type == P_8x8 || mb_type == P_8x8ref0)
 	{
+		int a = MPI_mvL0x(CurrMbAddr, mbPartIdx);
+		int b = MPI_mvL0y(CurrMbAddr, mbPartIdx);
 		// Here should be part for generating predicted MV of 4x4 parts (if defined).
 		// For now it's equal to MV of current macroblock part (8x8 size).
-		for (int i = 1; i < 4; i++)
+		PredictMV_LumaSubMB(mbPartIdx, 0);
+		if (NumSubMbPart(sub_mb_type[mbPartIdx]) > 1)
 		{
-			MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, i) = MPI_mvL0x(CurrMbAddr, mbPartIdx);
-			MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, i) = MPI_mvL0y(CurrMbAddr, mbPartIdx);
+			PredictMV_LumaSubMB(mbPartIdx, 1);
+			if (NumSubMbPart(sub_mb_type[mbPartIdx]) > 2)
+			{
+				PredictMV_LumaSubMB(mbPartIdx, 2);
+				PredictMV_LumaSubMB(mbPartIdx, 3);
+			} else {
+				if (sub_mb_type[mbPartIdx] == P_L0_4x8)
+				{
+					MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 2) = MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 0);
+					MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 2) = MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 0);
+					MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 3) = MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 1);
+					MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 3) = MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 1);
+				} else {
+					MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 2) = MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 1);
+					MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 2) = MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 1);
+					MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 3) = MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 1);
+					MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 3) = MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 1);
+					MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 1) = MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 0);
+					MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 1) = MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 0);				
+				}
+			}			
+		} else {
+			for (int i = 1; i < 3; i++)
+			{
+				MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, i) = MPI_mvSubL0x_byIdx(CurrMbAddr, mbPartIdx, 0);
+				MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, i) = MPI_mvSubL0y_byIdx(CurrMbAddr, mbPartIdx, 0);
+			}
 		}
 	}
 }
@@ -260,8 +380,8 @@ void PredictMV()
 				MPI_mvL0y(CurrMbAddr, 0) = 0;
 			} else {
 				PredictMV_Luma(0);
-				MPI_mvL0x(CurrMbAddr, 0) += mvd_l0[0][0][0];
-				MPI_mvL0y(CurrMbAddr, 0) += mvd_l0[0][0][1];
+				//MPI_mvL0x(CurrMbAddr, 0) += mvd_l0[0][0][0];
+				//MPI_mvL0y(CurrMbAddr, 0) += mvd_l0[0][0][1];
 			}
 		}
 	} else { // in baseline profile cannot occur B_* MB_TYPE, so, except P_SKIP, normal derivation for luma vector prediction is used
@@ -356,8 +476,5 @@ void DeriveMVs() {
 			int test = 0;
 		}
 	}
-	if (CurrMbAddr == 480)
-	{
-		int test2 = 1;
-	}
+	int test2 = 1;
 }
