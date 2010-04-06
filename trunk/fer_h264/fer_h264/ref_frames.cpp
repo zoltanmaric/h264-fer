@@ -151,21 +151,21 @@ void modificationProcess()
 		} while (shd.modification_of_pic_nums_idc[curr_id++] != 3);
 	} else {
 				int refIdxL0 = 0, curr_id = 0;
-		int picNumL0Pred = shd.frame_num, picNumL0NoWrap, picNumL0;
-				if (picNumL0Pred - (shd.abs_diff_pic_num_minus1[curr_id]+1) < 0)
-					picNumL0NoWrap = picNumL0Pred - (shd.abs_diff_pic_num_minus1[curr_id]+1) + sps.MaxFrameNum;
-				else
-					picNumL0NoWrap = picNumL0Pred - (shd.abs_diff_pic_num_minus1[curr_id]+1);
-				picNumL0Pred = picNumL0NoWrap;
-				if (picNumL0NoWrap > shd.frame_num)
-					picNumL0 = picNumL0NoWrap - sps.MaxFrameNum;
-				else 
-					picNumL0 = picNumL0NoWrap;
+		//int picNumL0Pred = shd.frame_num, picNumL0NoWrap, picNumL0;
+		//		if (picNumL0Pred - (shd.abs_diff_pic_num_minus1[curr_id]+1) < 0)
+		//			picNumL0NoWrap = picNumL0Pred - (shd.abs_diff_pic_num_minus1[curr_id]+1) + sps.MaxFrameNum;
+		//		else
+		//			picNumL0NoWrap = picNumL0Pred - (shd.abs_diff_pic_num_minus1[curr_id]+1);
+		//		picNumL0Pred = picNumL0NoWrap;
+		//		if (picNumL0NoWrap > shd.frame_num)
+		//			picNumL0 = picNumL0NoWrap - sps.MaxFrameNum;
+		//		else 
+		//			picNumL0 = picNumL0NoWrap;
 
-				for (int cIdx = shd.num_ref_idx_l0_active_minus1+1; cIdx>refIdxL0; cIdx--)
-					RefPicList0[cIdx] = RefPicList0[cIdx-1];
+		//		for (int cIdx = shd.num_ref_idx_l0_active_minus1+1; cIdx>refIdxL0; cIdx--)
+		//			RefPicList0[cIdx] = RefPicList0[cIdx-1];
 				// Postavljanje u listu
-				RefPicList0[refIdxL0].PicNum = picNumL0;
+				RefPicList0[refIdxL0].PicNum = shd.frame_num;
 				RefPicList0[refIdxL0].LongTermPicNum = 0;
 				RefPicList0[refIdxL0].FrameNum = shd.frame_num;
 				RefPicList0[refIdxL0].IsLongTerm = false;
@@ -173,10 +173,10 @@ void modificationProcess()
 				//frameDeepCopy(RefPicList0 + (refIdxL0++));
 				frameDeepCopy();
 
-				int nIdx = refIdxL0;
-				for (int cIdx = refIdxL0; cIdx <= shd.num_ref_idx_l0_active_minus1+1; cIdx++)
-					if (picNumF(cIdx) != picNumL0)
-						RefPicList0[nIdx++] = RefPicList0[cIdx];	
+				//int nIdx = refIdxL0;
+				//for (int cIdx = refIdxL0; cIdx <= shd.num_ref_idx_l0_active_minus1+1; cIdx++)
+				//	if (picNumF(cIdx) != picNumL0)
+				//		RefPicList0[nIdx++] = RefPicList0[cIdx];	
 	}
 	RefPicList0[shd.num_ref_idx_l0_active_minus1+1].RefPicPresent = false;
 }

@@ -55,7 +55,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 		int currMin = 0;
 		for (int i = 0; i < NumMbPart(mb_type); i++)
 		{
-			int currStepSize = 256, currMbSadMin = INT_MAX;
+			int currStepSize = 16, currMbSadMin = INT_MAX;
 			int mvdx = 0, mvdy = 0;
 			while (currStepSize > 0)
 			{

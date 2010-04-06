@@ -378,8 +378,6 @@ void RBSP_encode(NALunit &nal_unit)
 		pps_write();
 		RBSP_trailing_bits();
 		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;
-		// TEST: ovo stoji samo dok imamo samo intra frejmove
-		shd.idr_pic_id = -1;
 	}
 	else if ((nal_unit.nal_unit_type == NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type == NAL_UNIT_TYPE_NOT_IDR))
 	{
@@ -387,8 +385,7 @@ void RBSP_encode(NALunit &nal_unit)
 		{
 			shd.slice_type = I_SLICE;
 			shd.frame_num = 0;
-			// TEST: ovo stoji samo dok imamo samo intra frejmove
-			shd.idr_pic_id++;
+			shd.idr_pic_id = 0;		// There will be no 2 consecutive idr pics
 		}
 		else
 		{
@@ -513,12 +510,10 @@ void RBSP_encode(NALunit &nal_unit)
 				// mb_qp_delta = 0;
 				expGolomb_SC(0);
 
-				// Norm: start residual(0,15)
-				residual_write();
+				// residual_write();
 
 				// Test: Assume nC = 0..2 and TotalCoef and TrailingOnes = 0
-				// writeFlag(1);	// coeff_token = 1
-				// Norm: end residual(0,15)
+				writeFlag(1);	// coeff_token = 1
 				// Norm: end macroblock_layer()
 			}
 
@@ -526,5 +521,11 @@ void RBSP_encode(NALunit &nal_unit)
 		}
 		RBSP_trailing_bits();
 		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;
+
+		if (shd.slice_type % 5 == I_SLICE)
+		{
+			initialisationProcess();
+		}
+		modificationProcess();
 	}
 }
