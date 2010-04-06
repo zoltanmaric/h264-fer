@@ -10,7 +10,7 @@
 
 void decode()
 {
-	stream=fopen("bourne.264","rb");
+	stream=fopen("big_buck_bunny.264","rb");
 	yuvoutput = fopen("Bourne.yuv","wb");
 
 	NALunit nu;
@@ -80,7 +80,7 @@ void encode()
 
 		writeNAL(nu);
 
-		if (frameCount == 30) break;
+		if (frameCount == 3) break;
 
 		//writeToY4M();
 	}

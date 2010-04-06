@@ -165,7 +165,8 @@ bool writeRawBits(int N, unsigned char *data_to_write)
 		}
 
 		//Classic bit by bit loading
-		RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1) + ((data_to_write[count/8]>>((N-count-1)%8))&1);
+		int offset = N - count - 1;
+		RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1) + ((data_to_write[offset/8]>>(offset%8))&1);
 		RBSP_write_current_bit++;
 		if (RBSP_write_current_bit==8)
 		{

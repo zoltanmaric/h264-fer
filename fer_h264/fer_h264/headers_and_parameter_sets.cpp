@@ -179,6 +179,17 @@ void shd_write(NALunit &nal_unit)
 	shd.slice_qp_delta = -14;		// inferred quantization parameter
 	shd.PicSizeInMbs = frame.Lwidth * frame.Lheight >> 8;
 
+	// These variables are stored for the reference picture
+	// list modification process described in 8.2.4.3
+	shd.modification_of_pic_nums_idc = new int[sps.MaxFrameNum];
+	shd.abs_diff_pic_num_minus1 = new int[sps.MaxFrameNum];
+	shd.long_term_pic_num = new int[sps.MaxFrameNum];
+
+	shd.memory_management_control_operation = new int[sps.MaxFrameNum];
+	shd.difference_of_pic_nums_minus1 = new int[sps.MaxFrameNum];
+	shd.long_term_frame_idx = new int[sps.MaxFrameNum];
+	shd.max_long_term_frame_idx_plus1 = new int[sps.MaxFrameNum];
+
 	unsigned char buffer[4];
 
 	expGolomb_UC(shd.first_mb_in_slice);
@@ -198,14 +209,7 @@ void shd_write(NALunit &nal_unit)
 
 	if((shd.slice_type%5)==P_SLICE || (shd.slice_type%5)==B_SLICE || (shd.slice_type%5)==SP_SLICE)
 	{
-		if (shd.num_ref_idx_active_override_flag==1)
-		{
-			writeOnes(1);
-		}
-		else
-		{
-			writeZeros(1);
-		}
+		writeFlag(shd.num_ref_idx_active_override_flag);
 		
 		if (shd.num_ref_idx_active_override_flag==1)
 		{
