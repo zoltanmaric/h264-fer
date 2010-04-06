@@ -236,6 +236,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\moestimation.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\nal.cpp"
 				>
 			</File>
@@ -307,6 +311,10 @@
 			</File>
 			<File
 				RelativePath=".\mode_pred.h"
+				>
+			</File>
+			<File
+				RelativePath=".\moestimation.h"
 				>
 			</File>
 			<File

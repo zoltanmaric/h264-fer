@@ -10,6 +10,7 @@
 #include "ref_frames.h"
 #include "mocomp.h"
 #include "mode_pred.h"
+#include "moestimation.h"
 #include "quantizationTransform.h"
 
 void RBSP_decode(NALunit nal_unit)
@@ -135,9 +136,6 @@ void RBSP_decode(NALunit nal_unit)
 				int pixel_pos_x=mb_pos_x*16;
 				int pixel_pos_y=mb_pos_y*16;
 
-				//Contains sub_mb_type for each 8x8 submacroblock for inter prediction.
-				int sub_mb_type_array[4];
-
 				//Norm: if( mb_type != I_NxN && MbPartPredMode( mb_type, 0 ) != Intra_16x16 && NumMbPart( mb_type ) == 4 )
 				// I_NxN is an alias for Intra_4x4 and Intra_8x8 MbPartPredMode (mb_type in both cases equal to 0)
 				// mb_type (positive integer value) is equal to "Name of mb_type" (i.e. I_NxN). These are often interchanged in the norm
@@ -151,14 +149,14 @@ void RBSP_decode(NALunit nal_unit)
 					int mbPartIdx;
 					for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
 					{
-						sub_mb_type_array[mbPartIdx]=expGolomb_UD();
+						sub_mb_type[mbPartIdx]=expGolomb_UD();
 					}
 
 					for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
 					{
 						if ((shd.num_ref_idx_active_override_flag > 0) &&
 							(mb_type != P_8x8ref0) &&
-							(SubMbPredMode(sub_mb_type_array[mbPartIdx]) != Pred_L1))
+							(SubMbPredMode(sub_mb_type[mbPartIdx]) != Pred_L1))
 						{
 							ref_idx_l0_array[CurrMbAddr][mbPartIdx] = expGolomb_TD();
 						}
@@ -169,7 +167,7 @@ void RBSP_decode(NALunit nal_unit)
 
 					for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
 					{
-						for (int subMbPartIdx = 0; subMbPartIdx < NumSubMbPart(sub_mb_type_array[mbPartIdx]); subMbPartIdx++)
+						for (int subMbPartIdx = 0; subMbPartIdx < NumSubMbPart(sub_mb_type[mbPartIdx]); subMbPartIdx++)
 						{
 							mvd_l0[mbPartIdx][subMbPartIdx][0] = expGolomb_SD();
 							mvd_l0[mbPartIdx][subMbPartIdx][1] = expGolomb_SD();
@@ -407,8 +405,7 @@ void RBSP_encode(NALunit &nal_unit)
 		{
 			if ((shd.slice_type != I_SLICE) && (shd.slice_type != SI_SLICE))
 			{
-				// TODO: perform inter prediction
-				// mb_type = nesto
+				interEncoding(predL, predCr, predCb);
 				if (mb_type == P_Skip)
 				{
 					mb_skip_run++;
@@ -449,11 +446,8 @@ void RBSP_encode(NALunit &nal_unit)
 			{
 				// Norm: start sub_mb_pred()
 				int mbPartIdx;
-				// TODO: dogovori s Prugoveèkim novu globalnu varijablu sub_mb_type
-				int sub_mb_type[4];
 				for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
 				{
-					
 					expGolomb_UC(sub_mb_type[mbPartIdx]);
 				}
 				// Norm: currently there is no support for reference picture list
