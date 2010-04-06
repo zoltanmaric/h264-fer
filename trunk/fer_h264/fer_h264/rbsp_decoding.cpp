@@ -519,6 +519,12 @@ void RBSP_encode(NALunit &nal_unit)
 
 			
 		}
+		
+		if (mb_skip_run > 0)
+		{
+			expGolomb_UC(mb_skip_run);
+		}
+
 		RBSP_trailing_bits();
 		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;
 
