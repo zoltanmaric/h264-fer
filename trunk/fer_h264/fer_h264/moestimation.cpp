@@ -7,6 +7,8 @@
 #include "h264_math.h"
 #include "limits.h"
 
+#define P_Skip_Treshold 0.9
+
 int sadLuma8x8(int predL[16][16], int luma8x8BlkIdx)
 {
 	int sad = 0;
@@ -28,6 +30,24 @@ int sadLuma8x8(int predL[16][16], int luma8x8BlkIdx)
 	return sad;
 }
 
+int ExactPixels(int predL[16][16])
+{
+	int exactLumaPixels = 0;
+
+	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
+	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+
+	for (int i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 16; j++)
+		{
+			exactLumaPixels += (frame.L[yP+i][xP+j] != predL[i][j])?0:1;
+		}
+	}
+
+	return exactLumaPixels;	
+}
+
 int sadLuma(int predL[16][16], int partId)
 {
 	if (mb_type == P_L0_8x8 || mb_type == P_8x8 || mb_type == P_8x8ref0) return sadLuma8x8(predL, partId);
@@ -47,10 +67,12 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 	mb_type = P_Skip;
 	DeriveMVs();
 	Decode(predL, predCr, predCb);
-	minBlock = sadLuma(predL, 0);
-	for (int curr_mbtype = -1; curr_mbtype < 5; curr_mbtype++)
+	if (ExactPixels(predL) >= (int)(256.0*P_Skip_Treshold))
+		return;
+	
+	for (int curr_mbtype = 0; curr_mbtype < 5; curr_mbtype++)
 	{
-		mb_type = curr_mbtype%32;
+		mb_type = curr_mbtype;
 		ClearMVD();
 		int currMin = 0;
 		for (int i = 0; i < NumMbPart(mb_type); i++)
