@@ -20,6 +20,7 @@
 extern int mvL0x[], mvL0y[];
 //int subMvCnt[Frame_Width/MB_Width][Frame_Height/MB_Height], refIdxL0[Frame_Height/MB_Width][Frame_Height/MB_Height];
 extern int subMvCnt[], refIdxL0[];
+extern int sub_mb_type[4];
 
 //int ValidMVD;
 

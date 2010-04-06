@@ -15,6 +15,7 @@
 
 int mvL0x[100000], mvL0y[100000];
 int subMvCnt[100000], refIdxL0[100000];
+int sub_mb_type[4];
 
 int pomocna;
 
