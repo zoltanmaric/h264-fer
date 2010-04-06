@@ -199,7 +199,6 @@ typedef struct {
 } frame_type;
 
 extern frame_type frame;
-
 // The absolute frame count starting with 1
 extern unsigned long frameCount;
 
