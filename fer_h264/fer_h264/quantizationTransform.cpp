@@ -276,6 +276,7 @@ void transformScan(int c[4][4], int list[16], bool Intra16x16AC)
 			int y = ZigZagReordering[i][1];
 			list[i] = c[x][y];
 		}
+		list[0] = 0;
 	}
 	else {
 		for (int i = 0; i < 16; i++)
@@ -287,12 +288,35 @@ void transformScan(int c[4][4], int list[16], bool Intra16x16AC)
 	}
 }
 
+void scanChroma(int rChroma[4][4], int list[16])
+{
+	for (int i = 1; i < 16; i++)
+	{
+		int y = ZigZagReordering[i][0];
+		int x = ZigZagReordering[i][1];
+		list[i] = rChroma[y][x];
+	}
+	list[0] = 0;
+}
+
+void scanDCChroma(int rDCChroma[2][2], int list[4])
+{
+	for (int i = 0; i < 4; i++)
+	{
+		list[i] = rDCChroma[i/2][i%2];
+	}
+}
+
 void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8])
 {
 	int diffL4x4[4][4];
 	int DCLuma[4][4];
 	int rLuma[4][4];
 	int rDCLuma[4][4];
+	int diffCb4x4[4][4], diffCr4x4[4][4];
+	int rCb[4][4], rCr[4][4];
+	int DCCb[2][2], DCCr[2][2];
+	int rDCCb[2][2], rDCCr[2][2];
 
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
@@ -329,4 +353,56 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		transformScan(rDCLuma, Intra16x16DCLevel, false);		
 	}
 
+	//Chroma quantization and transform process
+
+	int xPC = xP/2;
+	int yPC = yP/2;
+
+	int QpBdOffsetC = 0;	// Norm: = 6 * bit_depth_chroma_minus8; bit_depth_chroma_minus_8 == 0 in baseline
+	int qPoffset = pps.chroma_qp_index_offset;	// Norm: qPoffset = second_chroma_qp_index_offset,
+												// second_chroma_qp_index_offset == chroma_qp_index_offset when not
+												// present. It is not present in baseline.
+	int qPi = Clip3(-QpBdOffsetC, 51, QPy + qPoffset);
+	int QPc = qPiToQPc[qPi];
+	int QP_c = QPc + QpBdOffsetC;
+
+	int qP = QP_c;
+
+	for (int chroma4x4BlkIdx; chroma4x4BlkIdx < 4; chroma4x4BlkIdx++)
+	{
+		x0C = (chroma4x4BlkIdx % 2) * 4;
+		y0C = (chroma4x4BlkIdx / 2) * 4;
+		
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{				
+				diffCb4x4[i][j] = frame.C[0][yPC + y0C + i][xP + x0 + j] - predCb[y0C + i][x0C + j];
+				diffCr4x4[i][j] = frame.C[1][yPC + y0C + i][xP + x0 + j] - predCr[y0C + i][x0C + j];
+			}
+		}
+
+		forwardResidual(qP, diffCb4x4, rCb, true, true);
+		forwardResidual(qP, diffCr4x4, rCr, true, true);
+
+		DCCb[y0C/4][x0C/4] = rCb[0][0];
+		DCCr[y0C/4][x0C/4] = rCr[0][0];
+
+		scanChroma(rCb, ChromaACLevel[0][chroma4x4BlkIdx]);
+		scanChroma(rCr, ChromaACLevel[1][chroma4x4BlkIdx]);
+	}
+
+	if (MbPartPredMode(mb_type , 0) == Intra_16x16 || MbPartPredMode(mb_type , 0) == Intra_4x4)
+	{
+		forwardDCChroma(qP, DCCb, rDCCb, true);
+		forwardDCChroma(qP, DCCr, rDCCr, true);
+	}
+	else
+	{
+		forwardDCChroma(qP, DCCb, rDCCb, false);
+		forwardDCChroma(qP, DCCr, rDCCr, false);
+	}
+
+	scanDCChroma(rDCCb, ChromaDCLevel[0]);
+	scanDCChroma(rDCCr, ChromaDCLevel[1]);
 }
