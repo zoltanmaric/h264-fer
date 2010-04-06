@@ -162,7 +162,7 @@ int P_sub_macroblock_modes[5][6]=
 	{NA,	NA,					NA,	NA,		 NA,	NA},
 	{0,		P_L0_8x8,			1,	Pred_L0, 8,		8},
 	{1,		P_L0_8x4,			2,	Pred_L0, 8,		4},
-	{2,		P_L0_4x8,			3,	Pred_L0, 4,		8},
+	{2,		P_L0_4x8,			2,	Pred_L0, 4,		8},
 	{3,		P_L0_4x4,			4,	Pred_L0, 4,		4}
 };
 
