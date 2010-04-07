@@ -352,6 +352,94 @@ void RBSP_decode(NALunit nal_unit)
 
 // ENCODING:
 
+void setCodedBlockPattern()
+{
+	CodedBlockPatternLuma = 0;
+	CodedBlockPatternChroma = 0;
+
+	// Set CodedBlockPatternLuma:
+	for (int i8x8 = 0; i8x8 < 4; i8x8++)
+	{
+		bool allZero = true;
+		for (int i4x4 = 0; i4x4 < 4; i4x4++)
+		{
+			if (MbPartPredMode(mb_type,0) == Intra_16x16)
+			{
+				for (int i = 0; i < 15; i++)
+				{
+					if (Intra16x16ACLevel[i8x8*4 + i4x4][i] != 0)
+					{
+						allZero = false;
+						break;
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < 16; i++)
+				{
+					if (LumaLevel[i8x8*4 + i4x4][i] != 0)
+					{
+						allZero = false;
+						break;
+					}
+				}
+			}
+
+			if (allZero == false)
+			{
+				// Set the corresponding bit of CodedBlockPattern to 1
+				CodedBlockPatternLuma |= 1 << i8x8;
+				break;
+			}
+		}
+	}
+
+	if (MbPartPredMode(mb_type,0) == Intra_16x16)
+	{
+		if (CodedBlockPatternLuma != 0)
+		{
+			CodedBlockPatternLuma = 15;
+		}
+		if (CodedBlockPatternChroma == 3)
+		{
+			// CodedBlockPatternChroma == 3 is not defined for 16x16 pred mode
+			CodedBlockPatternChroma = 2;
+		}
+	}
+
+	// Set CodedBlockPatternChroma:
+	for (int i = 0; i < 4; i++)
+	{
+		if ((ChromaDCLevel[0][i] != 0) || (ChromaDCLevel[1][i] != 0))
+		{
+			CodedBlockPatternChroma |= 1;
+			break;
+		}
+	}
+
+	bool allZero = true;
+	for (int i4x4 = 0; i4x4 < 4; i4x4++)
+	{
+		for (int i = 0; i < 15; i++)
+		{
+			if ((ChromaACLevel[0][i4x4][i] != 0) || (ChromaACLevel[1][i4x4][i] != 0))
+			{
+				allZero = false;
+				break;
+			}
+		}
+		if (allZero == false)
+		{
+			CodedBlockPatternChroma |= 2;
+			break;
+		}
+	}
+
+	CodedBlockPatternLumaArray[CurrMbAddr] = CodedBlockPatternLuma;
+	CodedBlockPatternChromaArray[CurrMbAddr] = CodedBlockPatternChroma;
+}
+
 // 7.3.2.11
 void RBSP_trailing_bits()
 {
@@ -413,26 +501,32 @@ void RBSP_encode(NALunit &nal_unit)
 				mb_skip_run = 0;
 
 				quantizationTransform(predL, predCb, predCr);
-
+				setCodedBlockPattern();
 			}
 			else
 			{
 				intra16x16PredMode = intraPredictionEncoding(predL, predCr, predCb);
-				quantizationTransform(predL, predCb, predCr);
 
 				// intra4x4 prediction
 				if (intra16x16PredMode == -1)
 				{
 					mb_type = I_4x4;
+					quantizationTransform(predL, predCb, predCr);
+					setCodedBlockPattern();
 				}
 				// intra16x16 prediction
 				else
 				{
-					// TODO: choose mb_type according to intra16x16PredMode
-					// and Luma and Chroma coded block patterns
+					mb_type = intra16x16PredMode;
+					
+					quantizationTransform(predL, predCb, predCr);
+					setCodedBlockPattern();
 
-					// TEST: Assume all residual is zero.
-					mb_type = intra16x16PredMode + 1;					
+					mb_type += (CodedBlockPatternChroma << 2);
+					if (CodedBlockPatternLuma == 15)
+					{
+						mb_type += 13;
+					}
 				}
 				mb_type_array[CurrMbAddr] = mb_type;
 			}
@@ -519,10 +613,10 @@ void RBSP_encode(NALunit &nal_unit)
 				// mb_qp_delta = 0;
 				expGolomb_SC(0);
 
-				// residual_write();
+				residual_write();
 
 				// Test: Assume nC = 0..2 and TotalCoef and TrailingOnes = 0
-				writeFlag(1);	// coeff_token = 1
+				// writeFlag(1);	// coeff_token = 1
 				// Norm: end macroblock_layer()
 			}
 

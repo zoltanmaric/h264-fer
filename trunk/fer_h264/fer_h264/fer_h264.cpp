@@ -10,7 +10,7 @@
 
 void decode()
 {
-	stream=fopen("big_buck_bunny.264","rb");
+	stream=fopen("bourne.264","rb");
 	yuvoutput = fopen("Bourne.yuv","wb");
 
 	NALunit nu;
@@ -60,16 +60,14 @@ void encode()
 	RBSP_encode(nu);
 
 	writeNAL(nu);
-
+	
+	nu.nal_ref_idc = 1;		// non-zero for reference
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
 
 		printf("Frame #%d\n", frameCount);
 
-		nu.nal_ref_idc = 1;		// non-zero for reference
-
-		// TEST: Creating intra frames only
 		if(frameCount % 30 == 1)
 		{
 			nu.nal_unit_type = NAL_UNIT_TYPE_IDR;
@@ -94,8 +92,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	decode();
-	//encode();
+	//decode();
+	encode();
 
 	return 0;
 }

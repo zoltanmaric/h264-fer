@@ -178,6 +178,8 @@ void shd_write(NALunit &nal_unit)
 	shd.num_ref_idx_active_override_flag = 0;	// no changes in the reference picture list order yet
 	shd.slice_qp_delta = -14;		// inferred quantization parameter
 	shd.PicSizeInMbs = frame.Lwidth * frame.Lheight >> 8;
+	shd.SliceQPy = pps.pic_init_qp + shd.slice_qp_delta;
+	QPy = shd.SliceQPy;			
 
 	// These variables are stored for the reference picture
 	// list modification process described in 8.2.4.3
