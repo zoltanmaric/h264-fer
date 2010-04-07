@@ -372,7 +372,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 
 	int qP = QP_c;
 
-	for (int chroma4x4BlkIdx; chroma4x4BlkIdx < 4; chroma4x4BlkIdx++)
+	for (int chroma4x4BlkIdx = 0; chroma4x4BlkIdx < 4; chroma4x4BlkIdx++)
 	{
 		x0C = (chroma4x4BlkIdx % 2) * 4;
 		y0C = (chroma4x4BlkIdx / 2) * 4;
