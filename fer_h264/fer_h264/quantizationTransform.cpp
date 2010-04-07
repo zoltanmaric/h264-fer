@@ -170,7 +170,7 @@ void forwardTransformDCLumaIntra(int input[4][4], int output[4][4])
 //}
 
 
-void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool intra16x16OrChroma, bool Intra)
+void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra)
 {
 	int qbits = 15 + qP/6;
 	int qPMod = qP % 6;
@@ -244,12 +244,12 @@ void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
 	}
 }
 
-void forwardResidual(int qP, int c[4][4], int r[4][4], bool luma, bool Intra)
+void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra)
 {
 	int d[4][4];
 
 	forwardTransform4x4(c, d);
-	quantisationResidualBlock(d, r, qP, true, Intra);
+	quantisationResidualBlock(d, r, qP, Intra);
 
 }
 
@@ -313,17 +313,23 @@ void scanDCChroma(int rDCChroma[2][2], int list[4])
 
 void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8])
 {
-	int diffL4x4[4][4];
-	int DCLuma[4][4];
-	int rLuma[4][4];
-	int rDCLuma[4][4];
-	int diffCb4x4[4][4], diffCr4x4[4][4];
-	int rCb[4][4], rCr[4][4];
-	int DCCb[2][2], DCCr[2][2];
-	int rDCCb[2][2], rDCCr[2][2];
+	int diffL4x4[4][4];						// unprocessed luma residual
+	int DCLuma[4][4];						// DC luma coefficients for Intra16x16 prediction
+	int rLuma[4][4];						// processed luma residual
+	int rDCLuma[4][4];						// processed DC luma coefficients
+	int diffCb4x4[4][4], diffCr4x4[4][4];	// unprocessed chroma residuals
+	int rCb[4][4], rCr[4][4];				// processed chroma residuals
+	int DCCb[2][2], DCCr[2][2];				// DC chroma coefficients
+	int rDCCb[2][2], rDCCr[2][2];			// processed DC chroma coefficients
+
+	int qP;									// quantizer
+
+	// Luma transform and quantization process
 
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+
+	qP = QPy;
 
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
@@ -338,7 +344,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			}
 		}
 
-		forwardResidual(QPy, diffL4x4, rLuma, true, true);
+		forwardResidual(qP, diffL4x4, rLuma, true);
 
 		if (MbPartPredMode(mb_type , 0) == Intra_16x16)
 		{
@@ -370,7 +376,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 	int QPc = qPiToQPc[qPi];
 	int QP_c = QPc + QpBdOffsetC;
 
-	int qP = QP_c;
+	qP = QP_c;
 
 	for (int chroma4x4BlkIdx = 0; chroma4x4BlkIdx < 4; chroma4x4BlkIdx++)
 	{
