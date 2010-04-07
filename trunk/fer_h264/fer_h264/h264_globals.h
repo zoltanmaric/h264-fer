@@ -127,6 +127,8 @@ extern mode_pred_info *mpi;
 #define NAL_UNIT_TYPE_SPS 7
 #define NAL_UNIT_TYPE_PPS 8
 
+extern int number_of_mmc_operations;
+
 extern int P_and_SP_macroblock_modes[32][7];
 extern int I_Macroblock_Modes[27][7];
 extern int P_sub_macroblock_modes[5][6];

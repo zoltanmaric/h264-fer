@@ -4,6 +4,10 @@
 #include "h264_globals.h"
 #include "h264_math.h"
 #include "headers_and_parameter_sets.h"
+#include "inttransform.h"
+
+//Stubs for compilation
+int x0C, y0C, x0;
 
 //Multiplication factors for quantization
 int MF[6][4][4] = 
