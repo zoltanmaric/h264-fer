@@ -135,6 +135,9 @@ extern int P_sub_macroblock_modes[5][6];
 extern int codeNum_to_coded_block_pattern_intra[48];
 extern int codeNum_to_coded_block_pattern_inter[48];
 
+extern int coded_block_pattern_to_codeNum_intra[48];
+extern int coded_block_pattern_to_codeNum_inter[48];
+
 extern int CodedBlockPatternLuma;
 extern int CodedBlockPatternChroma;
 

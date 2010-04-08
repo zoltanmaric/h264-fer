@@ -10,7 +10,7 @@
 
 void decode()
 {
-	stream=fopen("bourne.264","rb");
+	stream=fopen("big_buck_bunny.264","rb");
 	yuvoutput = fopen("Bourne.yuv","wb");
 
 	NALunit nu;

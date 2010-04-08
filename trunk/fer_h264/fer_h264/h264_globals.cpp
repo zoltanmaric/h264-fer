@@ -171,6 +171,7 @@ int P_sub_macroblock_modes[5][6]=
 //When ChromaArrayType is equal to 1 or 2
 //(We only support "ChromaArrayType=1")
 
+// decoding:
 int codeNum_to_coded_block_pattern_intra[48]=
 {
   47,31,15, 0,23,27,29,30, 7,11,13,14,39,43,45,46,
@@ -183,6 +184,23 @@ int codeNum_to_coded_block_pattern_inter[48]=
    0,16, 1, 2, 4, 8,32, 3, 5,10,12,15,47, 7,11,13,
   14, 6, 9,31,35,37,42,44,33,34,36,40,39,43,45,46,
   17,18,20,24,19,21,26,28,23,27,29,30,22,25,38,41
+};
+
+// encoding:
+int coded_block_pattern_to_codeNum_intra[48] =
+{
+	3, 29, 30, 17, 31, 18, 37, 8, 32, 38, 19, 9, 20,
+	10, 11, 2, 16, 33, 34, 21, 35, 22, 39, 4, 36, 40,
+	23, 5, 24, 6, 7, 1, 41, 42, 43, 25, 44, 26, 46,
+	12, 45, 47, 27, 13, 28, 14, 15, 0
+};
+
+int coded_block_pattern_to_codeNum_inter[48] =
+{
+	0, 2, 3, 7, 4, 8, 17, 13, 5, 18, 9, 14, 10, 15,
+	16, 11, 1, 32, 33, 36, 34, 37, 44, 40, 35, 45,
+	38, 41, 39, 42, 43, 19, 6, 24, 25, 20, 26, 21,
+	46, 28, 27, 47, 22, 29, 23, 30, 31, 12
 };
 
 int CodedBlockPatternLuma;

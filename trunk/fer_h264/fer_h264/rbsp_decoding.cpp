@@ -588,22 +588,16 @@ void RBSP_encode(NALunit &nal_unit)
 			}
 			// Norm: end mb_pred()
 
-			// TEST: Assume all residual is zero.
-			CodedBlockPatternLuma = 0;
-			CodedBlockPatternChroma = 0;
-
 			if (MbPartPredMode(mb_type, 0) != Intra_16x16)
 			{
-				// TEST: Assume all residual is zero.
-				if (shd.slice_type == I_SLICE)
-				{
-					// coded_block_pattern = 0 => codeNum = 3 for intra				
-					expGolomb_UC(3);
+				int coded_block_pattern = (CodedBlockPatternChroma << 4) | CodedBlockPatternLuma;
+				if (MbPartPredMode(mb_type,0) == Intra_4x4)
+				{								
+					expGolomb_UC(coded_block_pattern_to_codeNum_intra[coded_block_pattern]);
 				}
 				else
 				{
-					// coded_block_pattern = 0 => codeNum = 0 for inter		
-					expGolomb_UC(0);
+					expGolomb_UC(coded_block_pattern_to_codeNum_inter[coded_block_pattern]);
 				}
 			}
 
