@@ -392,8 +392,8 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			}
 		}
 
-		forwardResidual(qP, diffCb4x4, rCb, true, true);
-		forwardResidual(qP, diffCr4x4, rCr, true, true);
+		forwardResidual(qP, diffCb4x4, rCb, true);
+		forwardResidual(qP, diffCr4x4, rCr, true);
 
 		DCCb[y0C/4][x0C/4] = rCb[0][0];
 		DCCr[y0C/4][x0C/4] = rCr[0][0];
