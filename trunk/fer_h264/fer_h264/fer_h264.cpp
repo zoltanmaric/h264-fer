@@ -43,6 +43,7 @@ void encode()
 	NALunit nu;
 	nu.rbsp_byte = new unsigned char[500000];
 
+
 	nu.forbidden_zero_bit = 0;
 
 	loadY4MHeader();

@@ -268,7 +268,7 @@ frame_type frame;
 int **ref_idx_l0_array;
 int mvd_l0[4][4][2];
 
-int ABS(int a)
+unsigned int ABS(int a)
 {
 	if (a>0)
 		return a;

@@ -1,4 +1,5 @@
 #include "rawreader.h"
+#include <stdio.h>
 
 //Decoder variables
 unsigned int RBSP_current_byte;
@@ -150,9 +151,22 @@ void writeZeros(int N)
 	}
 }
 
-bool writeRawBits(int N, unsigned char *data_to_write)
+void dumpWriteBuffer()
 {
-	unsigned int count=0;
+	for (int i=0;i<=RBSP_write_current_byte;i++)
+	{
+		printf("%d%d%d%d%d%d%d%d - ",(RBSP_write_data[i]&128)>>7,(RBSP_write_data[i]&64)>>6,(RBSP_write_data[i]&32)>>5,
+			(RBSP_write_data[i]&16)>>4,(RBSP_write_data[i]&8)>>3,(RBSP_write_data[i]&4)>>2,(RBSP_write_data[i]&2)>>1,
+			(RBSP_write_data[i]&1));
+		printf("%x\n",RBSP_write_data[i]);
+	}
+
+	printf("Ending bit: %d\n",RBSP_write_current_bit);
+}
+
+bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
+{
+	unsigned int count=0, offset;
 	while(count<N)
 	{
 		//8-byte fast forward 
@@ -165,7 +179,15 @@ bool writeRawBits(int N, unsigned char *data_to_write)
 		}
 
 		//Classic bit by bit loading
-		int offset = N - count - 1;
+		if (CAVLC_table_mode==1)
+		{
+			offset = 8 - (count%8) - 1;
+		}
+		else
+		{
+			offset = N - count - 1;
+		}
+
 		RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1) + ((data_to_write[offset/8]>>(offset%8))&1);
 		RBSP_write_current_bit++;
 		if (RBSP_write_current_bit==8)

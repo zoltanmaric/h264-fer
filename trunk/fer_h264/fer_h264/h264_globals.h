@@ -190,7 +190,7 @@ extern int mvd_l0[4][4][2];
 
 //Various helping functions
 
-int ABS(int a);
+unsigned int ABS(int a);
 
 //Initalize per-movie data 
 int init_h264_structures();
