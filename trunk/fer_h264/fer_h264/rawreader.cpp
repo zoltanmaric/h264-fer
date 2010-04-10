@@ -109,7 +109,7 @@ void writeOnes(int N)
 		{
 			RBSP_write_data[RBSP_write_current_byte]=0xFF;
 			count+=8;
-			RBSP_current_byte++;
+			RBSP_write_current_byte++;
 			continue;
 		}
 
@@ -135,7 +135,7 @@ void writeZeros(int N)
 		{
 			RBSP_write_data[RBSP_write_current_byte]=0;
 			count+=8;
-			RBSP_current_byte++;
+			RBSP_write_current_byte++;
 			continue;
 		}
 
