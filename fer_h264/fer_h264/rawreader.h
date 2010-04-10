@@ -5,11 +5,13 @@ void initRawWriter(unsigned char *RBSP_write, unsigned int size);
 
 bool more_rbsp_data();
 
+void dumpWriteBuffer();
+
 void skipRawBits(int N);
 unsigned int peekRawBits(int N);
 
 unsigned int getRawBits(int N);
-bool writeRawBits(int N, unsigned char *data_to_write);
+bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode=0);
 void writeFlag(int flag);
 void writeZeros(int N);
 void writeOnes(int N);

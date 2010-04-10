@@ -25,11 +25,11 @@ void golombRice_SC(int codeNum, unsigned int VLCNum)
 
 	prefix_length=offset/(1<<VLCNum);
 
-	//writeZeros(prefix_length);
-	for (int i=0;i<prefix_length;i++)
-		printf("0");
-	//writeOnes(1);
-	printf("1");
+	writeZeros(prefix_length);
+	//for (int i=0;i<prefix_length;i++)
+		//printf("0");
+	writeOnes(1);
+	//printf("1");
 
 	if (VLCNum!=0)
 	{
