@@ -169,16 +169,6 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 	unsigned int count=0, offset;
 	while(count<N)
 	{
-		//8-byte fast forward 
-		if ((N-count)>7 && RBSP_write_current_bit==0)
-		{
-			RBSP_write_data[RBSP_write_current_byte]=data_to_write[count/8];
-			count+=8;
-			RBSP_write_current_byte++;
-			continue;
-		}
-
-		//Classic bit by bit loading
 		if (CAVLC_table_mode==1)
 		{
 			offset = 8 - (count%8) - 1;
@@ -188,6 +178,17 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 			offset = N - count - 1;
 		}
 
+		//8-byte fast forward 
+		if ((N-count)>7 && RBSP_write_current_bit==0 && (N-count)%8 == 0)
+		{
+			//int shift = offset + 1;
+			RBSP_write_data[RBSP_write_current_byte]=data_to_write[offset/8];
+			count+=8;
+			RBSP_write_current_byte++;
+			continue;
+		}
+
+		//Classic bit by bit loading
 		RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1) + ((data_to_write[offset/8]>>(offset%8))&1);
 		RBSP_write_current_bit++;
 		if (RBSP_write_current_bit==8)

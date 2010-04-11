@@ -131,10 +131,14 @@ void RBSP_decode(NALunit nal_unit)
 
 				mb_type = expGolomb_UD();
 				mb_type_array[CurrMbAddr]=mb_type;		
-
-				//Transform macroblock-level coordinates to pixel-level coordinates
-				int pixel_pos_x=mb_pos_x*16;
-				int pixel_pos_y=mb_pos_y*16;
+				if ((mb_type > 31) || ((shd.slice_type == I_SLICE) && (mb_type > 24)))
+				{
+					printf("Fatal error: Unexpected mb_type value (%d)\n", mb_type);
+					printf("Slice type: %d\n", shd.slice_type);
+					printf("Frame #%d, CurrMbAddr = %d\n", frameCount, CurrMbAddr);
+					system("pause");
+					exit(1);
+				}
 
 				//Norm: if( mb_type != I_NxN && MbPartPredMode( mb_type, 0 ) != Intra_16x16 && NumMbPart( mb_type ) == 4 )
 				// I_NxN is an alias for Intra_4x4 and Intra_8x8 MbPartPredMode (mb_type in both cases equal to 0)
@@ -201,6 +205,13 @@ void RBSP_decode(NALunit nal_unit)
 						//baseline defines "ChromaArrayType==1", so the if clause is skipped
 
 						intra_chroma_pred_mode=expGolomb_UD();
+						if (intra_chroma_pred_mode > 3)
+						{
+							printf("Fatal error: Unexpected intra_chroma_pred_mode value (%d)\n", intra_chroma_pred_mode);
+							printf("Frame #%d, CurrMbAddr = %d\n", frameCount, CurrMbAddr);
+							system("pause");
+							exit(1);
+						}
 					}
 					else
 					{
@@ -236,6 +247,13 @@ void RBSP_decode(NALunit nal_unit)
 				if(MbPartPredMode(mb_type,0)!=Intra_16x16)
 				{
 					int coded_block_pattern=expGolomb_UD();
+					if (coded_block_pattern > 47)
+					{
+						printf("Fatal error: Unexpected coded_block_pattern value (%d)\n", coded_block_pattern);
+						printf("Frame #%d, CurrMbAddr = %d\n", frameCount, CurrMbAddr);
+						system("pause");
+						exit(1);
+					}
 
 					//This is not real coded_block_pattern, it's the coded "codeNum" value which is now being decoded:
 
@@ -277,14 +295,17 @@ void RBSP_decode(NALunit nal_unit)
 
 				CodedBlockPatternLumaArray[CurrMbAddr] = CodedBlockPatternLuma;
 				CodedBlockPatternChromaArray[CurrMbAddr] = CodedBlockPatternChroma;
-					if (CurrMbAddr == 1530)
-					{
-						int blabla = 1;
-					}
 				if(CodedBlockPatternLuma>0 || CodedBlockPatternChroma>0 || MbPartPredMode(mb_type,0)==Intra_16x16)
 				{
 
 					mb_qp_delta=expGolomb_SD();
+					if ((mb_qp_delta < -26) || (mb_qp_delta > 25))
+					{
+						printf("Fatal error: Unexpected mb_qp_delta value (%d)\n", mb_qp_delta);
+						printf("Frame #%d, CurrMbAddr = %d\n", frameCount, CurrMbAddr);
+						system("pause");
+						exit(1);
+					}
 
 					//Norm: decode residual data.
 					//residual_block_cavlc( coeffLevel, startIdx, endIdx, maxNumCoeff )
@@ -395,19 +416,6 @@ void setCodedBlockPattern()
 		}
 	}
 
-	if (MbPartPredMode(mb_type,0) == Intra_16x16)
-	{
-		if (CodedBlockPatternLuma != 0)
-		{
-			CodedBlockPatternLuma = 15;
-		}
-		if (CodedBlockPatternChroma == 3)
-		{
-			// CodedBlockPatternChroma == 3 is not defined for 16x16 pred mode
-			CodedBlockPatternChroma = 2;
-		}
-	}
-
 	// Set CodedBlockPatternChroma:
 	for (int i = 0; i < 4; i++)
 	{
@@ -433,6 +441,19 @@ void setCodedBlockPattern()
 		{
 			CodedBlockPatternChroma |= 2;
 			break;
+		}
+	}
+
+	if (MbPartPredMode(mb_type,0) == Intra_16x16)
+	{
+		if (CodedBlockPatternLuma != 0)
+		{
+			CodedBlockPatternLuma = 15;
+		}
+		if (CodedBlockPatternChroma == 3)
+		{
+			// CodedBlockPatternChroma == 3 is not defined for 16x16 pred mode
+			CodedBlockPatternChroma = 2;
 		}
 	}
 
