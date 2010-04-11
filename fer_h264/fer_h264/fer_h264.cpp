@@ -93,7 +93,7 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//decode();
+	decode();
 	encode();
 
 	return 0;
