@@ -11,7 +11,7 @@ void golombRice_SC(int codeNum, unsigned int VLCNum)
 	
 	unsigned char buffer[4];
 	
-	if (codeNum<0)
+	if (codeNum<=0)
 	{
 		offset=(-codeNum-1)*2+1;
 	}

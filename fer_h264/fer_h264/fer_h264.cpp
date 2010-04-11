@@ -81,7 +81,7 @@ void encode()
 
 		writeNAL(nu);
 
-		if (frameCount == 5) break;
+		if (frameCount == 4) break;
 
 		//writeToY4M();
 	}
@@ -93,8 +93,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	decode();
-	//encode();
+	//decode();
+	encode();
 
 	return 0;
 }
