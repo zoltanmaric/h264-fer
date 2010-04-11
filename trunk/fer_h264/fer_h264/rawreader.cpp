@@ -202,6 +202,20 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 	return true;
 }
 
+bool writeRawBits(int N, unsigned int data)
+{
+	int count = 0;
+	while (count < N)
+	{
+		int difference = N - count;
+		int bitWeight = 7 - RBSP_write_current_bit;
+		if (difference > bitWeight)
+		{
+			
+		}
+	}
+}
+
 bool more_rbsp_data()
 {
 	return (RBSP_current_byte < RBSP_total_size - 1);// || ((RBSP_current_byte;
