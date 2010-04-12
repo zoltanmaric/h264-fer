@@ -264,6 +264,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\residual_tables.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\scaleTransform.cpp"
 				>
 			</File>
@@ -339,6 +343,10 @@
 			</File>
 			<File
 				RelativePath=".\residual.h"
+				>
+			</File>
+			<File
+				RelativePath=".\residual_tables.h"
 				>
 			</File>
 			<File
