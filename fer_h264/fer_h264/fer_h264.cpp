@@ -82,8 +82,8 @@ void encode()
 
 		writeNAL(nu);
 
-		writeToPPM();
-		if (frameCount == 211) break;
+		//writeToPPM();
+		if (frameCount == 212) break;
 	}
 
 	fclose(stream);
@@ -93,8 +93,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	decode();
-	//encode();
+	//decode();
+	encode();
 
 	return 0;
 }
