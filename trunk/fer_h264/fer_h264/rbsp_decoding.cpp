@@ -540,7 +540,7 @@ void RBSP_encode(NALunit &nal_unit)
 				// intra16x16 prediction
 				else
 				{
-					mb_type = intra16x16PredMode;
+					mb_type = intra16x16PredMode + 1;
 					
 					quantizationTransform(predL, predCb, predCr);
 					setCodedBlockPattern();
