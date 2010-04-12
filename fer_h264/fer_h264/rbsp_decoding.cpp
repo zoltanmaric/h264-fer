@@ -448,17 +448,15 @@ void setCodedBlockPattern()
 		}
 	}
 
-	if (MbPartPredMode(mb_type,0) == Intra_16x16)
+	if ((MbPartPredMode(mb_type,0) == Intra_16x16) && (CodedBlockPatternLuma != 0))
 	{
-		if (CodedBlockPatternLuma != 0)
-		{
-			CodedBlockPatternLuma = 15;
-		}
-		if (CodedBlockPatternChroma == 3)
-		{
-			// CodedBlockPatternChroma == 3 is not defined for 16x16 pred mode
-			CodedBlockPatternChroma = 2;
-		}
+		CodedBlockPatternLuma = 15;
+	}
+
+	if (CodedBlockPatternChroma == 3)
+	{
+		// CodedBlockPatternChroma == 3 is not defined
+		CodedBlockPatternChroma = 2;
 	}
 
 	CodedBlockPatternLumaArray[CurrMbAddr] = CodedBlockPatternLuma;
