@@ -66,7 +66,7 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 91) continue;
+		if (frameCount < 211) continue;
 
 		printf("Frame #%d\n", frameCount);
 
@@ -82,9 +82,8 @@ void encode()
 
 		writeNAL(nu);
 
-		if (frameCount == 91) break;
-
-		//writeToY4M();
+		writeToPPM();
+		if (frameCount == 211) break;
 	}
 
 	fclose(stream);
