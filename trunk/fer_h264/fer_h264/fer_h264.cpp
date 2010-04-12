@@ -66,6 +66,7 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
+		if (frameCount < 91) continue;
 
 		printf("Frame #%d\n", frameCount);
 
@@ -81,7 +82,7 @@ void encode()
 
 		writeNAL(nu);
 
-		if (frameCount == 4) break;
+		if (frameCount == 91) break;
 
 		//writeToY4M();
 	}
@@ -94,7 +95,7 @@ void encode()
 int _tmain(int argc, _TCHAR* argv[])
 {
 	decode();
-	encode();
+	//encode();
 
 	return 0;
 }
