@@ -7,11 +7,14 @@
 #include "rbsp_decoding.h"
 #include "rawreader.h"
 #include "h264_globals.h"
+#include "residual_tables.h"
 
 void decode()
 {
 	stream=fopen("big_buck_bunny.264","rb");
 	yuvoutput = fopen("Bourne.yuv","wb");
+
+	generate_residual_level_tables();
 
 	NALunit nu;
 	nu.rbsp_byte = new unsigned char[500000];
@@ -36,8 +39,10 @@ void decode()
 void encode()
 {
 	stream = fopen("big_buck_bunny.264", "wb");
-	yuvinput = fopen("big_buck_bunny.y4m", "rb");
+	yuvinput = fopen("c:\\big_buck_bunny.y4m", "rb");
 	yuvoutput = fopen("Bourne.yuv","wb");
+
+	generate_residual_level_tables();
 
 	frameCount = 0;
 	NALunit nu;
@@ -66,7 +71,7 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 211) continue;
+		if (frameCount != 211) continue;
 
 		printf("Frame #%d\n", frameCount);
 
@@ -82,8 +87,9 @@ void encode()
 
 		writeNAL(nu);
 
-		//writeToPPM();
-		if (frameCount == 212) break;
+		if (frameCount == 211) break;
+
+		//writeToY4M();
 	}
 
 	fclose(stream);
@@ -93,8 +99,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//decode();
-	encode();
+	decode();
+	//encode();
 
 	return 0;
 }
