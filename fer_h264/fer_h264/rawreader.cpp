@@ -101,54 +101,58 @@ void writeFlag(int flag)
 
 void writeOnes(int N)
 {
-	unsigned int count=0;
-	while(count<N)
-	{
-		//8-byte fast forward 
-		if ((N-count)>7 && RBSP_write_current_bit==0)
-		{
-			RBSP_write_data[RBSP_write_current_byte]=0xFF;
-			count+=8;
-			RBSP_write_current_byte++;
-			continue;
-		}
+	unsigned int data = (1 << N) - 1;
+	writeRawBits(N, data);
+	//unsigned int count=0;
+	//while(count<N)
+	//{
+	//	//8-byte fast forward 
+	//	if ((N-count)>7 && RBSP_write_current_bit==0)
+	//	{
+	//		RBSP_write_data[RBSP_write_current_byte]=0xFF;
+	//		count+=8;
+	//		RBSP_write_current_byte++;
+	//		continue;
+	//	}
 
-		//Classic bit by bit loading
-		RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1)+1;
-		RBSP_write_current_bit++;
-		if (RBSP_write_current_bit==8)
-		{
-			RBSP_write_current_bit=0;
-			RBSP_write_current_byte++;
-		}
-		count++;
-	}
+	//	//Classic bit by bit loading
+	//	RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1)+1;
+	//	RBSP_write_current_bit++;
+	//	if (RBSP_write_current_bit==8)
+	//	{
+	//		RBSP_write_current_bit=0;
+	//		RBSP_write_current_byte++;
+	//	}
+	//	count++;
+	//}
 }
 
 void writeZeros(int N)
 {
-	unsigned int count=0;
-	while(count<N)
-	{
-		//8-byte fast forward 
-		if ((N-count)>7 && RBSP_write_current_bit==0)
-		{
-			RBSP_write_data[RBSP_write_current_byte]=0;
-			count+=8;
-			RBSP_write_current_byte++;
-			continue;
-		}
+	unsigned int data = 0;
+	writeRawBits(N, data);
+	//unsigned int count=0;
+	//while(count<N)
+	//{
+	//	//8-byte fast forward 
+	//	if ((N-count)>7 && RBSP_write_current_bit==0)
+	//	{
+	//		RBSP_write_data[RBSP_write_current_byte]=0;
+	//		count+=8;
+	//		RBSP_write_current_byte++;
+	//		continue;
+	//	}
 
-		//Classic bit by bit loading
-		RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1);
-		RBSP_write_current_bit++;
-		if (RBSP_write_current_bit==8)
-		{
-			RBSP_write_current_bit=0;
-			RBSP_write_current_byte++;
-		}
-		count++;
-	}
+	//	//Classic bit by bit loading
+	//	RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1);
+	//	RBSP_write_current_bit++;
+	//	if (RBSP_write_current_bit==8)
+	//	{
+	//		RBSP_write_current_bit=0;
+	//		RBSP_write_current_byte++;
+	//	}
+	//	count++;
+	//}
 }
 
 void dumpWriteBuffer()
@@ -171,7 +175,24 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 	{
 		if (CAVLC_table_mode==1)
 		{
-			offset = 8 - (count%8) - 1;
+			//offset = 8 - (count%8) - 1;
+			// TEST:
+			offset = (8 - (N % 8)) % 8;
+			unsigned int data = 0;
+			while (count < N)
+			{
+				data |= data_to_write[count/8];
+				count += 8;
+				if (count < N)
+				{
+					data <<= 8;
+				}
+			}
+			// The data in the CAVLC tables is aligned to
+			// the left, so it has to be moved to
+			// correspond to the right value.
+			data >>= offset;
+			return writeRawBits(N, data);
 		}
 		else
 		{
@@ -202,18 +223,40 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 	return true;
 }
 
+// Write up to 32 bits of data
 bool writeRawBits(int N, unsigned int data)
 {
 	int count = 0;
 	while (count < N)
 	{
-		int difference = N - count;
-		int bitWeight = 7 - RBSP_write_current_bit;
-		if (difference > bitWeight)
+		if (RBSP_write_current_bit == 0)
 		{
-			
+			// Clear the current byte.
+			RBSP_write_data[RBSP_write_current_byte] = 0;
 		}
+
+		int difference = N - count;
+		int bitsLeft = 8 - RBSP_write_current_bit;
+		if (bitsLeft >= difference)
+		{
+			RBSP_write_data[RBSP_write_current_byte] |= data << (bitsLeft - difference);
+			count += difference;
+			RBSP_write_current_bit += difference;
+		}
+		else
+		{
+			RBSP_write_data[RBSP_write_current_byte] |= (data >> (difference - bitsLeft)) & 0xff;
+			count += bitsLeft;
+			RBSP_write_current_bit = 8;
+		}
+		
+		
+		RBSP_write_current_byte += RBSP_write_current_bit >> 3; // RBSP_write_current_bit / 8
+		RBSP_write_current_bit &= 7;	// RBSP_write_current_bit %= 8;
+
 	}
+
+	return true;
 }
 
 bool more_rbsp_data()

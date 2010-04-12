@@ -591,9 +591,10 @@ void RBSP_encode(NALunit &nal_unit)
 						writeFlag(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]);
 						if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == false)
 						{
-							unsigned char buffer[4];
-							UINT_to_RBSP_size_known(rem_intra4x4_pred_mode[luma4x4BlkIdx], 3, buffer);
-							writeRawBits(3, buffer);
+							//unsigned char buffer[4];
+							//UINT_to_RBSP_size_known(rem_intra4x4_pred_mode[luma4x4BlkIdx], 3, buffer);
+							//writeRawBits(3, buffer);
+							writeRawBits(3, rem_intra4x4_pred_mode[luma4x4BlkIdx]);
 						}
 					}
 					
