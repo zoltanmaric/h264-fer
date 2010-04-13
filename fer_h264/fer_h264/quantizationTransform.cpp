@@ -346,9 +346,9 @@ void transformScan(int c[4][4], int list[16], bool Intra16x16AC)
 		{
 			int x = ZigZagReordering[i][0];
 			int y = ZigZagReordering[i][1];
-			list[i] = c[x][y];
+			list[i-1] = c[x][y];
 		}
-		list[0] = 0;
+		//list[0] = 0;
 	}
 	else {
 		for (int i = 0; i < 16; i++)
@@ -362,13 +362,12 @@ void transformScan(int c[4][4], int list[16], bool Intra16x16AC)
 
 void scanChroma(int rChroma[4][4], int list[15])
 {
-	for (int i = 0; i < 15; i++)
+	for (int i = 1; i < 16; i++)
 	{
 		int x = ZigZagReordering[i][0];
 		int y = ZigZagReordering[i][1];
-		list[i] = rChroma[y][x];
+		list[i-1] = rChroma[y][x];
 	}
-	//list[0] = 0;
 }
 
 void scanDCChroma(int rDCChroma[2][2], int list[4])
