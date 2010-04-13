@@ -174,7 +174,7 @@ void shd_write(NALunit &nal_unit)
 	// inferred values:
 	shd.first_mb_in_slice = 0;
 	shd.pic_parameter_set_id = 0;	// always zero because there's only one pps
-	shd.pic_order_cnt_lsb = 0;
+	// shd.pic_order_cnt_lsb += 2;
 	shd.num_ref_idx_active_override_flag = 0;	// no changes in the reference picture list order yet
 	shd.slice_qp_delta = -14;		// inferred quantization parameter
 	shd.PicSizeInMbs = frame.Lwidth * frame.Lheight >> 8;
@@ -219,8 +219,8 @@ void shd_write(NALunit &nal_unit)
 		{
 			expGolomb_UC(shd.num_ref_idx_l0_active_minus1);
 		}
-
-	}
+		shd.pic_order_cnt_lsb += 2;
+	} else shd.pic_order_cnt_lsb = 0;
 
 	//TODO: check upper if-clause and the function below - double reading/writing?
 	ref_pic_list_modification_write();
@@ -339,7 +339,7 @@ void sps_write()
 	//sps.offset_for_ref_frame
 	sps.log2_max_frame_num = 9;
 	sps.pic_order_cnt_type = 0;
-	sps.log2_max_pic_order_cnt_lsb = 10;
+	sps.log2_max_pic_order_cnt_lsb = 6;
 	sps.delta_pic_order_always_zero_flag = 0;
 	sps.max_num_ref_frames = 1;
 	sps.gaps_in_frame_num_value_allowed_flag = 0;
