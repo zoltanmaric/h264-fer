@@ -3,6 +3,8 @@
 void initRawReader(unsigned char *RBSP,unsigned int size);
 void initRawWriter(unsigned char *RBSP_write, unsigned int size);
 
+unsigned int getRawBit();
+
 bool more_rbsp_data();
 
 void dumpWriteBuffer();
