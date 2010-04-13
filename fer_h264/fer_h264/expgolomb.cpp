@@ -4,6 +4,14 @@
 
 //Coder functions
 
+//There are two of these array (one is in rawreader), with different ordering
+unsigned int one_bit_masks_large[24]=
+{
+	0x800000, 0x400000, 0x200000, 0x100000, 0x80000, 0x40000, 0x20000, 0x10000,
+	0x8000, 0x4000, 0x2000, 0x1000, 0x800, 0x400, 0x200, 0x100,
+	0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1
+};
+
 void golombRice_SC(int codeNum, unsigned int VLCNum)
 {
 	unsigned int offset;
@@ -100,13 +108,20 @@ unsigned int expGolomb_UD()
 {
 	unsigned int zeroCount=0;
 
-	while (!getRawBits(1))
+	//Using fast N=24 peek request
+	unsigned int search_buffer=peekRawBits(24);
+	int i;
+	for (i=0;i<24;i++)
 	{
-		zeroCount++;
+		if ((one_bit_masks_large[i]&search_buffer)!=0)
+		{
+			break;
+		}
 	}
 
-	unsigned int broj=getRawBits(zeroCount);
-	return (1<<zeroCount)-1+broj;
+	skipRawBits(i+1);
+	search_buffer=getRawBits(i);
+	return (1<<i)-1+search_buffer;
 }
 
 signed int expGolomb_SD()
@@ -127,7 +142,7 @@ unsigned int expGolomb_TD()
 {
 	unsigned int zeroCount = 0;
 	
-	while (getRawBits(1) == 0)
+	while (getRawBit() == 0)
 	{
 		zeroCount++;
 	}
@@ -144,6 +159,6 @@ unsigned int expGolomb_TD()
 	}
 	else
 	{
-		return !getRawBits(1);
+		return !getRawBit();
 	}
 }

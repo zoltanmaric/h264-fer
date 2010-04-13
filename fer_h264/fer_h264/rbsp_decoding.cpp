@@ -189,7 +189,7 @@ void RBSP_decode(NALunit nal_unit)
 						{
 							for(int luma4x4BlkIdx=0; luma4x4BlkIdx<16; luma4x4BlkIdx++)
 							{
-								prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] = (bool)getRawBits(1);
+								prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] = (bool)getRawBit();
 								if(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]==false)
 								{
 									rem_intra4x4_pred_mode[luma4x4BlkIdx]=getRawBits(3);

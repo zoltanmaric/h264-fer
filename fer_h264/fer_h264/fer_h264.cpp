@@ -39,7 +39,7 @@ void decode()
 void encode()
 {
 	stream = fopen("big_buck_bunny.264", "wb");
-	yuvinput = fopen("big_buck_bunny.y4m", "rb");
+	yuvinput = fopen("c:\\big_buck_bunny.y4m", "rb");
 	yuvoutput = fopen("reference.yuv","wb");
 
 	generate_residual_level_tables();
@@ -97,8 +97,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//decode();
-	encode();
+	decode();
+	//encode();
 
 	return 0;
 }
