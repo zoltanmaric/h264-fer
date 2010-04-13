@@ -50,7 +50,7 @@ int ExactPixels(int predL[16][16])
 
 int sadLuma(int predL[16][16], int partId)
 {
-	if (mb_type == P_L0_8x8 || mb_type == P_8x8 || mb_type == P_8x8ref0) return sadLuma8x8(predL, partId);
+	if (mb_type == P_8x8 || mb_type == P_8x8ref0) return sadLuma8x8(predL, partId);
 	if (mb_type == P_L0_L0_16x8) return sadLuma8x8(predL, partId*2) + sadLuma8x8(predL, partId*2+1);
 	if (mb_type == P_L0_L0_8x16) return sadLuma8x8(predL, partId) + sadLuma8x8(predL, partId+2);
 	if (mb_type == P_L0_16x16 || mb_type == P_Skip) return sadLuma8x8(predL, 0) + sadLuma8x8(predL, 1) + sadLuma8x8(predL, 2) + sadLuma8x8(predL, 3);
@@ -70,47 +70,90 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 	if (ExactPixels(predL) >= (int)(256.0*P_Skip_Treshold))
 		return;
 	
-	for (int curr_mbtype = 0; curr_mbtype < 5; curr_mbtype++)
+	for (int curr_mbtype = 0; curr_mbtype < 3; curr_mbtype++)
 	{
 		mb_type = curr_mbtype;
 		ClearMVD();
 		int currMin = 0;
 		for (int i = 0; i < NumMbPart(mb_type); i++)
 		{
-			int currStepSize = 16, currMbSadMin = INT_MAX;
-			int mvdx = 0, mvdy = 0;
-			while (currStepSize > 0)
-			{
-				int bx = 0, by = 0, bmin = INT_MAX;
-				mvd_l0[i][0][0] = mvdx;
-				mvd_l0[i][0][1] = mvdy;
-				DeriveMVs();
-				Decode(predL, predCr, predCb);
-				bmin = sadLuma(predL, i);
-				for (int tx = -1; tx < 2; tx++)
-					for (int ty = -1; ty < 2; ty++)
-					{
-						mvd_l0[i][0][0] = mvdx + tx*currStepSize;
-						mvd_l0[i][0][1] = mvdy + ty*currStepSize;
-						DeriveMVs();
-						Decode(predL, predCr, predCb);
-						int trenSad = sadLuma(predL, i);
-						if (trenSad < bmin) 
-						{
-							bmin = trenSad;
-							bx = tx; by = ty;
-						}
-					}
-				mvdx = mvdx + bx*currStepSize;
-				mvdy = mvdy + by*currStepSize;
+			//int currStepSize = 8, currMbSadMin = INT_MAX;
+			//int mvdx = 0, mvdy = 0;
 
-				if (bx == 0 && by == 0) 
-					currStepSize >>= 1;
-				currMbSadMin = bmin;
-			}
-			mvd_l0[i][0][0] = mvdx;
-			mvd_l0[i][0][1] = mvdy;
-			currMin += currMbSadMin;
+			int bx = 0, by = 0, bmin = INT_MAX;
+			mvd_l0[i][0][0] = 0;
+			mvd_l0[i][0][1] = 0;
+			DeriveMVs();
+			Decode(predL, predCr, predCb);
+			bmin = sadLuma(predL, i);
+			for (int tx = -4; tx <= 4; tx+=4)
+				for (int ty = -4; ty <= 4; ty+=4)
+				{
+					mvd_l0[i][0][0] = tx;
+					mvd_l0[i][0][1] = ty;
+					DeriveMVs();
+					Decode(predL, predCr, predCb);
+					int trenSad = sadLuma(predL, i);
+					if (trenSad < bmin) 
+					{
+						bmin = trenSad;
+						bx = tx; by = ty;
+					}
+				}
+			mvd_l0[i][0][0] = bx;
+			mvd_l0[i][0][1] = by;
+			for (int tx = 0; tx <= 2; tx+=2)
+				for (int ty = 0; ty <= 2; ty+=2)
+				{
+					mvd_l0[i][0][0] += tx;
+					mvd_l0[i][0][1] += ty;
+					DeriveMVs();
+					Decode(predL, predCr, predCb);
+					int trenSad = sadLuma(predL, i);
+					if (trenSad < bmin) 
+					{
+						bmin = trenSad;
+						bx += tx; by += ty;
+					}
+					mvd_l0[i][0][0] -= tx;
+					mvd_l0[i][0][1] -= ty;
+				}
+			currMin += bmin;
+			mvd_l0[i][0][0] = bx;
+			mvd_l0[i][0][1] = by;
+
+			//while (currStepSize > 0)
+			//{
+			//	int bx = 0, by = 0, bmin = INT_MAX;
+			//	mvd_l0[i][0][0] = mvdx;
+			//	mvd_l0[i][0][1] = mvdy;
+			//	DeriveMVs();
+			//	Decode(predL, predCr, predCb);
+			//	bmin = sadLuma(predL, i);
+			//	for (int tx = -1; tx < 2; tx++)
+			//		for (int ty = -1; ty < 2; ty++)
+			//		{
+			//			mvd_l0[i][0][0] = mvdx + tx*currStepSize;
+			//			mvd_l0[i][0][1] = mvdy + ty*currStepSize;
+			//			DeriveMVs();
+			//			Decode(predL, predCr, predCb);
+			//			int trenSad = sadLuma(predL, i);
+			//			if (trenSad < bmin) 
+			//			{
+			//				bmin = trenSad;
+			//				bx = tx; by = ty;
+			//			}
+			//		}
+			//	mvdx = mvdx + bx*currStepSize;
+			//	mvdy = mvdy + by*currStepSize;
+
+			//	if (bx == 0 && by == 0) 
+			//		currStepSize >>= 1;
+			//	currMbSadMin = bmin;
+			//}
+			//mvd_l0[i][0][0] = mvdx;
+			//mvd_l0[i][0][1] = mvdy;
+			//currMin += currMbSadMin;
 		}
 		if (currMin < minBlock)
 		{
