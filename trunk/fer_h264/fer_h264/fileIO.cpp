@@ -88,6 +88,41 @@ void writeToPPM()
 	free(pic);
 }
 
+// This (headerless) format is required by H264visa
+void writeToYUV()
+{
+	int i, j;
+
+	char *output;
+	output = new char[5000000];
+
+	unsigned int pos = 0;
+	for (i = 0; i < frame.Lheight; i++)
+	{
+		for (j = 0; j < frame.Lwidth; j++)
+		{
+			output[pos++] = frame.L[i][j];
+		}
+	}
+	for (i = 0; i < frame.Cheight; i++)
+	{
+		for (j = 0; j < frame.Cwidth; j++)
+		{
+			output[pos++] = frame.C[0][i][j];
+		}
+	}
+	for (i = 0; i < frame.Cheight; i++)
+	{
+		for (j = 0; j < frame.Cwidth; j++)
+		{
+			output[pos++] = frame.C[1][i][j];
+		}
+	}
+
+	fwrite(output, 1, pos, yuvoutput);
+	free(output);
+}
+
 void writeToY4M()
 {
 	//static unsigned long frameCount = 0;
@@ -101,7 +136,7 @@ void writeToY4M()
 	if (firstFrame)
 	{
 		// Write file header
-		pos = sprintf(output, "YUV4MPEG2 W%d H%d F24000:1001 Ip A1:1 C420 %c", frame.Lwidth, frame.Lheight, 0x0a);
+		pos = sprintf(output, "YUV4MPEG2 C420jpeg W%d H%d F24:1 Ip A1:1%c", frame.Lwidth, frame.Lheight, 0x0a);
 		firstFrame = false;
 	}
 

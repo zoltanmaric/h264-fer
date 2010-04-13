@@ -103,56 +103,12 @@ void writeOnes(int N)
 {
 	unsigned int data = (1 << N) - 1;
 	writeRawBits(N, data);
-	//unsigned int count=0;
-	//while(count<N)
-	//{
-	//	//8-byte fast forward 
-	//	if ((N-count)>7 && RBSP_write_current_bit==0)
-	//	{
-	//		RBSP_write_data[RBSP_write_current_byte]=0xFF;
-	//		count+=8;
-	//		RBSP_write_current_byte++;
-	//		continue;
-	//	}
-
-	//	//Classic bit by bit loading
-	//	RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1)+1;
-	//	RBSP_write_current_bit++;
-	//	if (RBSP_write_current_bit==8)
-	//	{
-	//		RBSP_write_current_bit=0;
-	//		RBSP_write_current_byte++;
-	//	}
-	//	count++;
-	//}
 }
 
 void writeZeros(int N)
 {
 	unsigned int data = 0;
 	writeRawBits(N, data);
-	//unsigned int count=0;
-	//while(count<N)
-	//{
-	//	//8-byte fast forward 
-	//	if ((N-count)>7 && RBSP_write_current_bit==0)
-	//	{
-	//		RBSP_write_data[RBSP_write_current_byte]=0;
-	//		count+=8;
-	//		RBSP_write_current_byte++;
-	//		continue;
-	//	}
-
-	//	//Classic bit by bit loading
-	//	RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1);
-	//	RBSP_write_current_bit++;
-	//	if (RBSP_write_current_bit==8)
-	//	{
-	//		RBSP_write_current_bit=0;
-	//		RBSP_write_current_byte++;
-	//	}
-	//	count++;
-	//}
 }
 
 void dumpWriteBuffer()
@@ -177,7 +133,7 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 		{
 			//offset = 8 - (count%8) - 1;
 			// TEST:
-			offset = (8 - (N % 8)) % 8;
+			offset = (8 - (N & 7)) & 7;
 			unsigned int data = 0;
 			while (count < N)
 			{
@@ -200,10 +156,10 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 		}
 
 		//8-byte fast forward 
-		if ((N-count)>7 && RBSP_write_current_bit==0 && (N-count)%8 == 0)
+		if ((N-count)>7 && RBSP_write_current_bit==0 && (N-count)&7 == 0)
 		{
 			//int shift = offset + 1;
-			RBSP_write_data[RBSP_write_current_byte]=data_to_write[offset/8];
+			RBSP_write_data[RBSP_write_current_byte]=data_to_write[offset>>3];
 			count+=8;
 			RBSP_write_current_byte++;
 			continue;

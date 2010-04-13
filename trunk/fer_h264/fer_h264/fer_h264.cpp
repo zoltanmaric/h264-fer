@@ -48,7 +48,6 @@ void encode()
 	NALunit nu;
 	nu.rbsp_byte = new unsigned char[500000];
 
-
 	nu.forbidden_zero_bit = 0;
 
 	loadY4MHeader();
@@ -87,9 +86,8 @@ void encode()
 
 		writeNAL(nu);
 
+		writeToYUV();
 		if (frameCount == 211) break;
-
-		//writeToY4M();
 	}
 
 	fclose(stream);
@@ -99,8 +97,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	decode();
-	//encode();
+	//decode();
+	encode();
 
 	return 0;
 }
