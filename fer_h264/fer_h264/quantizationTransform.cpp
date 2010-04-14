@@ -131,6 +131,22 @@ void forwardTransform4x4(int input[4][4], int output[4][4])
 
 }
 
+void forwardTransformDCChromaFast (int c[2][2], int f[2][2])
+{
+	int d[2][2];
+
+	d[0][0] = c[0][0] + c[1][0];
+	d[0][1] = c[0][1] + c[1][1];
+	d[1][0] = c[0][0] - c[1][0];
+	d[1][1] = c[0][1] - c[1][1];
+
+	f[0][0] = (d[0][0] + d[0][1]) >> 2;
+	f[0][1] = (d[0][0] - d[0][1]) >> 2;
+	f[1][0] = (d[1][0] + d[1][1]) >> 2;
+	f[1][1] = (d[1][0] - d[1][1]) >> 2;
+	
+}
+
 
 void forwardTransformDCLumaIntra(int input[4][4], int output[4][4])
 {
@@ -316,7 +332,6 @@ void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra)
 	int d[4][4];
 
 	forwardTransform4x4(c, d);
-	//inverseTransform4x4(d, c);
 	quantisationResidualBlock(d, r, qP, Intra);
 
 }
@@ -334,7 +349,8 @@ void forwardDCChroma (int qP, int dcC[2][2], int c[2][2], bool Intra)
 {
 	int f[2][2];
 
-	transformDCChromaFast(dcC, f);
+	forwardTransformDCChromaFast(dcC, f);
+	//transformDCChromaFast(f, dcC);
 	quantisationChromaDC(f, qP, c, Intra);
 }
 
