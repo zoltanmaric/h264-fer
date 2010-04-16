@@ -42,34 +42,34 @@ void forwardTransform4x4(int input[4][4], int output[4][4])
 
 	for (j = 0; j < 4; j++)
 	{
-		g[0][j] = (h[0][j] + h[3][j]) >> 1;
-		g[1][j] = (h[1][j] + h[2][j]) >> 1;
-		g[2][j] = (h[1][j] - h[2][j]) >> 1;
-		g[3][j] = (h[0][j] - h[3][j]) >> 1;
+		g[0][j] = h[0][j] + h[3][j];
+		g[1][j] = h[1][j] + h[2][j];
+		g[2][j] = h[1][j] - h[2][j];
+		g[3][j] = h[0][j] - h[3][j];
 	}
 
 	for (j = 0; j < 4; j++)
 	{
-		f[0][j] = (g[0][j] + g[1][j]) >> 1;
-		f[1][j] = (g[2][j] + (g[3][j] << 1)) >> 1;
-		f[2][j] = (g[0][j] - g[1][j]) >> 1;
-		f[3][j] = (-(g[2][j] << 1) + g[3][j]) >> 1;
+		f[0][j] = g[0][j] + g[1][j];
+		f[1][j] = g[2][j] + (g[3][j] << 1);
+		f[2][j] = g[0][j] - g[1][j];
+		f[3][j] = -(g[2][j] << 1) + g[3][j];
 	}
 
 	for (i = 0; i < 4; i++)
 	{
-		e[i][0] = (f[i][0] + f[i][3]) >> 1;
-		e[i][1] = (f[i][1] + f[i][2]) >> 1;
-		e[i][2] = (f[i][1] - f[i][2]) >> 1;
-		e[i][3] = (f[i][0] - f[i][3]) >> 1;
+		e[i][0] = f[i][0] + f[i][3];
+		e[i][1] = f[i][1] + f[i][2];
+		e[i][2] = f[i][1] - f[i][2];
+		e[i][3] = f[i][0] - f[i][3];
 	}
 
 	for (i = 0; i < 4; i++)
 	{
-		output[i][0] = (e[i][0] + e[i][1]) >> 1;
-		output[i][1] = (e[i][2] + (e[i][3] << 1)) >> 1;
-		output[i][2] = (e[i][0] - e[i][1]) >> 1;
-		output[i][3] = (-(e[i][2] << 1) + e[i][3]) >> 1;
+		output[i][0] = (e[i][0] + e[i][1]) >> 4;
+		output[i][1] = (e[i][2] + (e[i][3] << 1)) >> 4;
+		output[i][2] = (e[i][0] - e[i][1]) >> 4;
+		output[i][3] = (-(e[i][2] << 1) + e[i][3]) >> 4;
 	}*/
 
 	int i, j, pom_0, pom_1, pom_2, pom_3;
@@ -232,16 +232,16 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra)
 		f = (1 << qbits) / 6;
 	}
 
-	/*qbits = 4 - qP/6;
-	int adjust = 1 << (3 - qP/6);
+	//qbits = 4 - qP/6;
+	//int adjust = 1 << (3 - qP/6);
 
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			c[i][j] = ((d[i][j] << qbits) - adjust) / LevelScale[qPMod][i][j];
-		}
-	}*/
+	//for (int i = 0; i < 4; i++)
+	//{
+	//	for (int j = 0; j < 4; j++)
+	//	{
+	//		c[i][j] = ((d[i][j] << qbits) - adjust) / LevelScale[qPMod][i][j];
+	//	}
+	//}
 
 
 	for (int i = 0; i < 4; i++)
@@ -428,21 +428,21 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			{
 				for (int j = 0; j < 4; j++)
 				{
-					reconstructedLuma[y0 + i][x0 + i] = reconstructedBlock[i][j];
+					reconstructedLuma[y0 + i][x0 + j] = reconstructedBlock[i][j];
 				}
 			}
 		}
 		else
 		{
 			transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
-			inverseResidual(8, qP, rLuma, reconstructedBlock, false);
-			for (int i = 0; i < 4; i++)
-			{
-				for (int j = 0; j < 4; j++)
-				{
-					frame.L[yP + y0 + i][xP + x0 + j] = reconstructedBlock[i][j] + predL[y0 + i][x0 + j];
-				}
-			}
+			//inverseResidual(8, qP, rLuma, reconstructedBlock, false);
+			//for (int i = 0; i < 4; i++)
+			//{
+			//	for (int j = 0; j < 4; j++)
+			//	{
+			//		frame.L[yP + y0 + i][xP + x0 + j] = reconstructedBlock[i][j] + predL[y0 + i][x0 + j];
+			//	}
+			//}
 		}
 	}
 
@@ -554,7 +554,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			for (int j = 0; j < 4; j++)
 			{				
 				frame.C[0][yPC + y0C + i][xPC + x0C + j] = reconstructedChroma[0][y0C + i][x0C + j] + predCb[y0C + i][x0C + j];
-				frame.C[1][yPC + y0C + i][xPC + x0C + j] = reconstructedChroma[0][y0C + i][x0C + j] + predCr[y0C + i][x0C + j];				
+				frame.C[1][yPC + y0C + i][xPC + x0C + j] = reconstructedChroma[1][y0C + i][x0C + j] + predCr[y0C + i][x0C + j];				
 			}
 		}
 	}

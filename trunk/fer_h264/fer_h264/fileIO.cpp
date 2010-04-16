@@ -60,7 +60,7 @@ void toRGB()
 	}
 }
 
-void writeToPPM()
+void writeToPPM(char *namePrefix)
 {
 	toRGB();
 
@@ -76,8 +76,8 @@ void writeToPPM()
 	}
 
 	FILE *f;
-	char filename[15];
-	sprintf(filename, "frame%d%d%d%d.ppm", (frameCount%10000)/1000, (frameCount%1000)/100, (frameCount%100)/10, frameCount%10);
+	char filename[50];
+	sprintf(filename, "%s%d%d%d%d.ppm", namePrefix, (frameCount%10000)/1000, (frameCount%1000)/100, (frameCount%100)/10, frameCount%10);
 	f = fopen(filename,"wb");
 	fwrite(pic, 1, pos, f);
 

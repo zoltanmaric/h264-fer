@@ -137,7 +137,7 @@ void RBSP_decode(NALunit nal_unit)
 					printf("Slice type: %d\n", shd.slice_type);
 					printf("Frame #%d, CurrMbAddr = %d\n", frameCount, CurrMbAddr);
 					system("pause");
-					writeToPPM();		// dump the current frame
+					writeToPPM("errorFrame");		// dump the current frame
 					exit(1);
 				}
 
@@ -211,7 +211,7 @@ void RBSP_decode(NALunit nal_unit)
 							printf("Fatal error: Unexpected intra_chroma_pred_mode value (%d)\n", intra_chroma_pred_mode);
 							printf("Frame #%d, CurrMbAddr = %d\n", frameCount, CurrMbAddr);
 							system("pause");
-							writeToPPM();		// dump the current frame
+							writeToPPM("errorFrame");		// dump the current frame
 							exit(1);
 						}
 					}
@@ -254,7 +254,7 @@ void RBSP_decode(NALunit nal_unit)
 						printf("Fatal error: Unexpected coded_block_pattern value (%d)\n", coded_block_pattern);
 						printf("Frame #%d, CurrMbAddr = %d\n", frameCount, CurrMbAddr);
 						system("pause");
-						writeToPPM();		// dump the current frame
+						writeToPPM("errorFrame");		// dump the current frame
 						exit(1);
 					}
 
@@ -307,7 +307,7 @@ void RBSP_decode(NALunit nal_unit)
 						printf("Fatal error: Unexpected mb_qp_delta value (%d)\n", mb_qp_delta);
 						printf("Frame #%d, CurrMbAddr = %d\n", frameCount, CurrMbAddr);
 						system("pause");
-						writeToPPM();		// dump the current frame
+						writeToPPM("errorFrame");		// dump the current frame
 						exit(1);
 					}
 
@@ -367,7 +367,7 @@ void RBSP_decode(NALunit nal_unit)
 		// Reference frame list modification
 		modificationProcess();
 		
-		writeToPPM();
+		writeToPPM("frame");
 		//writeToY4M();
 	}
 }

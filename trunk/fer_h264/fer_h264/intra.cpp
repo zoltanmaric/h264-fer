@@ -1,5 +1,7 @@
 #include "intra.h"
 #include "inttransform.h"
+#include "scaleTransform.h"
+#include "quantizationTransform.h"
 #include "residual.h"
 #include "h264_math.h"
 #include "h264_globals.h"
@@ -1120,6 +1122,9 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	// Store the chosen prediction result in predL[16][16]
 	if (Intra16x16PredMode == -1)
 	{
+		int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
+		int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+
 		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 		{
 			int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;				
@@ -1128,11 +1133,23 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 			int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
 
+			int diffL4x4[4][4], rLuma[4][4], reconstructedBlock[4][4];
 			for (int y = 0; y < 4; y++)
 			{
 				for (int x = 0; x < 4; x++)
 				{
 					predL[y0+y][x0+x] = pred4x4L[y][x];
+					diffL4x4[y][x] = frame.L[yP + y0 + y][xP + x0 + x] - pred4x4L[y][x];
+				}
+			}
+
+			forwardResidual(QPy, diffL4x4, rLuma, true);
+			inverseResidual(8, QPy, rLuma, reconstructedBlock, false);
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					frame.L[yP + y0 + i][xP + x0 + j] = reconstructedBlock[i][j] + pred4x4L[i][j];
 				}
 			}
 		}
