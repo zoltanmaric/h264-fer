@@ -13,20 +13,6 @@ int qPiToQPc[52] = { 0,  1,  2,  3,  4,  5,  6,  7,
 					36, 36, 37, 37, 37, 38, 38, 38,
 					39, 39, 39, 39};
 
-// (Figure 8-9a)
-//int ZigZagReordering[16][2] = 
-//{
-//	{0,0}, {0,1}, {1,0}, {2,0}, {1,1}, {0,2}, {0,3}, {1,2},
-//	{2,1}, {3,0}, {3,1}, {2,2}, {1,3}, {2,3}, {3,2}, {3,3}
-//};
-
-// Haramustek
-// (8.5.12.1 & 8.5.12.2)
-//void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool luma)
-//{
-//
-//}
-
 // (8.5.12)
 // luma: true if process invoked for luma residuals
 // QPy_prev: the luma quantization parameter for the
@@ -70,22 +56,6 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool intra16x16OrChr
 	// TransformBypassModeFlag == 0 in baseline
 
 	inverseResidual(bitDepth, qP, c, r, intra16x16OrChroma);
-
-	// MEGATEST:
-	//if (intra16x16OrChroma == false)
-	//{
-	//	for (int i = 0; i < 4; i++)
-	//	{
-	//		for (int j = i + 1; j < 4; j++)
-	//		{
-	//			int temp = r[i][j];
-	//			r[i][j] = r[j][i];
-	//			r[j][i] = temp;
-	//		}
-	//	}
-	//}
-
-	int test = 0;
 }
 
 // (8.5.14) partial
@@ -288,7 +258,7 @@ void transformDecodingChroma(int ChromaDCLevel[4], int ChromaACLevel[4][16], int
 	int c[2][2];
 	for (int i = 0; i < 4; i++)
 	{
-		c[i/2][i%2] = ChromaDCLevel[i];
+		c[i>>1][i&1] = ChromaDCLevel[i];
 	}
 
 	int QpBdOffsetC = 0;	// Norm: = 6 * bit_depth_chroma_minus8; bit_depth_chroma_minus_8 == 0 in baseline

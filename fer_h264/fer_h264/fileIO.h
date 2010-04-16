@@ -4,7 +4,7 @@
 extern FILE *yuvoutput;
 extern FILE *yuvinput;
 
-void writeToPPM();
+void writeToPPM(char *namePrefix);
 void writeToY4M();
 void writeToYUV();
 

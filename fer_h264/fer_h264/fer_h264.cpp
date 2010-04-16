@@ -70,11 +70,12 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount != 211) continue;
+		if (frameCount < 211) continue;
 
 		printf("Frame #%d\n", frameCount);
+		writeToYUV();
 
-		if(frameCount % 30 == 1)
+		if(frameCount % 10 == 1)
 		{
 			nu.nal_unit_type = NAL_UNIT_TYPE_IDR;
 		}
@@ -85,8 +86,8 @@ void encode()
 		RBSP_encode(nu);
 
 		writeNAL(nu);
+		writeToPPM("recontruct");
 
-		writeToYUV();
 		if (frameCount == 211) break;
 	}
 

@@ -1,6 +1,6 @@
 #pragma once
 
-void forwardResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool luma, bool Intra);
+void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra);
 
 void forwardDCLumaIntra(int qP, int dcY[4][4], int c[4][4]);
 
