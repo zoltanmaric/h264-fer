@@ -367,7 +367,7 @@ void scanChroma(int rChroma[4][4], int list[16])
 	{
 		int x = ZigZagReordering[i][0];
 		int y = ZigZagReordering[i][1];
-		list[i-1] = rChroma[y][x];
+		list[i-1] = rChroma[x][y];
 	}
 }
 
