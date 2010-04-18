@@ -39,6 +39,7 @@ int LevelScale[6][4][4] =
 	{{288,368,288,368},{368,464,368,464},{288,368,288,368},{368,464,368,464}}
 };
 
+// {y,x} ({row,column})
 int ZigZagReordering[16][2] = 
 {
 	{0,0}, {0,1}, {1,0}, {2,0}, {1,1}, {0,2}, {0,3}, {1,2},
@@ -448,9 +449,9 @@ void transformInverseScan(int list[16], int c[4][4])
 {
 	for (int i = 0; i < 16; i++)
 	{
-		int x = ZigZagReordering[i][0];
-		int y = ZigZagReordering[i][1];
-		c[x][y] = list[i];
+		int y = ZigZagReordering[i][0];
+		int x = ZigZagReordering[i][1];
+		c[y][x] = list[i];
 	}
 }
 // --------------------------------------------------//

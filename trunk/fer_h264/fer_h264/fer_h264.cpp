@@ -86,7 +86,7 @@ void encode()
 		RBSP_encode(nu);
 
 		writeNAL(nu);
-		writeToPPM("recontruct");
+		writeToPPM("reconstruct");
 
 		if (frameCount == 211) break;
 	}
