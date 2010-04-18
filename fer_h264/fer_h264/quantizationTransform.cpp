@@ -346,17 +346,17 @@ void transformScan(int c[4][4], int list[16], bool Intra16x16AC)
 	{
 		for (int i = 1; i < 16; i++)
 		{
-			int x = ZigZagReordering[i][0];
-			int y = ZigZagReordering[i][1];
-			list[i-1] = c[x][y];
+			int y = ZigZagReordering[i][0];
+			int x = ZigZagReordering[i][1];
+			list[i-1] = c[y][x];
 		}		
 	}
 	else {
 		for (int i = 0; i < 16; i++)
 		{
-			int x = ZigZagReordering[i][0];
-			int y = ZigZagReordering[i][1];
-			list[i] = c[x][y];
+			int y = ZigZagReordering[i][0];
+			int x = ZigZagReordering[i][1];
+			list[i] = c[y][x];
 		}
 	}
 }
@@ -365,9 +365,9 @@ void scanChroma(int rChroma[4][4], int list[16])
 {
 	for (int i = 1; i < 16; i++)
 	{
-		int x = ZigZagReordering[i][0];
-		int y = ZigZagReordering[i][1];
-		list[i-1] = rChroma[x][y];
+		int y = ZigZagReordering[i][0];
+		int x = ZigZagReordering[i][1];
+		list[i-1] = rChroma[y][x];
 	}
 }
 
@@ -423,14 +423,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			DCLuma[y0/4][x0/4] = rLuma[0][0];			
 			transformScan(rLuma, Intra16x16ACLevel[luma4x4BlkIdx], true);
 
-			inverseResidual(8, qP, rLuma, reconstructedBlock, true);
-			for (int i = 0; i < 4; i++)
-			{
-				for (int j = 0; j < 4; j++)
-				{
-					reconstructedLuma[y0 + i][x0 + j] = reconstructedBlock[i][j];
-				}
-			}
+			
 		}
 		else
 		{
@@ -455,10 +448,21 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		
 		InverseDCLumaIntra(8, qP, rDCLuma, reconstructedDCY);
 
-		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+		transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy);
+
+/*		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 		{
 			int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 			int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
+
+			inverseResidual(8, qP, rLuma, reconstructedBlock, true);
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					reconstructedLuma[y0 + i][x0 + j] = reconstructedBlock[i][j];
+				}
+			}
 
 			reconstructedLuma[y0][x0] = reconstructedDCY[y0/4][x0/4];
 
@@ -469,7 +473,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 					frame.L[yP + y0 + i][xP + x0 + j] = reconstructedLuma[y0 + i][x0 + j] + predL[y0 + i][x0 + j];
 				}
 			}
-		}		
+		}	*/	
 	}
 
 	//Chroma quantization and transform process
@@ -506,19 +510,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		}
 
 		forwardResidual(qP, diffCb4x4, rCb, true);
-		forwardResidual(qP, diffCr4x4, rCr, true);
-
-		inverseResidual(8, qP, rCb,reconstructedChromaBlock[0], true);
-		inverseResidual(8, qP, rCr,reconstructedChromaBlock[1], true);
-
-		for (int i = 0; i < 4; i++)
-		{
-			for (int j = 0; j < 4; j++)
-			{				
-				reconstructedChroma[0][y0C + i][x0C + j] = reconstructedChromaBlock[0][i][j];
-				reconstructedChroma[1][y0C + i][x0C + j] = reconstructedChromaBlock[1][i][j];
-			}
-		}
+		forwardResidual(qP, diffCr4x4, rCr, true);		
 
 		DCCb[y0C/4][x0C/4] = rCb[0][0];
 		DCCr[y0C/4][x0C/4] = rCr[0][0];
@@ -538,13 +530,33 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		forwardDCChroma(qP, DCCr, rDCCr, false);
 	}
 
-	InverseDCChroma(8, qP, rDCCb, reconstructedDCChroma[0]);
+	scanDCChroma(rDCCb, ChromaDCLevel[0]);
+	scanDCChroma(rDCCr, ChromaDCLevel[1]);
+
+	// Reconstruction process:
+
+	transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, QPy, true);
+	transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, QPy, false);
+
+	/*InverseDCChroma(8, qP, rDCCb, reconstructedDCChroma[0]);
 	InverseDCChroma(8, qP, rDCCb, reconstructedDCChroma[1]);
 
 	for (int chroma4x4BlkIdx = 0; chroma4x4BlkIdx < 4; chroma4x4BlkIdx++)
 	{
 		x0C = (chroma4x4BlkIdx % 2) * 4;
 		y0C = (chroma4x4BlkIdx / 2) * 4;
+
+		inverseResidual(8, qP, rCb,reconstructedChromaBlock[0], true);
+		inverseResidual(8, qP, rCr,reconstructedChromaBlock[1], true);
+
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{				
+				reconstructedChroma[0][y0C + i][x0C + j] = reconstructedChromaBlock[0][i][j];
+				reconstructedChroma[1][y0C + i][x0C + j] = reconstructedChromaBlock[1][i][j];
+			}
+		}
 
 		reconstructedChroma[0][y0C][x0C] = reconstructedDCChroma[0][y0C/4][x0C/4];
 		reconstructedChroma[1][y0C][x0C] = reconstructedDCChroma[1][y0C/4][x0C/4];
@@ -557,8 +569,5 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 				frame.C[1][yPC + y0C + i][xPC + x0C + j] = reconstructedChroma[1][y0C + i][x0C + j] + predCr[y0C + i][x0C + j];				
 			}
 		}
-	}
-
-	scanDCChroma(rDCCb, ChromaDCLevel[0]);
-	scanDCChroma(rDCCr, ChromaDCLevel[1]);
+	}*/
 }
