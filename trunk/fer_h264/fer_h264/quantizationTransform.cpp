@@ -28,7 +28,7 @@ int Sign (int number)
 
 void forwardTransform4x4(int input[4][4], int output[4][4])
 {
-	/*int i, j;
+	int i, j;
 	int e[4][4], f[4][4], g[4][4], h[4][4];
 
 	for (i = 0; i < 4; i++)
@@ -70,64 +70,64 @@ void forwardTransform4x4(int input[4][4], int output[4][4])
 		output[i][1] = (e[i][2] + (e[i][3] << 1)) >> 4;
 		output[i][2] = (e[i][0] - e[i][1]) >> 4;
 		output[i][3] = (-(e[i][2] << 1) + e[i][3]) >> 4;
-	}*/
+	}
 
-	int i, j, pom_0, pom_1, pom_2, pom_3;
-	int output_temp[4][4];	
-	
-	//multiply A*X
-	for (i = 0; i < 4; i++)
-	{
-		for (j = 0; j < 4; j++)
-		{
-			switch (i)
-			{
-				case 0: 
-					output_temp[i][j] = input[0][j] + input[1][j] + input[2][j] + input[3][j];					
-					break;
-				case 1: 
-					pom_0 = input[0][j] << 1;
-					pom_3 = input[3][j] << 1;
-					output_temp[i][j] = pom_0 + input[1][j] - input[2][j] - pom_3;
-					break;
-				case 2:
-					output_temp[i][j] = input[0][j] - input[1][j] - input[2][j] + input[3][j];
-					break;
-				case 3:
-					pom_1 = input[1][j] << 1;
-					pom_2 = input[2][j] << 1;
-					output_temp[i][j] = input[0][j] - pom_1 + pom_2 - input[3][j];
-					break;
-			}
-		}
-	}
-	
-	//multiply (A*X)*At
-	for (i = 0; i < 4; i++)
-	{
-		for (j = 0; j < 4; j++)
-		{
-			switch (j)
-			{
-				case 0: 
-					output[i][j] = output_temp[i][0] + output_temp[i][1] + output_temp[i][2] + output_temp[i][3];
-					break;
-				case 1: 
-					pom_0 = output_temp[i][0] << 1;
-					pom_3 = output_temp[i][3] << 1;
-					output[i][j] = pom_0 + output_temp[i][1] - output_temp[i][2] - pom_3;
-					break;
-				case 2:
-					output[i][j] = output_temp[i][0] - output_temp[i][1] - output_temp[i][2] + output_temp[i][3];
-					break;
-				case 3:
-					pom_1 = output_temp[i][1] << 1;
-					pom_2 = output_temp[i][2] << 1;
-					output[i][j] = output_temp[i][0] - pom_1 + pom_2 - output_temp[i][3];
-					break;
-			}
-		}
-	}
+	//int i, j, pom_0, pom_1, pom_2, pom_3;
+	//int output_temp[4][4];	
+	//
+	////multiply A*X
+	//for (i = 0; i < 4; i++)
+	//{
+	//	for (j = 0; j < 4; j++)
+	//	{
+	//		switch (i)
+	//		{
+	//			case 0: 
+	//				output_temp[i][j] = input[0][j] + input[1][j] + input[2][j] + input[3][j];					
+	//				break;
+	//			case 1: 
+	//				pom_0 = input[0][j] << 1;
+	//				pom_3 = input[3][j] << 1;
+	//				output_temp[i][j] = pom_0 + input[1][j] - input[2][j] - pom_3;
+	//				break;
+	//			case 2:
+	//				output_temp[i][j] = input[0][j] - input[1][j] - input[2][j] + input[3][j];
+	//				break;
+	//			case 3:
+	//				pom_1 = input[1][j] << 1;
+	//				pom_2 = input[2][j] << 1;
+	//				output_temp[i][j] = input[0][j] - pom_1 + pom_2 - input[3][j];
+	//				break;
+	//		}
+	//	}
+	//}
+	//
+	////multiply (A*X)*At
+	//for (i = 0; i < 4; i++)
+	//{
+	//	for (j = 0; j < 4; j++)
+	//	{
+	//		switch (j)
+	//		{
+	//			case 0: 
+	//				output[i][j] = output_temp[i][0] + output_temp[i][1] + output_temp[i][2] + output_temp[i][3];
+	//				break;
+	//			case 1: 
+	//				pom_0 = output_temp[i][0] << 1;
+	//				pom_3 = output_temp[i][3] << 1;
+	//				output[i][j] = pom_0 + output_temp[i][1] - output_temp[i][2] - pom_3;
+	//				break;
+	//			case 2:
+	//				output[i][j] = output_temp[i][0] - output_temp[i][1] - output_temp[i][2] + output_temp[i][3];
+	//				break;
+	//			case 3:
+	//				pom_1 = output_temp[i][1] << 1;
+	//				pom_2 = output_temp[i][2] << 1;
+	//				output[i][j] = output_temp[i][0] - pom_1 + pom_2 - output_temp[i][3];
+	//				break;
+	//		}
+	//	}
+	//}
 
 }
 
@@ -217,7 +217,7 @@ void transformDCChromaF (int c[2][2], int f[2][2])
 }
 
 
-void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra)
+void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra, bool Intra16x16OrChroma)
 {
 	int qbits = 15 + qP/6;
 	int qPMod = qP % 6;
@@ -232,19 +232,18 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra)
 		f = (1 << qbits) / 6;
 	}
 
-	//qbits = 4 - qP/6;
-	//int adjust = 1 << (3 - qP/6);
-
-	//for (int i = 0; i < 4; i++)
-	//{
-	//	for (int j = 0; j < 4; j++)
-	//	{
-	//		c[i][j] = ((d[i][j] << qbits) - adjust) / LevelScale[qPMod][i][j];
-	//	}
-	//}
-
+	qbits = 4 - qP/6;
+	int adjust = 1 << (3 - qP/6);
 
 	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			c[i][j] = ((d[i][j] << qbits) - adjust) / LevelScale[qPMod][i][j];
+		}
+	}
+	
+	/*for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
 		{
@@ -253,6 +252,12 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra)
 			c[i][j] = (d[i][j] * MF[qPMod][i][j] + f) >> qbits;
 			if (sign) c[i][j] = sign * c[i][j];
 		}
+	}*/
+
+	if (Intra16x16OrChroma == true)
+	{
+		// Do not quantize DC.
+		c[0][0] = d[0][0];
 	}
 }
 
@@ -314,12 +319,12 @@ void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
 	}
 }
 
-void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra)
+void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra, bool Intra16x16OrChroma)
 {
 	int d[4][4];
 
 	forwardTransform4x4(c, d);
-	quantisationResidualBlock(d, r, qP, Intra);
+	quantisationResidualBlock(d, r, qP, Intra, Intra16x16OrChroma);
 
 }
 
@@ -416,10 +421,11 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			}
 		}
 
-		forwardResidual(qP, diffL4x4, rLuma, true);		
+			
 
 		if (MbPartPredMode(mb_type , 0) == Intra_16x16)
 		{
+			forwardResidual(qP, diffL4x4, rLuma, true, true);	
 			DCLuma[y0/4][x0/4] = rLuma[0][0];			
 			transformScan(rLuma, Intra16x16ACLevel[luma4x4BlkIdx], true);
 
@@ -427,6 +433,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		}
 		else
 		{
+			forwardResidual(qP, diffL4x4, rLuma, true, false);	
 			transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
 			//inverseResidual(8, qP, rLuma, reconstructedBlock, false);
 			//for (int i = 0; i < 4; i++)
@@ -445,12 +452,12 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		transformScan(rDCLuma, Intra16x16DCLevel, false);
 
 		//picture reconstruction
-		
-		InverseDCLumaIntra(8, qP, rDCLuma, reconstructedDCY);
 
 		transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy);
+		
+/*		InverseDCLumaIntra(8, qP, rDCLuma, reconstructedDCY);
 
-/*		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 		{
 			int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 			int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
@@ -505,12 +512,15 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			for (int j = 0; j < 4; j++)
 			{				
 				diffCb4x4[i][j] = frame.C[0][yPC + y0C + i][xPC + x0C + j] - predCb[y0C + i][x0C + j];
-				diffCr4x4[i][j] = frame.C[1][yPC + y0C + i][xPC + x0C + j] - predCr[y0C + i][x0C + j];				
+				diffCr4x4[i][j] = frame.C[1][yPC + y0C + i][xPC + x0C + j] - predCr[y0C + i][x0C + j];		
+
+				//diffCb4x4[i][j] = 19;
+				//diffCr4x4[i][j] = 19;
 			}
 		}
 
-		forwardResidual(qP, diffCb4x4, rCb, true);
-		forwardResidual(qP, diffCr4x4, rCr, true);		
+		forwardResidual(qP, diffCb4x4, rCb, true, true);
+		forwardResidual(qP, diffCr4x4, rCr, true, true);		
 
 		DCCb[y0C/4][x0C/4] = rCb[0][0];
 		DCCr[y0C/4][x0C/4] = rCr[0][0];

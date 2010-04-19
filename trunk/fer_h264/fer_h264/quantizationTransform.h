@@ -1,6 +1,6 @@
 #pragma once
 
-void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra);
+void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra, bool Intra16x16OrChroma);
 
 void forwardDCLumaIntra(int qP, int dcY[4][4], int c[4][4]);
 
