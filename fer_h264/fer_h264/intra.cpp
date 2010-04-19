@@ -1143,7 +1143,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 				}
 			}
 
-			forwardResidual(QPy, diffL4x4, rLuma, true);
+			forwardResidual(QPy, diffL4x4, rLuma, true, false);
 			inverseResidual(8, QPy, rLuma, reconstructedBlock, false);
 			for (int i = 0; i < 4; i++)
 			{

@@ -11,7 +11,7 @@
 
 void decode()
 {
-	stream=fopen("big_buck_bunny.264","rb");
+	stream=fopen("bourne.264","rb");
 	yuvoutput = fopen("Bourne.yuv","wb");
 
 	generate_residual_level_tables();
@@ -98,8 +98,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	decode();
-	//encode();
+	//decode();
+	encode();
 
 	return 0;
 }
