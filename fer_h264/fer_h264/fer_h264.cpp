@@ -11,7 +11,7 @@
 
 void decode()
 {
-	stream=fopen("bourne.264","rb");
+	stream=fopen("big_buck_bunny.264","rb");
 	yuvoutput = fopen("Bourne.yuv","wb");
 
 	generate_residual_level_tables();
@@ -70,7 +70,7 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 211) continue;
+		if (frameCount < 311) continue;
 
 		printf("Frame #%d\n", frameCount);
 		writeToYUV();
@@ -88,7 +88,7 @@ void encode()
 		writeNAL(nu);
 		writeToPPM("reconstruct");
 
-		if (frameCount == 211) break;
+		if (frameCount == 321) break;
 	}
 
 	fclose(stream);

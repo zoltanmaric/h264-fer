@@ -1,6 +1,7 @@
 #pragma once
 
 void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra, bool Intra16x16OrChroma);
+void transformScan(int c[4][4], int list[16], bool Intra16x16AC);
 
 void forwardDCLumaIntra(int qP, int dcY[4][4], int c[4][4]);
 

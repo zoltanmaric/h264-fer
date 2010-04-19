@@ -82,10 +82,10 @@ void RBSP_decode(NALunit nal_unit)
 		QPy = shd.SliceQPy;
 		while (moreDataFlag && CurrMbAddr<MbCount)
 		{
-			for (int i = 0; i < 4; i++)
+			/*for (int i = 0; i < 4; i++)
 				ChromaDCLevel[0][i] = ChromaDCLevel[1][i] = 0;
 			for (int i = 0; i < 16; i++)
-				LumaDCLevel[i] = 0;
+				LumaDCLevel[i] = 0;*/
 			if ((shd.slice_type%5)!=I_SLICE && (shd.slice_type%5)!=SI_SLICE)
 			{
 
@@ -367,8 +367,8 @@ void RBSP_decode(NALunit nal_unit)
 		// Reference frame list modification
 		modificationProcess();
 		
-		writeToPPM("frame");
-		//writeToY4M();
+		//writeToPPM("frame");
+		writeToY4M();
 	}
 }
 
@@ -496,7 +496,7 @@ void RBSP_encode(NALunit &nal_unit)
 		{
 			shd.slice_type = I_SLICE;
 			shd.frame_num = 0;
-			shd.idr_pic_id = 0;		// There will be no 2 consecutive idr pics
+			shd.idr_pic_id = 0;		// There will be no 2 consecutive idr frames
 		}
 		else
 		{
@@ -636,6 +636,10 @@ void RBSP_encode(NALunit &nal_unit)
 				// Test: Assume nC = 0..2 and TotalCoef and TrailingOnes = 0
 				// writeFlag(1);	// coeff_token = 1
 				// Norm: end macroblock_layer()
+			}
+			else
+			{
+				clear_residual_structures();
 			}
 
 			
