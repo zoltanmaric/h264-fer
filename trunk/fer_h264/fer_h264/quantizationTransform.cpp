@@ -28,6 +28,8 @@ int Sign (int number)
 
 void forwardTransform4x4(int input[4][4], int output[4][4])
 {
+	// Y = C'*D'*X*B'*A'
+
 	int i, j;
 	int e[4][4], f[4][4], g[4][4], h[4][4];
 
@@ -35,41 +37,27 @@ void forwardTransform4x4(int input[4][4], int output[4][4])
 	{
 		for (j = 0; j < 4; j++)
 		{
-			h[i][j] = (input[i][j] << 6) - 32;			
+			// Shifted left by 5 for increased precision.
+			h[i][j] = ((input[i][j] << 6) - 32) << 5;
 		}
 	}
 
-
+	// (C'*D')*X
 	for (j = 0; j < 4; j++)
 	{
-		g[0][j] = h[0][j] + h[3][j];
-		g[1][j] = h[1][j] + h[2][j];
-		g[2][j] = h[1][j] - h[2][j];
-		g[3][j] = h[0][j] - h[3][j];
+		f[0][j] = (h[0][j]>>2) + (h[1][j]>>2) + (h[2][j]>>2) + (h[3][j]>>2);
+		f[1][j] =(h[0][j]<<1)/5 + h[1][j] / 5 - h[2][j] / 5 - (h[3][j]<<1)/5;
+		f[2][j] = (h[0][j]>>2) - (h[1][j]>>2) - (h[2][j]>>2) + (h[3][j]>>2);
+		f[3][j] = h[0][j] / 5 - (h[1][j]<<1)/5 + (h[2][j]<<1)/5 - h[3][j] / 5;
 	}
 
-	for (j = 0; j < 4; j++)
+	// (C'*D'*X)*(B'*A')
+	for (int i = 0; i < 4; i++)
 	{
-		f[0][j] = g[0][j] + g[1][j];
-		f[1][j] = g[2][j] + (g[3][j] << 1);
-		f[2][j] = g[0][j] - g[1][j];
-		f[3][j] = -(g[2][j] << 1) + g[3][j];
-	}
-
-	for (i = 0; i < 4; i++)
-	{
-		e[i][0] = f[i][0] + f[i][3];
-		e[i][1] = f[i][1] + f[i][2];
-		e[i][2] = f[i][1] - f[i][2];
-		e[i][3] = f[i][0] - f[i][3];
-	}
-
-	for (i = 0; i < 4; i++)
-	{
-		output[i][0] = (e[i][0] + e[i][1]) >> 4;
-		output[i][1] = (e[i][2] + (e[i][3] << 1)) >> 4;
-		output[i][2] = (e[i][0] - e[i][1]) >> 4;
-		output[i][3] = (-(e[i][2] << 1) + e[i][3]) >> 4;
+		output[i][0] = ((f[i][0]>>2) + (f[i][1]>>2) + (f[i][2]>>2) + (f[i][3]>>2)) >> 5;
+		output[i][1] = ((f[i][0]<<1)/5 + f[i][1] / 5 - f[i][2] / 5 - (f[i][3]<<1)/5) >> 5;
+		output[i][2] = ((f[i][0]>>2) - (f[i][1]>>2) - (f[i][2]>>2) + (f[i][3]>>2)) >> 5;
+		output[i][3] = (f[i][0] / 5 - (f[i][1]<<1)/5 + (f[i][2]<<1)/5 - f[i][3] / 5) >> 5;
 	}
 
 	//int i, j, pom_0, pom_1, pom_2, pom_3;
@@ -427,11 +415,9 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		{
 			forwardResidual(qP, diffL4x4, rLuma, true, true);	
 			DCLuma[y0/4][x0/4] = rLuma[0][0];			
-			transformScan(rLuma, Intra16x16ACLevel[luma4x4BlkIdx], true);
-
-			
+			transformScan(rLuma, Intra16x16ACLevel[luma4x4BlkIdx], true);			
 		}
-		else
+		else if (MbPartPredMode(mb_type,0) == Intra_4x4)
 		{
 			forwardResidual(qP, diffL4x4, rLuma, true, false);	
 			transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
@@ -443,6 +429,10 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			//		frame.L[yP + y0 + i][xP + x0 + j] = reconstructedBlock[i][j] + predL[y0 + i][x0 + j];
 			//	}
 			//}
+		}
+		else
+		{
+			
 		}
 	}
 

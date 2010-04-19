@@ -100,8 +100,11 @@ void ScalingFunctions4x4Derivation(int LevelScale[6][4][4])
 // 8.5.12.2 Transformation process for residual 4x4 blocks
 void inverseTransform4x4(int d[4][4], int r[4][4])
 {	
+	// Y = D*C*X*A*B;
+
 	int e[4][4], f[4][4], g[4][4], h[4][4];
 	
+	// X*A
 	for (int i = 0; i < 4; i++)
 	{
 		e[i][0] = d[i][0] + d[i][2];
@@ -110,6 +113,7 @@ void inverseTransform4x4(int d[4][4], int r[4][4])
 		e[i][3] = d[i][1] + (d[i][3] >> 1);
 	}
 
+	// (X*A)*B
 	for (int i = 0; i < 4; i++)
 	{
 		f[i][0] = e[i][0] + e[i][3];
@@ -118,6 +122,7 @@ void inverseTransform4x4(int d[4][4], int r[4][4])
 		f[i][3] = e[i][0] - e[i][3];
 	}
 
+	// C*(X*A*B)
 	for (int j = 0; j < 4; j++)
 	{
 		g[0][j] = f[0][j] + f[2][j];
@@ -126,6 +131,7 @@ void inverseTransform4x4(int d[4][4], int r[4][4])
 		g[3][j] = f[1][j] + (f[3][j] >> 1);
 	}
 
+	// D*(C*X*A*B)
 	for (int j = 0; j < 4; j++)
 	{
 		h[0][j] = g[0][j] + g[3][j];
