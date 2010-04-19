@@ -394,83 +394,76 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
 
-	qP = QPy;	
+	qP = QPy;
 
-	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+	// The transformation and the picture reconstruction process
+	// for Intra_4x4 prediction modes has been performed within
+	// the prediction process.
+	if (MbPartPredMode(mb_type,0) != Intra_4x4)
 	{
-		int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
-		int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
-
-		for (int i = 0; i < 4; i++)
-		{
-			for (int j = 0; j < 4; j++)
-			{				
-				diffL4x4[i][j] = frame.L[yP + y0 + i][xP + x0 + j] - predL[y0 + i][x0 + j];
-			}
-		}
-
-			
-
-		if (MbPartPredMode(mb_type , 0) == Intra_16x16)
-		{
-			forwardResidual(qP, diffL4x4, rLuma, true, true);	
-			DCLuma[y0/4][x0/4] = rLuma[0][0];			
-			transformScan(rLuma, Intra16x16ACLevel[luma4x4BlkIdx], true);			
-		}
-		else if (MbPartPredMode(mb_type,0) == Intra_4x4)
-		{
-			forwardResidual(qP, diffL4x4, rLuma, true, false);	
-			transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
-			//inverseResidual(8, qP, rLuma, reconstructedBlock, false);
-			//for (int i = 0; i < 4; i++)
-			//{
-			//	for (int j = 0; j < 4; j++)
-			//	{
-			//		frame.L[yP + y0 + i][xP + x0 + j] = reconstructedBlock[i][j] + predL[y0 + i][x0 + j];
-			//	}
-			//}
-		}
-		else
-		{
-			
-		}
-	}
-
-	if (MbPartPredMode(mb_type , 0) == Intra_16x16)
-	{
-		forwardDCLumaIntra(QPy, DCLuma, rDCLuma);
-		transformScan(rDCLuma, Intra16x16DCLevel, false);
-
-		//picture reconstruction
-
-		transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy);
-		
-/*		InverseDCLumaIntra(8, qP, rDCLuma, reconstructedDCY);
-
 		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 		{
 			int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 			int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
 
-			inverseResidual(8, qP, rLuma, reconstructedBlock, true);
 			for (int i = 0; i < 4; i++)
 			{
 				for (int j = 0; j < 4; j++)
-				{
-					reconstructedLuma[y0 + i][x0 + j] = reconstructedBlock[i][j];
+				{				
+					diffL4x4[i][j] = frame.L[yP + y0 + i][xP + x0 + j] - predL[y0 + i][x0 + j];
 				}
-			}
+			}			
 
-			reconstructedLuma[y0][x0] = reconstructedDCY[y0/4][x0/4];
-
-			for (int i = 0; i < 4; i++)
+			if (MbPartPredMode(mb_type , 0) == Intra_16x16)
 			{
-				for (int j = 0; j < 4; j++)
-				{
-					frame.L[yP + y0 + i][xP + x0 + j] = reconstructedLuma[y0 + i][x0 + j] + predL[y0 + i][x0 + j];
-				}
+				forwardResidual(qP, diffL4x4, rLuma, true, true);	
+				DCLuma[y0/4][x0/4] = rLuma[0][0];			
+				transformScan(rLuma, Intra16x16ACLevel[luma4x4BlkIdx], true);			
 			}
-		}	*/	
+			else if (MbPartPredMode(mb_type,0) != Intra_4x4)
+			{
+				forwardResidual(qP, diffL4x4, rLuma, false, false);
+				transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
+				// picture reconstruction:
+				transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
+			}
+		}
+
+		if (MbPartPredMode(mb_type , 0) == Intra_16x16)
+		{
+			forwardDCLumaIntra(QPy, DCLuma, rDCLuma);
+			transformScan(rDCLuma, Intra16x16DCLevel, false);
+
+			//picture reconstruction:
+			transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy);
+			
+			//InverseDCLumaIntra(8, qP, rDCLuma, reconstructedDCY);
+
+			//for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+			//{
+			//	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
+			//	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
+
+			//	inverseResidual(8, qP, rLuma, reconstructedBlock, true);
+			//	for (int i = 0; i < 4; i++)
+			//	{
+			//		for (int j = 0; j < 4; j++)
+			//		{
+			//			reconstructedLuma[y0 + i][x0 + j] = reconstructedBlock[i][j];
+			//		}
+			//	}
+
+			//	reconstructedLuma[y0][x0] = reconstructedDCY[y0/4][x0/4];
+
+			//	for (int i = 0; i < 4; i++)
+			//	{
+			//		for (int j = 0; j < 4; j++)
+			//		{
+			//			frame.L[yP + y0 + i][xP + x0 + j] = reconstructedLuma[y0 + i][x0 + j] + predL[y0 + i][x0 + j];
+			//		}
+			//	}
+			//}
+		}
 	}
 
 	//Chroma quantization and transform process
@@ -502,15 +495,20 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			for (int j = 0; j < 4; j++)
 			{				
 				diffCb4x4[i][j] = frame.C[0][yPC + y0C + i][xPC + x0C + j] - predCb[y0C + i][x0C + j];
-				diffCr4x4[i][j] = frame.C[1][yPC + y0C + i][xPC + x0C + j] - predCr[y0C + i][x0C + j];		
-
-				//diffCb4x4[i][j] = 19;
-				//diffCr4x4[i][j] = 19;
+				diffCr4x4[i][j] = frame.C[1][yPC + y0C + i][xPC + x0C + j] - predCr[y0C + i][x0C + j];
 			}
 		}
 
-		forwardResidual(qP, diffCb4x4, rCb, true, true);
-		forwardResidual(qP, diffCr4x4, rCr, true, true);		
+		if (MbPartPredMode(mb_type , 0) == Intra_16x16 || MbPartPredMode(mb_type , 0) == Intra_4x4)
+		{
+			forwardResidual(qP, diffCb4x4, rCb, true, true);
+			forwardResidual(qP, diffCr4x4, rCr, true, true);
+		}
+		else
+		{
+			forwardResidual(qP, diffCb4x4, rCb, false, true);
+			forwardResidual(qP, diffCr4x4, rCr, false, true);
+		}
 
 		DCCb[y0C/4][x0C/4] = rCb[0][0];
 		DCCr[y0C/4][x0C/4] = rCr[0][0];
