@@ -107,10 +107,10 @@ void getNeighbourAddresses(int luma4x4BlkIdx, bool nA, int *mbAddrN, int *luma4x
 	// Luma block scanning process (6.4.3)
 	// position of the top left sample in the 4x4 block
 	// relative to the top left sample in the current macroblock
-	int x = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 0) +
-			InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 0);
-	int y = InverseRasterScan(luma4x4BlkIdx / 4, 8, 8, 16, 1) +
-			InverseRasterScan(luma4x4BlkIdx % 4, 4, 4, 8, 1);
+	int x = InverseRasterScan(luma4x4BlkIdx >> 2, 8, 8, 16, 0) +
+			InverseRasterScan(luma4x4BlkIdx & 3, 4, 4, 8, 0);
+	int y = InverseRasterScan(luma4x4BlkIdx >> 2, 8, 8, 16, 1) +
+			InverseRasterScan(luma4x4BlkIdx & 3, 4, 4, 8, 1);
 
 	// position of the edge sample in the adjacent 4x4 block
 	// relative to the top left sample in the current macroblock
@@ -121,7 +121,7 @@ void getNeighbourAddresses(int luma4x4BlkIdx, bool nA, int *mbAddrN, int *luma4x
 	getNeighbourLocations(xN, yN, mbAddrN, &xW, &yW, true);
 
 	if (*mbAddrN != -1)
-		*luma4x4BlkIdxN = 8 * (yW / 8) + 4 * (xW / 8) + 2 * ((yW % 8) / 4) + ((xW % 8) / 4);
+		*luma4x4BlkIdxN = ((yW >> 3) << 3) + ((xW >> 3) << 2) + (((yW & 7) >> 2) << 1) + ((xW & 7) >> 2);
 	else
 		*luma4x4BlkIdxN = -1;
 }
@@ -162,7 +162,7 @@ void getIntra4x4PredMode(int luma4x4BlkIdx)
 		(((mbAddrA != -1) || (mbAddrB != -1)) && (pps.constrained_intra_pred_flag == 1)))
 		dcPredModePredictedFlag = true;
 
-	int absIdx = CurrMbAddr * 16 + luma4x4BlkIdx;
+	int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;
 	int intraMxMPredModeA, intraMxMPredModeB;
 	if (dcPredModePredictedFlag == true)	// if dc mode is predicted
 	{
@@ -177,7 +177,7 @@ void getIntra4x4PredMode(int luma4x4BlkIdx)
 		}
 		else
 		{
-			int absIdxA = mbAddrA * 16 + luma4x4BlkIdxA;
+			int absIdxA = (mbAddrA << 4) + luma4x4BlkIdxA;
 			intraMxMPredModeA = Intra4x4PredMode[absIdxA];
 		}
 		if (MbPartPredMode(mb_type_array[mbAddrB],0) != Intra_4x4)		// if the macroblock of the neighbouring
@@ -186,7 +186,7 @@ void getIntra4x4PredMode(int luma4x4BlkIdx)
 		}
 		else
 		{
-			int absIdxB = mbAddrB * 16 + luma4x4BlkIdxB;
+			int absIdxB = (mbAddrB << 4) + luma4x4BlkIdxB;
 			intraMxMPredModeB = Intra4x4PredMode[absIdxB];
 		}
 	}
@@ -306,7 +306,7 @@ void Intra_4x4_Diagonal_Down_Left(int *p, int pred4x4L[4][4])
 			if ((x == 3) && (y == 3))
 				pred4x4L[y][x] = (p(6,-1) + 3*p(7,-1) + 2) >> 2;
 			else
-				pred4x4L[y][x] = (p(x+y,-1) + 2*p(x+y+1,-1) + p(x+y+2,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x+y,-1) + (p(x+y+1,-1) << 1) + p(x+y+2,-1) + 2) >> 2;
 		}
 	}
 }
@@ -319,11 +319,11 @@ void Intra_4x4_Diagonal_Down_Right(int *p, int pred4x4L[4][4])
 		for (int x = 0; x < 4; x++)
 		{
 			if (x > y)
-				pred4x4L[y][x] = (p(x-y-2,-1) + 2*p(x-y-1,-1) + p(x-y,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x-y-2,-1) + (p(x-y-1,-1) << 1) + p(x-y,-1) + 2) >> 2;
 			else if (x < y)
-				pred4x4L[y][x] = (p(-1,y-x-2) + 2*p(-1,y-x-1) + p(-1,y-x) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,y-x-2) + (p(-1,y-x-1) << 1) + p(-1,y-x) + 2) >> 2;
 			else
-				pred4x4L[y][x] = (p(0,-1) + 2*p(-1,-1) + p(-1,0) + 2) >> 2;
+				pred4x4L[y][x] = (p(0,-1) + (p(-1,-1) << 1) + p(-1,0) + 2) >> 2;
 		}
 	}
 }
@@ -335,17 +335,17 @@ void Intra_4x4_Vertical_Right(int *p, int pred4x4L[4][4])
 	{
 		for (int x = 0; x < 4; x++)
 		{
-			int zVR = 2 * x - y;
+			int zVR = (x << 1) - y;
 			if ((zVR == 0) || (zVR == 2) ||
 				(zVR == 4) || (zVR == 6))
 				pred4x4L[y][x] = (p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 1) >> 1;
 			else if ((zVR == 1) ||
 				(zVR == 3) || (zVR == 5))
-				pred4x4L[y][x] = (p(x-(y>>1)-2,-1) + 2*p(x-(y>>1)-1,-1) + p(x-(y>>1),-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x-(y>>1)-2,-1) + (p(x-(y>>1)-1,-1) << 1) + p(x-(y>>1),-1) + 2) >> 2;
 			else if (zVR == -1)
-				pred4x4L[y][x] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,0) + (p(-1,-1) << 1) + p(0,-1) + 2) >> 2;
 			else
-				pred4x4L[y][x] = (p(-1,y-1) + 2*p(-1,y-2) + p(-1,y-3) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,y-1) + (p(-1,y-2) << 1) + p(-1,y-3) + 2) >> 2;
 		}
 	}
 }
@@ -357,17 +357,17 @@ void Intra_4x4_Horizontal_Down(int *p, int pred4x4L[4][4])
 	{
 		for (int x = 0; x < 4; x++)
 		{
-			int zHD = 2 * y - x;
+			int zHD = (y << 1) - x;
 			if ((zHD == 0) || (zHD == 2) ||
 				(zHD == 4) || (zHD == 6))
 				pred4x4L[y][x] = (p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 1) >> 1;
 			else if ((zHD == 1) ||
 				(zHD == 3) || (zHD == 5))
-				pred4x4L[y][x] = (p(-1,y-(x>>1)-2) + 2*p(-1,y-(x>>1)-1) + p(-1,y-(x>>1)) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,y-(x>>1)-2) + (p(-1,y-(x>>1)-1) << 1) + p(-1,y-(x>>1)) + 2) >> 2;
 			else if (zHD == -1)
-				pred4x4L[y][x] = (p(-1,0) + 2*p(-1,-1) + p(0,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,0) + (p(-1,-1) << 1) + p(0,-1) + 2) >> 2;
 			else
-				pred4x4L[y][x] = (p(x-1,-1) + 2*p(x-2,-1) + p(x-3,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x-1,-1) + (p(x-2,-1) << 1) + p(x-3,-1) + 2) >> 2;
 		}
 	}
 }
@@ -382,7 +382,7 @@ void Intra_4x4_Vertical_Left(int *p, int pred4x4L[4][4])
 			if ((y == 0) || (y==2))
 				pred4x4L[y][x] = (p(x+(y>>1),-1) + p(x+(y>>1)+1,-1) + 1) >> 1;
 			else
-				pred4x4L[y][x] = (p(x+(y>>1),-1) + 2*p(x+(y>>1)+1,-1) + p(x+(y>>1)+2,-1) + 2) >> 2;
+				pred4x4L[y][x] = (p(x+(y>>1),-1) + (p(x+(y>>1)+1,-1) << 1) + p(x+(y>>1)+2,-1) + 2) >> 2;
 		}
 	}
 }
@@ -394,12 +394,12 @@ void Intra_4x4_Horizontal_Up(int *p, int pred4x4L[4][4])
 	{
 		for (int x = 0; x < 4; x++)
 		{
-			int zHU = x + 2 * y;
+			int zHU = x + (y << 1);
 			if ((zHU == 0) || (zHU == 2) ||
 				(zHU == 4))
 				pred4x4L[y][x] = (p(-1,y+(x>>1)) + p(-1,y+(x>>1)+1) + 1) >> 1;
 			else if ((zHU == 1) || (zHU == 3))
-				pred4x4L[y][x] = (p(-1,y+(x>>1)) + 2*p(-1,y+(x>>1)+1) + p(-1,y+(x>>1)+2) + 2) >> 2;
+				pred4x4L[y][x] = (p(-1,y+(x>>1)) + (p(-1,y+(x>>1)+1) << 1) + p(-1,y+(x>>1)+2) + 2) >> 2;
 			else if (zHU == 5)
 				pred4x4L[y][x] = (p(-1,2) + 3*p(-1,3) + 2) >> 2;
 			else
@@ -578,7 +578,7 @@ void Intra_16x16_Plane(int *p, int predL[16][16])
 		V += (i+1)*(p(-1,8+i) - p(-1,6-i));
 	}
 
-	int a = 16 * (p(-1,15) + p(15,-1));
+	int a = ((p(-1,15) + p(15,-1)) << 4);
 	int b = (5*H + 32) >> 6;
 	int c = (5*V + 32) >> 6;
 
@@ -770,7 +770,7 @@ void Intra_Chroma_Plane(int *p, int predC[8][8])
 	for (int i = 0; i <= 3 + yCF; i++)
 		V += (i+1)*(p(-1,(4+yCF+i)) - p(-1,(2+yCF-i)));
 
-	int a = 16 * (p(-1, (MbHeightC - 1)) + p((MbWidthC - 1), -1));
+	int a = ((p(-1, (MbHeightC - 1)) + p((MbWidthC - 1), -1)) << 4);
 	int b = (34 * H + 32) >> 6;	// Norm: ChromaArrayType == 0, so there's no 29*(ChromaArrayType == 3) coefficient
 	int c = (34 * V + 32) >> 6;	// Norm: ChromaArrayType == 0, so there's no 29*(ChromaArrayType != 1) coefficient
 
@@ -816,7 +816,7 @@ void IntraChromaSamplePrediction(int predCr[8][8], int predCb[8][8])
 			int yL = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
 
 			int xM = (xL >> 4)*MbWidthC;
-			int yM = (yL >> 4)*MbHeightC + (yL % 2);
+			int yM = (yL >> 4)*MbHeightC + (yL & 1);
 
 			// Chrominance blue:
 			pCb(x,y) = frame.C[0][yM+yW][xM+xW];
@@ -859,7 +859,7 @@ void intraPrediction(int predL[16][16], int predCr[8][8], int predCb[8][8])
 
 			// the luma prediction samples
 			int pred4x4L[4][4];
-			int absIdx = CurrMbAddr * 16 + luma4x4BlkIdx;
+			int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;
 			Intra4x4SamplePrediction(luma4x4BlkIdx, Intra4x4PredMode[absIdx], pred4x4L);
 
 			int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
@@ -977,7 +977,7 @@ void setIntra4x4PredMode(int luma4x4BlkIdx)
 		(((mbAddrA != -1) || (mbAddrB != -1)) && (pps.constrained_intra_pred_flag == 1)))
 		dcPredModePredictedFlag = true;
 
-	int absIdx = CurrMbAddr * 16 + luma4x4BlkIdx;
+	int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;
 	int intraMxMPredModeA, intraMxMPredModeB;
 	if (dcPredModePredictedFlag == true)	// if dc mode is predicted
 	{
@@ -992,7 +992,7 @@ void setIntra4x4PredMode(int luma4x4BlkIdx)
 		}
 		else
 		{
-			int absIdxA = mbAddrA * 16 + luma4x4BlkIdxA;
+			int absIdxA = (mbAddrA << 4) + luma4x4BlkIdxA;
 			intraMxMPredModeA = Intra4x4PredMode[absIdxA];
 		}
 		if (MbPartPredMode(mb_type_array[mbAddrB],0) != Intra_4x4)		// if the macroblock of the neighbouring
@@ -1001,7 +1001,7 @@ void setIntra4x4PredMode(int luma4x4BlkIdx)
 		}
 		else
 		{
-			int absIdxB = mbAddrB * 16 + luma4x4BlkIdxB;
+			int absIdxB = (mbAddrB << 4) + luma4x4BlkIdxB;
 			intraMxMPredModeB = Intra4x4PredMode[absIdxB];
 		}
 	}
@@ -1149,14 +1149,6 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			forwardResidual(QPy, diffL4x4, rLuma, true, false);
 			transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
 			transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
-			//inverseResidual(8, QPy, rLuma, reconstructedBlock, false);
-			//for (int i = 0; i < 4; i++)
-			//{
-			//	for (int j = 0; j < 4; j++)
-			//	{
-			//		frame.L[yP + y0 + i][xP + x0 + j] = reconstructedBlock[i][j] + pred4x4L[i][j];
-			//	}
-			//}
 		}
 	}
 	else
