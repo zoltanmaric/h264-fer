@@ -8,6 +8,7 @@
 #include "rawreader.h"
 #include "h264_globals.h"
 #include "residual_tables.h"
+#include "ref_frames.h"
 
 void decode()
 {
@@ -70,25 +71,18 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		//if (frameCount < 301) continue;
+		if (frameCount < 1301) continue;
 
 		printf("Frame #%d\n", frameCount);
-		//writeToYUV();
+		writeToYUV();
 
-		if(frameCount % 30 == 1)
-		{
-			nu.nal_unit_type = NAL_UNIT_TYPE_IDR;
-		}
-		else
-		{
-			nu.nal_unit_type = NAL_UNIT_TYPE_NOT_IDR;
-		}
+		nu.nal_unit_type = selectNALUnitType();
 		RBSP_encode(nu);
 
 		writeNAL(nu);
 		//writeToPPM("reconstruct");
 
-		//if (frameCount == 401) break;
+		if (frameCount == 1305) break;
 	}
 
 	fclose(stream);

@@ -186,18 +186,7 @@ void shd_write(NALunit &nal_unit)
 	shd.slice_qp_delta = -14;		// inferred quantization parameter
 	shd.PicSizeInMbs = frame.Lwidth * frame.Lheight >> 8;
 	shd.SliceQPy = pps.pic_init_qp + shd.slice_qp_delta;
-	QPy = shd.SliceQPy;			
-
-	// These variables are stored for the reference picture
-	// list modification process described in 8.2.4.3
-	shd.modification_of_pic_nums_idc = new int[sps.MaxFrameNum];
-	shd.abs_diff_pic_num_minus1 = new int[sps.MaxFrameNum];
-	shd.long_term_pic_num = new int[sps.MaxFrameNum];
-
-	shd.memory_management_control_operation = new int[sps.MaxFrameNum];
-	shd.difference_of_pic_nums_minus1 = new int[sps.MaxFrameNum];
-	shd.long_term_frame_idx = new int[sps.MaxFrameNum];
-	shd.max_long_term_frame_idx_plus1 = new int[sps.MaxFrameNum];
+	QPy = shd.SliceQPy;
 
 	unsigned char buffer[4];
 
@@ -345,7 +334,8 @@ void sps_write()
 	//sps.offset_for_ref_frame
 	sps.log2_max_frame_num = 9;
 	sps.pic_order_cnt_type = 0;
-	sps.log2_max_pic_order_cnt_lsb = 6;
+	// log2 max consecutive non-idr frames (max 1024)
+	sps.log2_max_pic_order_cnt_lsb = 10;
 	sps.delta_pic_order_always_zero_flag = 0;
 	sps.max_num_ref_frames = 1;
 	sps.gaps_in_frame_num_value_allowed_flag = 0;
@@ -358,7 +348,19 @@ void sps_write()
 	sps.PicWidthInMbs = frame.Lwidth >> 4;	// == /16
 	PicWidthInMbs = sps.PicWidthInMbs;
 	sps.PicHeightInMapUnits = frame.Lheight >> 4;
+	PicHeightInMbs = sps.PicHeightInMapUnits;
 	sps.FrameHeightInMbs = sps.PicHeightInMapUnits;
+
+	// These variables are stored for the reference picture
+	// list modification process described in 8.2.4.3
+	shd.modification_of_pic_nums_idc = new int[sps.MaxFrameNum];
+	shd.abs_diff_pic_num_minus1 = new int[sps.MaxFrameNum];
+	shd.long_term_pic_num = new int[sps.MaxFrameNum];
+
+	shd.memory_management_control_operation = new int[sps.MaxFrameNum];
+	shd.difference_of_pic_nums_minus1 = new int[sps.MaxFrameNum];
+	shd.long_term_frame_idx = new int[sps.MaxFrameNum];
+	shd.max_long_term_frame_idx_plus1 = new int[sps.MaxFrameNum];
 
 	unsigned char buffer[4];
 	

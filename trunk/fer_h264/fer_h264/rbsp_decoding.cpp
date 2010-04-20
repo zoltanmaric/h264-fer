@@ -550,7 +550,7 @@ void RBSP_encode(NALunit &nal_unit)
 					mb_type += (CodedBlockPatternChroma << 2);
 					if (CodedBlockPatternLuma == 15)
 					{
-						mb_type += 13;
+						mb_type += 12;
 					}
 				}
 				mb_type_array[CurrMbAddr] = mb_type;
