@@ -68,54 +68,6 @@ void UINT_to_RBSP_size_known(unsigned long int uint_number, unsigned int size, u
 	rbsp_result[0]=(uint_number)&0xFF;
 }
 
-// Return value is the size of "uint_number" in bits
-// rbsp_result byte 0 is the LSB and byte 3 is the MSB
-unsigned int UINT_to_RBSP_size_unknown(unsigned long int uint_number, unsigned char rbsp_result[4])
-{
-	int rbsp_length=0;
-	unsigned char *new_rbsp_result=new unsigned char[4];
-	new_rbsp_result[0]=0;
-	rbsp_result=new_rbsp_result;
-	if (uint_number==0)
-	{
-		return 0;
-	}
-	else
-	{
-		new_rbsp_result[3]=(uint_number>>24)&0xFF;
-		new_rbsp_result[2]=(uint_number>>16)&0xFF;
-		new_rbsp_result[1]=(uint_number>>8)&0xFF;
-		new_rbsp_result[0]=(uint_number)&0xFF;
-
-
-		//Let's count the number of bits that make this integer (important only for return value)
-		int length=0;
-
-		while (uint_number>0)
-		{
-			if ((uint_number>>8)==0)
-			{
-				int bit_mask=128;
-				int bit_counter=8;
-				while ((bit_mask & uint_number) == 0)
-				{
-					bit_counter--;
-					bit_mask=bit_mask>>1;
-				}
-				length+=bit_counter;
-			}
-			else
-			{
-				length+=8;
-			}
-			
-			uint_number>>8;
-		}
-
-		return length;
-	}
-}
-
 void writeFlag(int flag)
 {
 	if (flag==1)
@@ -185,7 +137,7 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 		}
 
 		//8-byte fast forward 
-		if ((N-count)>7 && RBSP_write_current_bit==0 && (N-count)&7 == 0)
+		if ((N-count)>7 && RBSP_write_current_bit==0 && ((N-count)&7) == 0)
 		{
 			//int shift = offset + 1;
 			RBSP_write_data[RBSP_write_current_byte]=data_to_write[offset>>3];
@@ -294,11 +246,11 @@ unsigned int peekRawBits(int N)
 	}
 	else
 	{
-		RBSP_buffer=(RBSP_data[RBSP_current_byte]<<32)
-		| (RBSP_data[RBSP_current_byte+1]<<24)
-		| (RBSP_data[RBSP_current_byte+2]<<16)
-		| (RBSP_data[RBSP_current_byte+3]<<8)
-		| (RBSP_data[RBSP_current_byte+4]);
+		RBSP_buffer=((unsigned long)RBSP_data[RBSP_current_byte]<<32)
+		| ((unsigned long)RBSP_data[RBSP_current_byte+1]<<24)
+		| ((unsigned long)RBSP_data[RBSP_current_byte+2]<<16)
+		| ((unsigned long)RBSP_data[RBSP_current_byte+3]<<8)
+		| ((unsigned long)RBSP_data[RBSP_current_byte+4]);
 	}
 
 	return (unsigned int)(RBSP_buffer>>(RBSP_levels[N]-(N+RBSP_current_bit)))& RBSP_masks[32-N];	
@@ -333,7 +285,6 @@ unsigned int getRawBits(int N)
 
 	RBSP_bit=7-RBSP_current_bit;
 
-	int predict_bytes;
 	RBSP_buffer=0;
 	if (N<=9)
 	{
@@ -355,11 +306,11 @@ unsigned int getRawBits(int N)
 	}
 	else
 	{
-		RBSP_buffer=(RBSP_data[RBSP_current_byte]<<32)
-		| (RBSP_data[RBSP_current_byte+1]<<24)
-		| (RBSP_data[RBSP_current_byte+2]<<16)
-		| (RBSP_data[RBSP_current_byte+3]<<8)
-		| (RBSP_data[RBSP_current_byte+4]);
+		RBSP_buffer=((unsigned long)RBSP_data[RBSP_current_byte]<<32)
+		| ((unsigned long)RBSP_data[RBSP_current_byte+1]<<24)
+		| ((unsigned long)RBSP_data[RBSP_current_byte+2]<<16)
+		| ((unsigned long)RBSP_data[RBSP_current_byte+3]<<8)
+		| ((unsigned long)RBSP_data[RBSP_current_byte+4]);
 	}
 
 	//Didn't read into next the RBSP byte, easier housekeeping

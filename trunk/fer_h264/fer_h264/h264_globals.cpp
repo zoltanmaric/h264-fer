@@ -369,8 +369,18 @@ int init_h264_structures()
 			TotalCoeff_chroma_array[0][i][j]=0;
 			TotalCoeff_chroma_array[1][i][j]=0;
 		}
-	}
-	
+	}	
+
+	// These variables are stored for the reference picture
+	// list modification process described in 8.2.4.3
+	shd.modification_of_pic_nums_idc = new int[sps.MaxFrameNum];
+	shd.abs_diff_pic_num_minus1 = new int[sps.MaxFrameNum];
+	shd.long_term_pic_num = new int[sps.MaxFrameNum];
+
+	shd.memory_management_control_operation = new int[sps.MaxFrameNum];
+	shd.difference_of_pic_nums_minus1 = new int[sps.MaxFrameNum];
+	shd.long_term_frame_idx = new int[sps.MaxFrameNum];
+	shd.max_long_term_frame_idx_plus1 = new int[sps.MaxFrameNum];	
 
 	//Everything is ok
 	return 0;

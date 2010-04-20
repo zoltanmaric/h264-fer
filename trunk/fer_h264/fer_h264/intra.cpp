@@ -854,7 +854,6 @@ void intraPrediction(int predL[16][16], int predCr[8][8], int predCb[8][8])
 	{
 		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 		{
-			int mbAddrA, mbAddrB;
 			getIntra4x4PredMode(luma4x4BlkIdx);
 
 			// the luma prediction samples
@@ -1136,7 +1135,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 			int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
 
-			int diffL4x4[4][4], rLuma[4][4], reconstructedBlock[4][4];
+			int diffL4x4[4][4], rLuma[4][4];
 			for (int y = 0; y < 4; y++)
 			{
 				for (int x = 0; x < 4; x++)

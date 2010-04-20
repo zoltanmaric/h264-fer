@@ -71,7 +71,7 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 1301) continue;
+		if (frameCount < 301) continue;
 
 		printf("Frame #%d\n", frameCount);
 		writeToYUV();
@@ -82,7 +82,7 @@ void encode()
 		writeNAL(nu);
 		//writeToPPM("reconstruct");
 
-		if (frameCount == 1305) break;
+		if (frameCount == 401) break;
 	}
 
 	fclose(stream);

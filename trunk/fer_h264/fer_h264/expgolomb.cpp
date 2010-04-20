@@ -17,8 +17,6 @@ void golombRice_SC(int codeNum, unsigned int VLCNum)
 	unsigned int offset;
 	unsigned int prefix_length,suffix;
 	
-	unsigned char buffer[4];
-	
 	if (codeNum<=0)
 	{
 		offset=(-codeNum-1)*2+1;
@@ -54,7 +52,6 @@ void expGolomb_UC(unsigned int codeNum)
 
 	unsigned int upper_boundary=2;
 	unsigned int lower_boundary=1;
-	unsigned int temp_boundary;
 
 	unsigned int suffix;
 
