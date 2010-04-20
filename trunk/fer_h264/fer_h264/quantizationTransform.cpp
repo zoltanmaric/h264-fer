@@ -120,56 +120,56 @@ void forwardTransform4x4(int input[4][4], int output[4][4])
 }
 
 
-void forwardTransformDCLumaIntra(int input[4][4], int output[4][4])
+void forwardTransformDCLumaIntra(int f[4][4], int c[4][4]) //(int input[4][4], int output[4][4])
 {
 	int i, j;
-	int output_temp[4][4];
+	//int output_temp[4][4];
 
-	//multiply A*W
-	for (i = 0; i < 4; i++)
-	{
-		for (j = 0; j < 4; j++)
-		{
-			switch (i)
-			{
-				case 0: 
-					output_temp[i][j] = input[0][j] + input[1][j] + input[2][j] + input[3][j];					
-					break;
-				case 1: 					
-					output_temp[i][j] = input[0][j] + input[1][j] - input[2][j] - input[3][j];
-					break;
-				case 2:
-					output_temp[i][j] = input[0][j] - input[1][j] - input[2][j] + input[3][j];
-					break;
-				case 3:					
-					output_temp[i][j] = input[0][j] - input[1][j] + input[2][j] - input[3][j];
-					break;
-			}
-		}
-	}
-	
-	//multiply (A*W)*At
-	for (i = 0; i < 4; i++)
-	{
-		for (j = 0; j < 4; j++)
-		{
-			switch (j)
-			{
-				case 0: 
-					output[i][j] = output_temp[i][0] + output_temp[i][1] + output_temp[i][2] + output_temp[i][3];
-					break;
-				case 1: 					
-					output[i][j] = output_temp[i][0] + output_temp[i][1] - output_temp[i][2] - output_temp[i][3];
-					break;
-				case 2:
-					output[i][j] = output_temp[i][0] - output_temp[i][1] - output_temp[i][2] + output_temp[i][3];
-					break;
-				case 3:					
-					output[i][j] = output_temp[i][0] - output_temp[i][1] + output_temp[i][2] - output_temp[i][3];
-					break;
-			}
-		}
-	}
+	////multiply A*W
+	//for (i = 0; i < 4; i++)
+	//{
+	//	for (j = 0; j < 4; j++)
+	//	{
+	//		switch (i)
+	//		{
+	//			case 0: 
+	//				output_temp[i][j] = input[0][j] + input[1][j] + input[2][j] + input[3][j];					
+	//				break;
+	//			case 1: 					
+	//				output_temp[i][j] = input[0][j] + input[1][j] - input[2][j] - input[3][j];
+	//				break;
+	//			case 2:
+	//				output_temp[i][j] = input[0][j] - input[1][j] - input[2][j] + input[3][j];
+	//				break;
+	//			case 3:					
+	//				output_temp[i][j] = input[0][j] - input[1][j] + input[2][j] - input[3][j];
+	//				break;
+	//		}
+	//	}
+	//}
+	//
+	////multiply (A*W)*At
+	//for (i = 0; i < 4; i++)
+	//{
+	//	for (j = 0; j < 4; j++)
+	//	{
+	//		switch (j)
+	//		{
+	//			case 0: 
+	//				output[i][j] = output_temp[i][0] + output_temp[i][1] + output_temp[i][2] + output_temp[i][3];
+	//				break;
+	//			case 1: 					
+	//				output[i][j] = output_temp[i][0] + output_temp[i][1] - output_temp[i][2] - output_temp[i][3];
+	//				break;
+	//			case 2:
+	//				output[i][j] = output_temp[i][0] - output_temp[i][1] - output_temp[i][2] + output_temp[i][3];
+	//				break;
+	//			case 3:					
+	//				output[i][j] = output_temp[i][0] - output_temp[i][1] + output_temp[i][2] - output_temp[i][3];
+	//				break;
+	//		}
+	//	}
+	//}
 
 	//shifting one bit to the right, equaly to dividing with 2
 	/*for (i = 0; i < 4; i++)
@@ -179,6 +179,40 @@ void forwardTransformDCLumaIntra(int input[4][4], int output[4][4])
 			output[i][j] = output[i][j] >> 1;
 		}
 	}*/
+
+	int d[4][4], e[4][4], g[4][4];
+
+	for (j = 0; j < 4; j++)
+	{
+		g[0][j] = (f[0][j] + f[3][j]) >> 1;
+		g[1][j] = (f[1][j] + f[2][j]) >> 1;
+		g[2][j] = (f[1][j] - f[2][j]) >> 1;
+		g[3][j] = (f[0][j] - f[3][j]) >> 1;
+	}
+
+	for (j = 0; j < 4; j++)
+	{
+		e[0][j] = (g[0][j] + g[1][j]) >> 1;
+		e[1][j] = (g[3][j] + g[2][j]) >> 1;
+		e[2][j] = (g[0][j] - g[1][j]) >> 1;
+		e[3][j] = (g[3][j] - g[2][j]) >> 1;
+	}
+
+	for (i = 0; i < 4; i++)
+	{
+		d[i][0] = (e[i][0] + e[i][3]) >> 1;
+		d[i][1] = (e[i][1] + e[i][2]) >> 1;
+		d[i][2] = (e[i][1] - e[i][2]) >> 1;
+		d[i][3] = (e[i][0] - e[i][3]) >> 1;
+	}
+
+	for (i = 0; i < 4; i++)
+	{
+		c[i][0] = (d[i][0] + d[i][1]) >> 1;
+		c[i][1] = (d[i][3] + d[i][2]) >> 1;
+		c[i][2] = (d[i][0] - d[i][1]) >> 1;
+		c[i][3] = (d[i][3] - d[i][2]) >> 1;
+	}
 
 }
 
