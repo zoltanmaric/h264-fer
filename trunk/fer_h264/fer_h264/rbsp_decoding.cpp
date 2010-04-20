@@ -367,8 +367,8 @@ void RBSP_decode(NALunit nal_unit)
 		// Reference frame list modification
 		modificationProcess();
 		
-		//writeToPPM("frame");
-		writeToY4M();
+		writeToPPM("frame");
+		//writeToY4M();
 	}
 }
 
@@ -511,6 +511,8 @@ void RBSP_encode(NALunit &nal_unit)
 		int mb_skip_run = 0;
 		for (CurrMbAddr = 0; CurrMbAddr < shd.PicSizeInMbs; CurrMbAddr++)
 		{
+			// TODO: Try avoiding this.
+			clear_residual_structures();
 			if ((shd.slice_type != I_SLICE) && (shd.slice_type != SI_SLICE))
 			{
 				interEncoding(predL, predCr, predCb);
@@ -589,9 +591,6 @@ void RBSP_encode(NALunit &nal_unit)
 						writeFlag(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]);
 						if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == false)
 						{
-							//unsigned char buffer[4];
-							//UINT_to_RBSP_size_known(rem_intra4x4_pred_mode[luma4x4BlkIdx], 3, buffer);
-							//writeRawBits(3, buffer);
 							writeRawBits(3, rem_intra4x4_pred_mode[luma4x4BlkIdx]);
 						}
 					}
@@ -632,17 +631,12 @@ void RBSP_encode(NALunit &nal_unit)
 				expGolomb_SC(0);
 
 				residual_write();
-
-				// Test: Assume nC = 0..2 and TotalCoef and TrailingOnes = 0
-				// writeFlag(1);	// coeff_token = 1
-				// Norm: end macroblock_layer()
 			}
+			// Norm: end macroblock_layer()
 			else
 			{
 				clear_residual_structures();
-			}
-
-			
+			}			
 		}
 		
 		if (mb_skip_run > 0)

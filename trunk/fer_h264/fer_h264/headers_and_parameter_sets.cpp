@@ -173,10 +173,15 @@ void shd_write(NALunit &nal_unit)
 {
 	// inferred values:
 	shd.first_mb_in_slice = 0;
-	shd.pic_parameter_set_id = 0;	// always zero because there's only one pps
-	shd.pic_order_cnt_lsb += 2;
+	shd.pic_parameter_set_id = 0;	// always zero because there's only one pps	
 	if (shd.slice_type == I_SLICE)
+	{
 		shd.pic_order_cnt_lsb = 0;
+	}
+	else
+	{
+		shd.pic_order_cnt_lsb += 2;
+	}
 	shd.num_ref_idx_active_override_flag = 0;	// no changes in the reference picture list order yet
 	shd.slice_qp_delta = -14;		// inferred quantization parameter
 	shd.PicSizeInMbs = frame.Lwidth * frame.Lheight >> 8;

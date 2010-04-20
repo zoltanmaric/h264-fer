@@ -1102,7 +1102,6 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 				{
 					int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;
 					Intra4x4PredMode[absIdx] = intra4x4PredMode;
-					setIntra4x4PredMode(luma4x4BlkIdx);
 					min4x4 = sad4x4;
 					if (min4x4 == 0)
 					{
@@ -1122,11 +1121,15 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	// Store the chosen prediction result in predL[16][16]
 	if (Intra16x16PredMode == -1)
 	{
+		mb_type_array[CurrMbAddr] = 0;
+
 		int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 		int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
 
 		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 		{
+			setIntra4x4PredMode(luma4x4BlkIdx);
+			
 			int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;				
 			Intra4x4SamplePrediction(luma4x4BlkIdx, Intra4x4PredMode[absIdx], pred4x4L);
 
@@ -1145,14 +1148,15 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 
 			forwardResidual(QPy, diffL4x4, rLuma, true, false);
 			transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
-			inverseResidual(8, QPy, rLuma, reconstructedBlock, false);
-			for (int i = 0; i < 4; i++)
-			{
-				for (int j = 0; j < 4; j++)
-				{
-					frame.L[yP + y0 + i][xP + x0 + j] = reconstructedBlock[i][j] + pred4x4L[i][j];
-				}
-			}
+			transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
+			//inverseResidual(8, QPy, rLuma, reconstructedBlock, false);
+			//for (int i = 0; i < 4; i++)
+			//{
+			//	for (int j = 0; j < 4; j++)
+			//	{
+			//		frame.L[yP + y0 + i][xP + x0 + j] = reconstructedBlock[i][j] + pred4x4L[i][j];
+			//	}
+			//}
 		}
 	}
 	else
