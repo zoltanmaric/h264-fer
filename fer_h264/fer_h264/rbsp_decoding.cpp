@@ -127,7 +127,7 @@ void RBSP_decode(NALunit nal_unit)
 			if(moreDataFlag)
 			{ 
 				// Norm: start macroblock_layer()
-				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)%8;
+				mb_pos_array[CurrMbAddr]=(RBSP_current_bit+1)&7;
 
 				mb_type = expGolomb_UD();
 				mb_type_array[CurrMbAddr]=mb_type;		
@@ -270,8 +270,8 @@ void RBSP_decode(NALunit nal_unit)
 						coded_block_pattern=codeNum_to_coded_block_pattern_inter[coded_block_pattern];
 					}
 
-					CodedBlockPatternLuma=coded_block_pattern%16;
-					CodedBlockPatternChroma=coded_block_pattern/16;
+					CodedBlockPatternLuma=coded_block_pattern & 15;
+					CodedBlockPatternChroma=coded_block_pattern >> 4;
 
 					//Norm:
 					/*
@@ -367,8 +367,8 @@ void RBSP_decode(NALunit nal_unit)
 		// Reference frame list modification
 		modificationProcess();
 		
-		writeToPPM("frame");
-		//writeToY4M();
+		//writeToPPM("frame");
+		writeToY4M();
 	}
 }
 
@@ -392,7 +392,7 @@ void setCodedBlockPattern()
 			{
 				for (int i = 0; i < 15; i++)
 				{
-					if (Intra16x16ACLevel[i8x8*4 + i4x4][i] != 0)
+					if (Intra16x16ACLevel[(i8x8<<2) + i4x4][i] != 0)
 					{
 						allZero = false;
 						break;
@@ -403,7 +403,7 @@ void setCodedBlockPattern()
 			{
 				for (int i = 0; i < 16; i++)
 				{
-					if (LumaLevel[i8x8*4 + i4x4][i] != 0)
+					if (LumaLevel[(i8x8<<2) + i4x4][i] != 0)
 					{
 						allZero = false;
 						break;
