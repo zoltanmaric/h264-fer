@@ -21,7 +21,6 @@ void writeOnes(int N);
 
 unsigned int RBSPtoUINT(unsigned char *rbsp, int N);
 void UINT_to_RBSP_size_known(unsigned long int uint_number, unsigned int size, unsigned char rbsp_result[4]);
-unsigned int UINT_to_RBSP_size_unknown(unsigned long int uint_number, unsigned char rbsp_result[4]);
 
 //Decoder
 extern unsigned int RBSP_current_byte;

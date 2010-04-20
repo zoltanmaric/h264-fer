@@ -188,8 +188,6 @@ void shd_write(NALunit &nal_unit)
 	shd.SliceQPy = pps.pic_init_qp + shd.slice_qp_delta;
 	QPy = shd.SliceQPy;
 
-	unsigned char buffer[4];
-
 	expGolomb_UC(shd.first_mb_in_slice);
 	expGolomb_UC(shd.slice_type);
 	expGolomb_UC(shd.pic_parameter_set_id);
@@ -281,17 +279,6 @@ void fill_shd(NALunit *nal_unit)
 		}
 	}
 
-	// These variables are stored for the reference picture
-	// list modification process described in 8.2.4.3
-	shd.modification_of_pic_nums_idc = new int[sps.MaxFrameNum];
-	shd.abs_diff_pic_num_minus1 = new int[sps.MaxFrameNum];
-	shd.long_term_pic_num = new int[sps.MaxFrameNum];
-
-	shd.memory_management_control_operation = new int[sps.MaxFrameNum];
-	shd.difference_of_pic_nums_minus1 = new int[sps.MaxFrameNum];
-	shd.long_term_frame_idx = new int[sps.MaxFrameNum];
-	shd.max_long_term_frame_idx_plus1 = new int[sps.MaxFrameNum];
-
 	ref_pic_list_modification();
 
 	if(nal_unit->nal_ref_idc!=0)
@@ -361,8 +348,6 @@ void sps_write()
 	shd.difference_of_pic_nums_minus1 = new int[sps.MaxFrameNum];
 	shd.long_term_frame_idx = new int[sps.MaxFrameNum];
 	shd.max_long_term_frame_idx_plus1 = new int[sps.MaxFrameNum];
-
-	unsigned char buffer[4];
 	
 	//UINT_to_RBSP_size_known(sps.profile_idc, 8, buffer);
 	//writeRawBits(8, buffer);
@@ -501,8 +486,6 @@ void fill_sps(NALunit *nal_unit)
 
 void pps_write()
 {
-	unsigned char buffer[4];
-
 	pps.pic_parameter_set_id = 0;
 	pps.seq_parameter_set_id = 0;
 	pps.entropy_coding_mode_flag = 0;
