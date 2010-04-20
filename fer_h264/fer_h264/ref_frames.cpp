@@ -1,6 +1,7 @@
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
 #include "ref_frames.h"
+#include "h264_math.h"
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -179,4 +180,35 @@ void modificationProcess()
 				//		RefPicList0[nIdx++] = RefPicList0[cIdx];	
 	}
 	RefPicList0[shd.num_ref_idx_l0_active_minus1+1].RefPicPresent = false;
+}
+
+int selectNALUnitType()
+{
+	unsigned long sad = 0;
+	unsigned long picSizeInMBs = PicWidthInMbs * PicHeightInMbs;
+
+	if (dpb.L == NULL)
+	{
+		return NAL_UNIT_TYPE_IDR;
+	}
+
+	for (int i = 0; i < frame.Lheight; i++)
+	{
+		for (int j = 0; j < frame.Lwidth; j++)
+		{
+			sad += ABS(frame.L[i][j] - dpb.L[i][j]);
+		}
+	}
+
+	// The chosen average treshold difference per macroblock
+	// is 4096, which corresponds to 16 per pixel. Therefore
+	// the treshold SAD is picSizeInMBs * 4096 or picSizeInMBs << 12
+	if (sad > (picSizeInMBs << 12))
+	{
+		return NAL_UNIT_TYPE_IDR;
+	}
+	else
+	{
+		return NAL_UNIT_TYPE_NOT_IDR;
+	}
 }

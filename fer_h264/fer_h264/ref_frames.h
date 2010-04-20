@@ -16,3 +16,5 @@ void decodePictureNumbers();
 void initialisationProcess();
 
 void modificationProcess();
+
+int selectNALUnitType();
