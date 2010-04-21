@@ -12,6 +12,7 @@
 #include "mode_pred.h"
 #include "moestimation.h"
 #include "quantizationTransform.h"
+#include "rbsp_decoding.h"
 
 void RBSP_decode(NALunit nal_unit)
 {
@@ -509,8 +510,14 @@ void RBSP_encode(NALunit &nal_unit)
 		int predL[16][16], predCb[8][8], predCr[8][8];
 		int intra16x16PredMode;
 		int mb_skip_run = 0;
+
+
+		unsigned int macroblock_size;
+
 		for (CurrMbAddr = 0; CurrMbAddr < shd.PicSizeInMbs; CurrMbAddr++)
 		{
+			macroblock_size=0;
+
 			// TODO: Try avoiding this.
 			clear_residual_structures();
 			if ((shd.slice_type != I_SLICE) && (shd.slice_type != SI_SLICE))
@@ -523,6 +530,7 @@ void RBSP_encode(NALunit &nal_unit)
 					continue;
 				}
 				expGolomb_UC(mb_skip_run);
+
 				mb_skip_run = 0;
 
 				quantizationTransform(predL, predCb, predCr);
@@ -555,6 +563,12 @@ void RBSP_encode(NALunit &nal_unit)
 				}
 				mb_type_array[CurrMbAddr] = mb_type;
 			}
+
+			macroblock_size=coded_mb_size();
+			
+			//Zoltan: Nakon ove linije u macroblock_size je velicina MB-a u bitovima, odnosno zbroj svega
+			//			sto ce slijediti iz donjeg koda (inter MV-ovi ili intra podaci)
+
 
 			// Norm: start macroblock_layer()
 			expGolomb_UC(mb_type);
@@ -636,9 +650,10 @@ void RBSP_encode(NALunit &nal_unit)
 			else
 			{
 				clear_residual_structures();
-			}			
+			}
 		}
-		
+	
+
 		if (mb_skip_run > 0)
 		{
 			expGolomb_UC(mb_skip_run);
@@ -653,4 +668,136 @@ void RBSP_encode(NALunit &nal_unit)
 		}
 		modificationProcess();
 	}
+}
+
+//MB size testing function
+
+unsigned int coded_mb_size()
+{
+	unsigned int totalSize=0;
+
+	totalSize+=expgolomb_UC_codes[mb_type][0]*2+1;
+
+	if ((mb_type != I_4x4) && (MbPartPredMode(mb_type,0) != Intra_16x16) && (NumMbPart(mb_type) == 4))
+	{
+		int mbPartIdx;
+		for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
+		{
+			totalSize+=expgolomb_UC_codes[sub_mb_type[mbPartIdx]][0]*2+1;
+		}
+		for (mbPartIdx = 0; mbPartIdx < 4; mbPartIdx++)
+		{
+			for (int subMbPartIdx = 0; subMbPartIdx < NumSubMbPart(sub_mb_type[mbPartIdx]); subMbPartIdx++)
+			{
+				totalSize+=expgolomb_UC_codes[SC_to_UC(mvd_l0[mbPartIdx][subMbPartIdx][0])][0]*2+1;
+				totalSize+=expgolomb_UC_codes[SC_to_UC(mvd_l0[mbPartIdx][subMbPartIdx][1])][0]*2+1;
+			}
+		}
+	}
+	if ((MbPartPredMode(mb_type,0) == Intra_4x4) || (MbPartPredMode(mb_type,0) == Intra_16x16))
+	{
+		if (MbPartPredMode(mb_type, 0) == Intra_4x4)
+		{
+			for(int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+			{
+				totalSize++;
+				if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == false)
+				{
+					totalSize+=3;
+				}
+			}
+			
+		}
+
+		totalSize+=expgolomb_UC_codes[intra_chroma_pred_mode][0]*2+1;
+	}
+	else
+	{
+		for (int mbPartIdx = 0; mbPartIdx < NumMbPart(mb_type); mbPartIdx++)
+		{
+			totalSize+=expgolomb_UC_codes[SC_to_UC(mvd_l0[mbPartIdx][0][0])][0]*2+1;
+			totalSize+=expgolomb_UC_codes[SC_to_UC(mvd_l0[mbPartIdx][0][1])][0]*2+1;
+		}
+	}
+
+	if (MbPartPredMode(mb_type, 0) != Intra_16x16)
+	{
+		int coded_block_pattern = (CodedBlockPatternChroma << 4) | CodedBlockPatternLuma;
+		if (MbPartPredMode(mb_type,0) == Intra_4x4)
+		{				
+			totalSize+=expgolomb_UC_codes[coded_block_pattern_to_codeNum_intra[coded_block_pattern]][0]*2+1;
+		}
+		else
+		{
+			totalSize+=expgolomb_UC_codes[coded_block_pattern_to_codeNum_inter[coded_block_pattern]][0]*2+1;
+		}
+	}
+
+	if ((CodedBlockPatternLuma > 0) || (CodedBlockPatternChroma > 0) ||
+		(MbPartPredMode(mb_type, 0) == Intra_16x16))
+	{
+		totalSize+=1;
+
+		int startIdx=0;
+		int endIdx=15;
+
+		if (startIdx == 0 && MbPartPredMode(mb_type, 0) == Intra_16x16)
+		{
+			invoked_for_Intra16x16DCLevel=1;
+			totalSize+=residual_block_cavlc_size(Intra16x16DCLevel, 0, 15, 16);
+			invoked_for_Intra16x16DCLevel=0;
+		}
+
+		
+		for (i8x8=0;i8x8<4;i8x8++)
+		{
+			for (i4x4=0;i4x4<4;i4x4++)
+			{
+				if (CodedBlockPatternLuma & (1<<i8x8))
+				{
+					if (endIdx>0 && MbPartPredMode(mb_type, 0) == Intra_16x16)
+					{
+						invoked_for_Intra16x16ACLevel=1;
+						totalSize+=residual_block_cavlc_size(Intra16x16ACLevel[i8x8*4+i4x4],(((startIdx-1)>0)?(startIdx-1):0),endIdx-1,15);
+						invoked_for_Intra16x16ACLevel=0;
+					}
+					else
+					{
+						invoked_for_LumaLevel=1;
+						totalSize+=residual_block_cavlc_size(LumaLevel[i8x8*4 + i4x4],startIdx,endIdx,16);
+						invoked_for_LumaLevel=0;
+					}
+				}
+			}
+		}
+
+		NumC8x8 = 4 / (SubWidthC * SubHeightC );
+		for (iCbCr=0; iCbCr<2; iCbCr++)
+		{
+			if ((CodedBlockPatternChroma & 3) && startIdx==0)
+			{
+				invoked_for_ChromaDCLevel=1;
+				totalSize+=residual_block_cavlc_size(ChromaDCLevel[iCbCr],0,4*NumC8x8-1, 4*NumC8x8);
+				invoked_for_ChromaDCLevel=0;
+			}
+		}
+
+		for (iCbCr=0;iCbCr<2;iCbCr++)
+		{
+			for (i8x8=0;i8x8<NumC8x8;i8x8++)
+			{
+				for (cb4x4BlkIdx=0; cb4x4BlkIdx<4; cb4x4BlkIdx++)
+				{
+					if ((CodedBlockPatternChroma & 2) && endIdx>0)
+					{
+						invoked_for_ChromaACLevel=1;
+						totalSize+=residual_block_cavlc_size(ChromaACLevel[iCbCr][i8x8*4+cb4x4BlkIdx],((startIdx-1)>0?(startIdx-1):0),endIdx-1,15);
+						invoked_for_ChromaACLevel=0;
+					}
+				}
+			}
+		}
+	}
+		
+return totalSize;
 }

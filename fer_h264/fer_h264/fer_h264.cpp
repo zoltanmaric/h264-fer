@@ -9,6 +9,7 @@
 #include "h264_globals.h"
 #include "residual_tables.h"
 #include "ref_frames.h"
+#include "expgolomb.h"
 
 void decode()
 {
@@ -40,10 +41,11 @@ void decode()
 void encode()
 {
 	stream = fopen("big_buck_bunny.264", "wb");
-	yuvinput = fopen("big_buck_bunny.y4m", "rb");
+	yuvinput = fopen("c:\\big_buck_bunny.y4m", "rb");
 	yuvoutput = fopen("reference.yuv","wb");
 
 	generate_residual_level_tables();
+	init_expgolomb_UC_codes();
 
 	frameCount = 0;
 	NALunit nu;

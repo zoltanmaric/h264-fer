@@ -2,48 +2,12 @@
 #include "residual.h"
 #include "h264_globals.h"
 
-//TEST INSERT
-
 int LumaDCLevel[16];
 int LumaACLevel[16][16];
 int ChromaDCLevelX[2][4];
 int ChromaACLevelX[2][4][16];
 
 int number_of_mmc_operations;
-
-mode_pred_info *mpi=NULL;
-
-///// nC / TotalCoeff stuff /////
-
-static inline int get_luma_nN(mode_pred_info *mpi, int x, int y) {
-  if(x<0 || y<0) return -1;
-  return ModePredInfo_TotalCoeffL(mpi,x>>2,y>>2);
-}
-
-static inline int get_chroma_nN(mode_pred_info *mpi, int x, int y, int iCbCr) {
-  if(x<0 || y<0) return -1;
-  return ModePredInfo_TotalCoeffC(mpi,x>>3,y>>3,iCbCr);
-}
-
-int get_luma_nC(mode_pred_info *mpi, int x, int y) {
-  int nA=get_luma_nN(mpi,x-4,y);
-  int nB=get_luma_nN(mpi,x,y-4);
-  if(nA<0  && nB<0)  return 0;
-  if(nA>=0 && nB>=0) return (nA+nB+1)>>1;
-  if(nA>=0) return nA;
-       else return nB;
-}
-
-int get_chroma_nC(mode_pred_info *mpi, int x, int y, int iCbCr) {
-  int nA=get_chroma_nN(mpi,x-8,y,iCbCr);
-  int nB=get_chroma_nN(mpi,x,y-8,iCbCr);
-  if(nA<0  && nB<0)  return 0;
-  if(nA>=0 && nB>=0) return (nA+nB+1)>>1;
-  if(nA>=0) return nA;
-       else return nB;
-}
-
-
 
 //Inter prediction slices - Macroblock types
 //Defined strictly by norm, page 121.

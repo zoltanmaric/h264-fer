@@ -2,6 +2,40 @@
 #include "expgolomb.h"
 #include <stdio.h>
 
+//Didn't encounter codeNums larger than 10000 (actually no codeNums larger than ~100) during testing
+unsigned int expgolomb_UC_codes[10000][2];
+
+void init_expgolomb_UC_codes()
+{
+	for (int codeNum=0;codeNum<10000;codeNum++)
+	{
+		unsigned int prefix_length=1;
+		unsigned int upper_boundary=2;
+		unsigned int lower_boundary=1;
+
+		unsigned int suffix;
+
+		if (codeNum==0)
+		{
+			expgolomb_UC_codes[codeNum][0]=0;
+			expgolomb_UC_codes[codeNum][1]=0;
+		}
+		else
+		{
+			while (codeNum>upper_boundary)
+			{
+				prefix_length++;
+				lower_boundary = upper_boundary + 1;
+				upper_boundary = lower_boundary << 1;
+			}
+
+			suffix=codeNum-(1<<prefix_length)+1;
+			expgolomb_UC_codes[codeNum][0]=prefix_length;
+			expgolomb_UC_codes[codeNum][1]=suffix;
+		}
+	}
+}
+
 //Coder functions
 
 //There are two of these array (one is in rawreader), with different ordering
@@ -47,41 +81,15 @@ void golombRice_SC(int codeNum, unsigned int VLCNum)
 
 void expGolomb_UC(unsigned int codeNum)
 {
-	//"prefix_length" is equal to "suffix_length"
-	unsigned int prefix_length=1;
-
-	unsigned int upper_boundary=2;
-	unsigned int lower_boundary=1;
-
-	unsigned int suffix;
-
 	if (codeNum==0)
 	{
 		writeOnes(1);
 	}
 	else
 	{
-		while (codeNum>upper_boundary)
-		{
-			prefix_length++;
-			lower_boundary = upper_boundary + 1;
-			upper_boundary = lower_boundary << 1;
-			
-			//temp_boundary=upper_boundary;
-			//upper_boundary=(lower_boundary*2)+1;
-			//lower_boundary=temp_boundary+1;
-		}
-
-		suffix=codeNum-(1<<prefix_length)+1;
-
-		unsigned char suffixRbspValue[4];
-
-		UINT_to_RBSP_size_known(suffix, prefix_length, suffixRbspValue);
-
-		writeZeros(prefix_length);
+		writeZeros(expgolomb_UC_codes[codeNum][0]);
 		writeOnes(1);
-		//writeRawBits(prefix_length, suffixRbspValue);
-		writeRawBits(prefix_length, suffix);
+		writeRawBits(expgolomb_UC_codes[codeNum][0], expgolomb_UC_codes[codeNum][1]);
 	}
 }
 
@@ -97,6 +105,18 @@ void expGolomb_SC(int codeNum)
 	}
 
 	expGolomb_UC(codeNum);
+}
+
+unsigned int SC_to_UC(int codeNum)
+{
+	if (codeNum<=0)
+	{
+		return (unsigned int)((-codeNum)*2);
+	}
+	else
+	{
+		return (unsigned int)((codeNum*2)-1);
+	}
 }
 
 //Decoder functions

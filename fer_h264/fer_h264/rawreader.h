@@ -33,3 +33,4 @@ extern unsigned int RBSP_write_current_byte;
 extern unsigned int RBSP_write_current_bit;
 extern unsigned int RBSP_write_total_size;
 extern unsigned char *RBSP_write_data;
+extern unsigned int bitcount;
