@@ -1,5 +1,9 @@
 #pragma once
 
+extern unsigned int expgolomb_UC_codes[10000][2];
+void init_expgolomb_UC_codes();
+unsigned int SC_to_UC(int codeNum);
+
 unsigned int expGolomb_UD();
 
 signed int expGolomb_SD();

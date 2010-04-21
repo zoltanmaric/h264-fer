@@ -1,51 +1,9 @@
 #pragma once
 
-// TEST INSERT
-
-
-typedef struct _mode_pred_info {
-  // per-macroblock information     (16x16)
-  int MbWidth, MbHeight, MbPitch;
-  int *MbMode;
-  // per-chroma block information    (8x8)
-  int CbWidth, CbHeight, CbPitch;
-  int *TotalCoeffC[2];
-  // per-transform block information (4x4)
-  int TbWidth, TbHeight, TbPitch;
-  int *TotalCoeffL;
-  int *Intra4x4PredMode;
-  int *MVx,*MVy;
-} mode_pred_info;
-
-
-
-#define ModePredInfo_MbMode(mpi,x,y) (mpi->MbMode[(y)*mpi->MbPitch+(x)])
-#define ModePredInfo_TotalCoeffC(mpi,x,y,iCbCr) (mpi->TotalCoeffC[iCbCr][(y)*mpi->CbPitch+(x)])
-#define ModePredInfo_TotalCoeffL(mpi,x,y) (mpi->TotalCoeffL[(y)*mpi->TbPitch+(x)])
-#define ModePredInfo_Intra4x4PredMode(mpi,x,y) (mpi->Intra4x4PredMode[(y)*mpi->TbPitch+(x)])
-#define ModePredInfo_MVx(mpi,x,y) (mpi->MVx[(y)*mpi->TbPitch+(x)])
-#define ModePredInfo_MVy(mpi,x,y) (mpi->MVy[(y)*mpi->TbPitch+(x)])
-
-
-// some macros for easier access to the various ModePredInfo structures
-#define LumaDC_nC     get_luma_nC(mpi,(mb_pos_x*16),(mb_pos_y*16))
-#define LumaAC_nC     get_luma_nC(mpi,(mb_pos_x*16)+Intra4x4ScanOrder[i8x8*4+i4x4][0],(mb_pos_y*16)+Intra4x4ScanOrder[i8x8*4+i4x4][1])
-#define ChromaDC_nC   -1
-#define ChromaAC_nC   get_chroma_nC(mpi,(mb_pos_x*16)+(i4x4&1)*8,(mb_pos_y*16)+(i4x4>>1)*8,iCbCr)
-#define LumaAdjust    ModePredInfo_TotalCoeffL(mpi,((mb_pos_x*16)+Intra4x4ScanOrder[i8x8*4+i4x4][0])>>2,((mb_pos_y*16)+Intra4x4ScanOrder[i8x8*4+i4x4][1])>>2) =
-#define ChromaAdjust  ModePredInfo_TotalCoeffC(mpi,((mb_pos_x*16)+(i4x4&1)*8)>>3,((mb_pos_y*16)+(i4x4>>1)*8)>>3,iCbCr) =
-
-
-
-int get_luma_nC(mode_pred_info *mpi, int x, int y);
-int get_chroma_nC(mode_pred_info *mpi, int x, int y, int iCbCr);
-
 extern int LumaDCLevel[16];
 extern int LumaACLevel[16][16];
 extern int ChromaDCLevelX[2][4];
 extern int ChromaACLevelX[2][4][16];
-
-extern mode_pred_info *mpi;
 
 //Constants used for "get_nC" function
 #define LUMA 0

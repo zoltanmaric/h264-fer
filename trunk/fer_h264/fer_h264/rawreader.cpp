@@ -4,6 +4,7 @@
 //Decoder variables
 unsigned int RBSP_current_byte;
 unsigned int RBSP_current_bit;
+unsigned int bitcount;
 
 unsigned int RBSP_bit;
 
@@ -52,6 +53,7 @@ void initRawReader(unsigned char *RBSP,unsigned int size)
 
 void initRawWriter(unsigned char *RBSP_write, unsigned int size)
 {
+	bitcount=0;
 	RBSP_write_current_byte=0;
 	RBSP_write_current_bit=0;
 	RBSP_write_total_size=size;
@@ -107,6 +109,7 @@ void dumpWriteBuffer()
 
 bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 {
+
 	unsigned int count=0, offset;
 	while(count<N)
 	{
@@ -129,6 +132,7 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 			// the left, so it has to be moved to
 			// correspond to the right value.
 			data >>= offset;
+				bitcount=RBSP_write_current_byte*8+RBSP_write_current_bit;
 			return writeRawBits(N, data);
 		}
 		else
@@ -157,12 +161,14 @@ bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
 		count++;
 	}
 
+		bitcount=RBSP_write_current_byte*8+RBSP_write_current_bit;
 	return true;
 }
 
 // Write up to 32 bits of data
 bool writeRawBits(int N, unsigned int data)
 {
+	bitcount+=N;
 	int count = 0;
 	while (count < N)
 	{
@@ -193,6 +199,7 @@ bool writeRawBits(int N, unsigned int data)
 
 	}
 
+		bitcount=RBSP_write_current_byte*8+RBSP_write_current_bit;
 	return true;
 }
 

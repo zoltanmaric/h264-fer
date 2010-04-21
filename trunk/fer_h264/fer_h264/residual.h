@@ -18,6 +18,12 @@ void inverse_4x4_luma_block_scanning_process(int luma4x4BlkIdx, int *x, int *y);
 extern int ChromaDCLevel[2][4];
 extern int ChromaACLevel[2][4][16];
 
+
+extern int luma4x4BlkIdx, cb4x4BlkIdx;
+extern int iCbCr;
+
+extern int i8x8, i4x4;
+
 extern int NumC8x8;
 
 extern int coeffLevel_luma_DC[16];
@@ -97,3 +103,5 @@ void residual_block_cavlc(int ChromaDCLevel[16], int, int, int);
 void residual_write();
 void residual_luma_write(int i16x16DClevel[16], int i16x16AClevel[16][16], int level[16][16], int startIdx, int endIdx);
 void residual_block_cavlc_write(int coeffLevel[16], int startIdx, int endIdx, int maxNumCoeff, struct additional_level_data);
+
+unsigned int residual_block_cavlc_size(int coeffLevel[16], int startIdx, int endIdx, int maxNumCoeff);
