@@ -192,8 +192,6 @@ void shd_write(NALunit &nal_unit)
 	expGolomb_UC(shd.slice_type);
 	expGolomb_UC(shd.pic_parameter_set_id);
 
-	//UINT_to_RBSP_size_known(shd.frame_num,sps.log2_max_frame_num,buffer);
-	//writeRawBits(sps.log2_max_frame_num,buffer); 
 	writeRawBits(sps.log2_max_frame_num, shd.frame_num);
 
 	if(nal_unit.nal_unit_type==5)
@@ -201,8 +199,6 @@ void shd_write(NALunit &nal_unit)
 		expGolomb_UC(shd.idr_pic_id);
 	}
 
-	//UINT_to_RBSP_size_known(shd.pic_order_cnt_lsb,sps.log2_max_pic_order_cnt_lsb,buffer);
-	//writeRawBits(sps.log2_max_pic_order_cnt_lsb,buffer);
 	writeRawBits(sps.log2_max_pic_order_cnt_lsb, shd.pic_order_cnt_lsb);
 
 	if((shd.slice_type%5)==P_SLICE || (shd.slice_type%5)==B_SLICE || (shd.slice_type%5)==SP_SLICE)
@@ -225,6 +221,7 @@ void shd_write(NALunit &nal_unit)
 	}
 
 	expGolomb_SC(shd.slice_qp_delta);
+
 
 	//Deblocking filter flag is inferred as NOT PRESENT.
 	//This is copy-paste from shd reading functions
@@ -349,8 +346,6 @@ void sps_write()
 	shd.long_term_frame_idx = new int[sps.MaxFrameNum];
 	shd.max_long_term_frame_idx_plus1 = new int[sps.MaxFrameNum];
 	
-	//UINT_to_RBSP_size_known(sps.profile_idc, 8, buffer);
-	//writeRawBits(8, buffer);
 	writeRawBits(8, sps.profile_idc);
 
 	writeFlag(sps.constraint_set0_flag);
@@ -358,8 +353,6 @@ void sps_write()
 	writeFlag(sps.constraint_set2_flag);
 	writeZeros(5);
 
-	//UINT_to_RBSP_size_known(sps.level_idc, 8, buffer);
-	//writeRawBits(8, buffer);
 	writeRawBits(8, sps.level_idc);
 
 	expGolomb_UC(sps.seq_parameter_set_id);
@@ -396,7 +389,6 @@ void sps_write()
 	writeFlag(sps.direct_8x8_inference_flag);
 	writeFlag(sps.frame_cropping_flag);
 	writeFlag(sps.vui_parameters_present_flag);
-	
 }
 
 /////////////////////////////////////////////////
@@ -511,8 +503,6 @@ void pps_write()
 	expGolomb_UC(pps.num_ref_idx_l1_active-1);
 	writeFlag(pps.weighted_pred_flag);
 
-	//UINT_to_RBSP_size_known(pps.num_ref_idx_l1_active,2,buffer);
-	//writeRawBits(2,buffer);
 	writeRawBits(2, pps.num_ref_idx_l1_active);
 	expGolomb_SC(pps.pic_init_qp-26);
 	expGolomb_SC(pps.pic_init_qs-26);

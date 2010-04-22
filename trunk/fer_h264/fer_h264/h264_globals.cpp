@@ -1,4 +1,5 @@
 #include "headers_and_parameter_sets.h"
+#include "residual_tables.h"
 #include "residual.h"
 #include "h264_globals.h"
 
@@ -262,7 +263,6 @@ int init_h264_structures()
 	//mb_type_array=new int[sps.PicWidthInMbs*sps.FrameHeightInMbs];
 
 	init_cavlc_tables();
-
 
 	//TODO: init frame
 

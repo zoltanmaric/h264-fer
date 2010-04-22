@@ -59,16 +59,14 @@ void encode()
 	nu.nal_ref_idc = 1;			// non-zero for sps
 	nu.nal_unit_type = NAL_UNIT_TYPE_SPS;
 	RBSP_encode(nu);
-
 	writeNAL(nu);
 
 	// write picture paramater set:
 	nu.nal_ref_idc = 1;			// non-zero for pps
 	nu.nal_unit_type = NAL_UNIT_TYPE_PPS;
 	RBSP_encode(nu);
-
 	writeNAL(nu);
-	
+
 	nu.nal_ref_idc = 1;		// non-zero for reference
 	while (readFromY4M() != -1)
 	{		
