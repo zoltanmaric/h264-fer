@@ -20,6 +20,7 @@ int MF[6][4][4] =
 	{{7282,4559, 7282,4559},{4559,2893,4559,2893},{7282,4559, 7282,4559},{4559,2893,4559,2893}}
 };
 
+// Quantization factors based on level scale factor from decoder (round(reciprocal>>15))
 int LevelQuantize[6][4][4] =
 {
 	{{205, 158, 205, 158}, {158, 128, 158, 128}, {205, 158, 205, 158}, {158, 128, 158, 128}},
@@ -35,7 +36,8 @@ int Sign (int number)
 	if (number < 0) return (number * (-1));
 	else return number;
 }
-
+// --------------------------------------------------
+// Integer transformation process for residual blocks
 void forwardTransform4x4(int r[4][4], int d[4][4])
 {
 	// Y = C'*D'*X*B'*A'
@@ -173,6 +175,8 @@ void forwardTransform4x4(int r[4][4], int d[4][4])
 }
 
 
+// --------------------------------------------------
+// Integer transformation process for DC Luma Intra coefficients
 void forwardTransformDCLumaIntra(int f[4][4], int c[4][4]) //(int input[4][4], int output[4][4])
 {
 	int i, j;
@@ -235,43 +239,47 @@ void forwardTransformDCLumaIntra(int f[4][4], int c[4][4]) //(int input[4][4], i
 
 	int d[4][4], e[4][4], g[4][4];
 
+	// D'*X
 	for (j = 0; j < 4; j++)
 	{
-		g[0][j] = f[0][j] + f[3][j];
-		g[1][j] = f[1][j] + f[2][j];
-		g[2][j] = f[1][j] - f[2][j];
-		g[3][j] = f[0][j] - f[3][j];
+		g[0][j] = (f[0][j] + f[3][j]) >> 1;
+		g[1][j] = (f[1][j] + f[2][j]) >> 1;
+		g[2][j] = (f[1][j] - f[2][j]) >> 1;
+		g[3][j] = (f[0][j] - f[3][j]) >> 1;
 	}
 
+	// C'*(D'*X)
 	for (j = 0; j < 4; j++)
 	{
-		e[0][j] = g[0][j] + g[1][j];
-		e[1][j] = g[3][j] + g[2][j];
-		e[2][j] = g[0][j] - g[1][j];
-		e[3][j] = g[3][j] - g[2][j];
+		e[0][j] = (g[0][j] + g[1][j]) >> 1;
+		e[1][j] = (g[3][j] + g[2][j]) >> 1;
+		e[2][j] = (g[0][j] - g[1][j]) >> 1;
+		e[3][j] = (g[3][j] - g[2][j]) >> 1;
 	}
 
+	// (C'*D'*X)*B'
 	for (i = 0; i < 4; i++)
 	{
-		d[i][0] = e[i][0] + e[i][3];
-		d[i][1] = e[i][1] + e[i][2];
-		d[i][2] = e[i][1] - e[i][2];
-		d[i][3] = e[i][0] - e[i][3];
+		d[i][0] = (e[i][0] + e[i][3]) >> 1;
+		d[i][1] = (e[i][1] + e[i][2]) >> 1;
+		d[i][2] = (e[i][1] - e[i][2]) >> 1;
+		d[i][3] = (e[i][0] - e[i][3]) >> 1;
 	}
-
+	
+	// (C'*D'*X*B')*A'
 	for (i = 0; i < 4; i++)
 	{
-		c[i][0] = (d[i][0] + d[i][1]) >> 4;
-		c[i][1] = (d[i][3] + d[i][2]) >> 4;
-		c[i][2] = (d[i][0] - d[i][1]) >> 4;
-		c[i][3] = (d[i][3] - d[i][2]) >> 4;
+		c[i][0] = (d[i][0] + d[i][1]) >> 1;
+		c[i][1] = (d[i][3] + d[i][2]) >> 1;
+		c[i][2] = (d[i][0] - d[i][1]) >> 1;
+		c[i][3] = (d[i][3] - d[i][2]) >> 1;
 	}
 
 }
 
 
 // --------------------------------------------------
-// 8.5.11.1 Transformation process for chroma DC transform coefficients
+// Integer transformation process for Chroma DC coefficients
 void forwardTransformDCChroma (int f[2][2], int c[2][2])
 {
 	int d[2][2];
@@ -302,6 +310,8 @@ void forwardTransformDCChroma (int f[2][2], int c[2][2])
 }
 
 
+// --------------------------------------------------
+// Quantization process for residual blocks
 void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra, bool Intra16x16OrChroma)
 {
 	int qbits = 15 + qP/6;
@@ -347,6 +357,8 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra, boo
 	}
 }
 
+// --------------------------------------------------
+// Quantization process for DC Luma Intra coefficients
 void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 {
 	int qP_calculate = qP/6;
@@ -397,6 +409,8 @@ void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 	}*/
 }
 
+// --------------------------------------------------
+// Quantization process for DC Chroma coefficients
 void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
 {
 	int qbits = 15 + qP/6;
