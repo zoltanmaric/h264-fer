@@ -47,7 +47,6 @@ void forwardTransform4x4(int r[4][4], int d[4][4])
 	{
 		for (j = 0; j < 4; j++)
 		{
-			// Shifted left by 5 for increased precision.
 			h[i][j] = ((r[i][j] << 6) - 32);
 		}
 	}
@@ -238,40 +237,40 @@ void forwardTransformDCLumaIntra(int f[4][4], int c[4][4]) //(int input[4][4], i
 
 	for (j = 0; j < 4; j++)
 	{
-		g[0][j] = (f[0][j] + f[3][j]) >> 1;
-		g[1][j] = (f[1][j] + f[2][j]) >> 1;
-		g[2][j] = (f[1][j] - f[2][j]) >> 1;
-		g[3][j] = (f[0][j] - f[3][j]) >> 1;
+		g[0][j] = f[0][j] + f[3][j];
+		g[1][j] = f[1][j] + f[2][j];
+		g[2][j] = f[1][j] - f[2][j];
+		g[3][j] = f[0][j] - f[3][j];
 	}
 
 	for (j = 0; j < 4; j++)
 	{
-		e[0][j] = (g[0][j] + g[1][j]) >> 1;
-		e[1][j] = (g[3][j] + g[2][j]) >> 1;
-		e[2][j] = (g[0][j] - g[1][j]) >> 1;
-		e[3][j] = (g[3][j] - g[2][j]) >> 1;
+		e[0][j] = g[0][j] + g[1][j];
+		e[1][j] = g[3][j] + g[2][j];
+		e[2][j] = g[0][j] - g[1][j];
+		e[3][j] = g[3][j] - g[2][j];
 	}
 
 	for (i = 0; i < 4; i++)
 	{
-		d[i][0] = (e[i][0] + e[i][3]) >> 1;
-		d[i][1] = (e[i][1] + e[i][2]) >> 1;
-		d[i][2] = (e[i][1] - e[i][2]) >> 1;
-		d[i][3] = (e[i][0] - e[i][3]) >> 1;
+		d[i][0] = e[i][0] + e[i][3];
+		d[i][1] = e[i][1] + e[i][2];
+		d[i][2] = e[i][1] - e[i][2];
+		d[i][3] = e[i][0] - e[i][3];
 	}
 
 	for (i = 0; i < 4; i++)
 	{
-		c[i][0] = (d[i][0] + d[i][1]) >> 1;
-		c[i][1] = (d[i][3] + d[i][2]) >> 1;
-		c[i][2] = (d[i][0] - d[i][1]) >> 1;
-		c[i][3] = (d[i][3] - d[i][2]) >> 1;
+		c[i][0] = (d[i][0] + d[i][1]) >> 4;
+		c[i][1] = (d[i][3] + d[i][2]) >> 4;
+		c[i][2] = (d[i][0] - d[i][1]) >> 4;
+		c[i][3] = (d[i][3] - d[i][2]) >> 4;
 	}
 
 }
 
 
-// --------------------------------------------------//
+// --------------------------------------------------
 // 8.5.11.1 Transformation process for chroma DC transform coefficients
 void transformDCChromaF (int c[2][2], int f[2][2])
 {
@@ -340,22 +339,52 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra, boo
 
 void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 {
-	int qbits = 15 + qP/6;
-	int qPMod = qP % 6;
-	int f_adjust;	
-
-	f_adjust = (1 << qbits) / 3;	
-
-	for (int i = 0; i < 4; i++)
+	int qP_calculate = qP/6;
+	int scaleL = LevelScale[qP%6][0][0];
+	int qbits;
+	
+	if (qP >= 36)
 	{
-		for (int j = 0; j < 4; j++)
+		qbits = qP_calculate - 6;
+		for (int i = 0; i < 4; i++)
 		{
-			int sign = ExtractSign(f[i][j]);
-			if (sign) f[i][j] =  sign * f[i][j];	
-			c[i][j] = (f[i][j] * MF[qPMod][0][0] + 2 * f_adjust) >> (qbits + 3);
-			if (sign) c[i][j] =  sign * c[i][j];
+			for (int j = 0; j < 4; j++)
+			{
+				c[i][j] = (f[i][j] >> qbits) / scaleL;
+			}
 		}
 	}
+	else
+	{
+		int adjust = 1 << (5 - qP_calculate);
+		qbits = 6 - qP_calculate;
+
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				c[i][j] = ((f[i][j] << qbits) - adjust) / scaleL;
+			}
+		}
+	}
+
+	// Glupi rièardson.
+	//int qbits = 15 + qP/6;
+	//int qPMod = qP % 6;
+	//int f_adjust;	
+
+	//f_adjust = (1 << qbits) / 3;	
+
+	//for (int i = 0; i < 4; i++)
+	//{
+	//	for (int j = 0; j < 4; j++)
+	//	{
+	//		int sign = ExtractSign(f[i][j]);
+	//		if (sign) f[i][j] =  sign * f[i][j];	
+	//		c[i][j] = (f[i][j] * MF[qPMod][0][0] + 2 * f_adjust) >> (qbits + 3);
+	//		if (sign) c[i][j] =  sign * c[i][j];
+	//	}
+	//}
 }
 
 void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
@@ -461,7 +490,7 @@ void scanDCChroma(int rDCChroma[2][2], int list[4])
 	}
 }
 
-void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8])
+void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8], bool reconstruct)
 {
 	int diffL4x4[4][4];						// unprocessed luma residual
 	int DCLuma[4][4];						// DC luma coefficients for Intra16x16 prediction
@@ -514,7 +543,10 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 				forwardResidual(qP, diffL4x4, rLuma, false, false);
 				transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
 				// picture reconstruction:
-				transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
+				if (reconstruct == true)
+				{
+					transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
+				}
 			}
 		}
 
@@ -524,7 +556,10 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			transformScan(rDCLuma, Intra16x16DCLevel, false);
 
 			//picture reconstruction:
-			transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy);
+			if (reconstruct == true)
+			{
+				transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy);
+			}
 			
 			//InverseDCLumaIntra(8, qP, rDCLuma, reconstructedDCY);
 
@@ -621,9 +656,11 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 	scanDCChroma(rDCCr, ChromaDCLevel[1]);
 
 	// Reconstruction process:
-
-	transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, QPy, true);
-	transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, QPy, false);
+	if (reconstruct == true)
+	{
+		transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, QPy, true);
+		transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, QPy, false);
+	}
 
 	/*InverseDCChroma(8, qP, rDCCb, reconstructedDCChroma[0]);
 	InverseDCChroma(8, qP, rDCCb, reconstructedDCChroma[1]);

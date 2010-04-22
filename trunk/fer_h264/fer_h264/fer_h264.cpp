@@ -41,7 +41,7 @@ void decode()
 void encode()
 {
 	stream = fopen("big_buck_bunny.264", "wb");
-	yuvinput = fopen("c:\\big_buck_bunny.y4m", "rb");
+	yuvinput = fopen("big_buck_bunny.y4m", "rb");
 	yuvoutput = fopen("reference.yuv","wb");
 
 	generate_residual_level_tables();
@@ -74,7 +74,7 @@ void encode()
 		if (frameCount < 301) continue;
 
 		printf("Frame #%d\n", frameCount);
-		writeToYUV();
+		//writeToYUV();
 
 		nu.nal_unit_type = selectNALUnitType();
 		RBSP_encode(nu);

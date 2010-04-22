@@ -166,10 +166,9 @@ void transformDecodingIntra_16x16Luma(int Intra16x16DCLevel[16], int Intra16x16A
 	int lumaList[16];
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
-		int x = InverseRasterScan(luma4x4BlkIdx / 4, 2, 2, 4, 0) +
-				InverseRasterScan(luma4x4BlkIdx % 4, 1, 1, 2, 0);
-		int y = InverseRasterScan(luma4x4BlkIdx / 4, 2, 2, 4, 1) +
-				InverseRasterScan(luma4x4BlkIdx % 4, 1, 1, 2, 1);
+		int x = Intra4x4ScanOrder[luma4x4BlkIdx][0] >> 2;
+		int y = Intra4x4ScanOrder[luma4x4BlkIdx][1] >> 2;
+
 		lumaList[0] = dcY[y][x];
 		for (int k = 1; k < 16; k++)
 		{

@@ -6,6 +6,10 @@
 #include "h264_math.h"
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
+#include "rbsp_decoding.h"
+
+
+const int intraToChromaPredMode[4] = {2,1,0,3};
 
 // Derivation process for neighbouring locations (6.4.11)
 // luma: true if invoked for luma locations, false if invoked for chroma
@@ -915,11 +919,11 @@ int sadLuma16x16(int predL[16][16])
 	return sad;
 }
 
-// Çalculates the sum of absolute differences
+// Çalculates the sum of absolute transformed differences
 // for a predicted 4x4 luma submacroblock.
-int sadLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx)
+int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx)
 {
-	int sad = 0;
+	int satd = 0;
 
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
@@ -927,15 +931,27 @@ int sadLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx)
 	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
 
+	int diffL4x4[4][4];
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			sad += ABS(frame.L[yP+y0+i][xP+x0+j] - pred4x4L[i][j]);
+			diffL4x4[i][j] = frame.L[yP+y0+i][xP+x0+j] - pred4x4L[i][j];
 		}
 	}
 
-	return sad;
+	int rLuma[4][4];
+	forwardResidual(QPy, diffL4x4, rLuma, true, false);
+
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			satd += ABS(rLuma[i][j]);
+		}
+	}
+
+	return satd;
 }
 
 // Calculates the sum of absolute differences
@@ -1038,6 +1054,8 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	int sad, Intra16x16PredMode;
 	int pred4x4L[4][4];
 	int mbAddrA, mbAddrB;
+	int bitLoad;
+	int chosenChromaPrediction;
 
 	getNeighbouringMacroblocks(&mbAddrA, &mbAddrB);
 	int min = INT_MAX;
@@ -1053,68 +1071,79 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			continue;
 		}
 		Intra16x16SamplePrediction(predL, i);
-		sad = sadLuma16x16(predL);
-		if (sad < min)
+
+		// Choose the same prediction mode for chroma:
+		intra_chroma_pred_mode = intraToChromaPredMode[i];
+		IntraChromaSamplePrediction(predCr, predCb);
+
+		bitLoad = coded_mb_size(i, predL, predCb, predCr);
+		if (bitLoad < min)
 		{
-			min = sad;
+			min = bitLoad;
 			Intra16x16PredMode = i;
-			if (min == 0)
+			chosenChromaPrediction = intra_chroma_pred_mode;
+		}
+	}
+
+	// Store the chosen chroma prediction:
+	intra_chroma_pred_mode = chosenChromaPrediction;
+	IntraChromaSamplePrediction(predCr, predCb);
+
+	// 4x4 prediction:
+	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+	{
+		int min4x4 = INT_MAX;
+		// getNeighbourAddresses also calculates the address of the neighbouring
+		// macroblock which is not used in this function, so it's stored in the
+		// variable temp.
+		int luma4x4BlkIdxA, luma4x4BlkIdxB, temp;
+		getNeighbourAddresses(luma4x4BlkIdx, true, &temp, &luma4x4BlkIdxA);
+		getNeighbourAddresses(luma4x4BlkIdx, false, &temp, &luma4x4BlkIdxB);
+		for(int intra4x4PredMode = 0; intra4x4PredMode < 9; intra4x4PredMode++)
+		{
+			// Skip prediction if required neighbouring submacroblocks are not available
+			if (((intra4x4PredMode == 0) && (luma4x4BlkIdxB == -1)) ||
+				((intra4x4PredMode == 1) && (luma4x4BlkIdxA == -1)) ||
+				((intra4x4PredMode == 3) && (luma4x4BlkIdxB == -1)) ||
+				((intra4x4PredMode == 4) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
+				((intra4x4PredMode == 5) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
+				((intra4x4PredMode == 6) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
+				((intra4x4PredMode == 7) && (luma4x4BlkIdxB == -1)) ||
+				((intra4x4PredMode == 8) && (luma4x4BlkIdxA == -1)))
 			{
-				break;
+				continue;
+			}
+			
+			Intra4x4SamplePrediction(luma4x4BlkIdx, intra4x4PredMode, pred4x4L);
+
+			int satd4x4 = satdLuma4x4(pred4x4L, luma4x4BlkIdx);
+			if (satd4x4 < min4x4)
+			{
+				int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;
+				Intra4x4PredMode[absIdx] = intra4x4PredMode;
+				min4x4 = satd4x4;
+
+				int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
+				int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
+				for (int y = 0; y < 4; y++)
+				{
+					for (int x = 0; x < 4; x++)
+					{
+						predL[y0+y][x0+x] = pred4x4L[y][x];
+					}
+				}
+				if (min4x4 == 0)
+				{
+					break;
+				}					
 			}
 		}
 	}
 
-	// Skip 4x4 prediction if 16x16 gives exact prediction
-	if (min > 0)
+	bitLoad = coded_mb_size(-1, predL, predCb, predCr);
+	if (bitLoad < min)
 	{
-		// 4x4 prediction:
-		sad = 0;
-		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
-		{
-			int min4x4 = INT_MAX;
-			// getNeighbourAddresses also calculates the address of the neighbouring
-			// macroblock which is not used in this function, so it's stored in the
-			// variable temp.
-			int luma4x4BlkIdxA, luma4x4BlkIdxB, temp;
-			getNeighbourAddresses(luma4x4BlkIdx, true, &temp, &luma4x4BlkIdxA);
-			getNeighbourAddresses(luma4x4BlkIdx, false, &temp, &luma4x4BlkIdxB);
-			for(int intra4x4PredMode = 0; intra4x4PredMode < 9; intra4x4PredMode++)
-			{
-				// Skip prediction if required neighbouring submacroblocks are not available
-				if (((intra4x4PredMode == 0) && (luma4x4BlkIdxB == -1)) ||
-					((intra4x4PredMode == 1) && (luma4x4BlkIdxA == -1)) ||
-					((intra4x4PredMode == 3) && (luma4x4BlkIdxB == -1)) ||
-					((intra4x4PredMode == 4) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
-					((intra4x4PredMode == 5) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
-					((intra4x4PredMode == 6) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
-					((intra4x4PredMode == 7) && (luma4x4BlkIdxB == -1)) ||
-					((intra4x4PredMode == 8) && (luma4x4BlkIdxA == -1)))
-				{
-					continue;
-				}
-				
-				Intra4x4SamplePrediction(luma4x4BlkIdx, intra4x4PredMode, pred4x4L);
-
-				int sad4x4 = sadLuma4x4(pred4x4L, luma4x4BlkIdx);
-				if (sad4x4 < min4x4)
-				{
-					int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;
-					Intra4x4PredMode[absIdx] = intra4x4PredMode;
-					min4x4 = sad4x4;
-					if (min4x4 == 0)
-					{
-						break;
-					}
-				}
-			}
-			sad += min4x4;
-		}
-
-		if (sad < min)
-		{
-			Intra16x16PredMode = -1;	// Choose 4x4 prediction mode
-		}
+		Intra16x16PredMode = -1;		// Choose 4x4 prediction mode
 	}
 
 	// Store the chosen prediction result in predL[16][16]
@@ -1155,35 +1184,35 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		Intra16x16SamplePrediction(predL, Intra16x16PredMode);
 	}
 
-	min = INT_MAX;
-	int finalPredMode;
-	for (int i = 0; i < 4; i++)
-	{
-		// Skip prediction if required neighbouring macroblocks are not available
-		if (((i == 1) && (mbAddrA == -1)) ||
-			((i == 2) && (mbAddrB == -1)) ||
-			((i == 3) && ((mbAddrA == -1) || (mbAddrB == -1))))
-		{
-			continue;
-		}
-		
-		intra_chroma_pred_mode = i;
-		IntraChromaSamplePrediction(predCr, predCb);
-		sad = sadChroma(predCb, predCr);
-		if (sad < min)
-		{
-			min = sad;
-			finalPredMode = i;
-			if (min == 0)
-			{
-				break;
-			}
-		}
-	}
+	//min = INT_MAX;
+	//int finalPredMode;
+	//for (int i = 0; i < 4; i++)
+	//{
+	//	// Skip prediction if required neighbouring macroblocks are not available
+	//	if (((i == 1) && (mbAddrA == -1)) ||
+	//		((i == 2) && (mbAddrB == -1)) ||
+	//		((i == 3) && ((mbAddrA == -1) || (mbAddrB == -1))))
+	//	{
+	//		continue;
+	//	}
+	//	
+	//	intra_chroma_pred_mode = i;
+	//	IntraChromaSamplePrediction(predCr, predCb);
+	//	sad = sadChroma(predCb, predCr);
+	//	if (sad < min)
+	//	{
+	//		min = sad;
+	//		finalPredMode = i;
+	//		if (min == 0)
+	//		{
+	//			break;
+	//		}
+	//	}
+	//}
 
-	// Store the chosen prediction result in predCb and predCr
-	intra_chroma_pred_mode = finalPredMode;
-	IntraChromaSamplePrediction(predCr, predCb);
+	//// Store the chosen prediction result in predCb and predCr
+	//intra_chroma_pred_mode = finalPredMode;
+	//IntraChromaSamplePrediction(predCr, predCb);
 
 	return Intra16x16PredMode;
 }

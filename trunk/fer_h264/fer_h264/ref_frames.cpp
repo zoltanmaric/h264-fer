@@ -186,6 +186,7 @@ int selectNALUnitType()
 {
 	unsigned long sad = 0;
 	unsigned long picSizeInMBs = PicWidthInMbs * PicHeightInMbs;
+	static unsigned int pFrameRun = 0;
 
 	if (dpb.L == NULL)
 	{
@@ -203,12 +204,14 @@ int selectNALUnitType()
 	// The chosen average treshold difference per macroblock
 	// is 4096, which corresponds to 16 per pixel. Therefore
 	// the treshold SAD is picSizeInMBs * 4096 or picSizeInMBs << 12
-	if (sad > (picSizeInMBs << 12))
+	if ((sad > (picSizeInMBs << 12)) || (pFrameRun == 30))
 	{
+		pFrameRun = 0;
 		return NAL_UNIT_TYPE_IDR;
 	}
 	else
 	{
+		pFrameRun++;
 		return NAL_UNIT_TYPE_NOT_IDR;
 	}
 }
