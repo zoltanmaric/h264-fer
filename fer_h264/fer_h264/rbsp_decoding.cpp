@@ -507,7 +507,7 @@ void RBSP_encode(NALunit &nal_unit)
 
 		shd_write(nal_unit);
 
-		int predL[16][16], predCb[8][8], predCr[8][8];
+		int predL[16][16] = {0}, predCb[8][8] = {0}, predCr[8][8] = {0};
 		int intra16x16PredMode;
 		int mb_skip_run = 0;
 
@@ -533,7 +533,7 @@ void RBSP_encode(NALunit &nal_unit)
 
 				mb_skip_run = 0;
 
-				quantizationTransform(predL, predCb, predCr);
+				quantizationTransform(predL, predCb, predCr, true);
 				setCodedBlockPattern();
 			}
 			else
@@ -544,7 +544,7 @@ void RBSP_encode(NALunit &nal_unit)
 				if (intra16x16PredMode == -1)
 				{
 					mb_type = I_4x4;
-					quantizationTransform(predL, predCb, predCr);
+					quantizationTransform(predL, predCb, predCr, true);
 					setCodedBlockPattern();
 				}
 				// intra16x16 prediction
@@ -552,7 +552,7 @@ void RBSP_encode(NALunit &nal_unit)
 				{
 					mb_type = intra16x16PredMode + 1;
 					
-					quantizationTransform(predL, predCb, predCr);
+					quantizationTransform(predL, predCb, predCr, true);
 					setCodedBlockPattern();
 
 					mb_type += (CodedBlockPatternChroma << 2);
@@ -564,7 +564,7 @@ void RBSP_encode(NALunit &nal_unit)
 				mb_type_array[CurrMbAddr] = mb_type;
 			}
 
-			macroblock_size=coded_mb_size();
+			//macroblock_size=coded_mb_size();
 			
 			//Zoltan: Nakon ove linije u macroblock_size je velicina MB-a u bitovima, odnosno zbroj svega
 			//			sto ce slijediti iz donjeg koda (inter MV-ovi ili intra podaci)
@@ -672,9 +672,39 @@ void RBSP_encode(NALunit &nal_unit)
 
 //MB size testing function
 
-unsigned int coded_mb_size()
+unsigned int coded_mb_size(int intra16x16PredMode, int predL[16][16], int predCb[8][8], int predCr[8][8])
 {
 	unsigned int totalSize=0;
+
+	if ((shd.slice_type != I_SLICE) && (shd.slice_type != SI_SLICE))
+	{
+		quantizationTransform(predL, predCb, predCr, false);
+		setCodedBlockPattern();
+	}
+	else
+	{
+		// intra4x4 prediction
+		if (intra16x16PredMode == -1)
+		{
+			mb_type = I_4x4;
+			quantizationTransform(predL, predCb, predCr, false);
+			setCodedBlockPattern();
+		}
+		// intra16x16 prediction
+		else
+		{
+			mb_type = intra16x16PredMode + 1;
+			
+			quantizationTransform(predL, predCb, predCr, false);
+			setCodedBlockPattern();
+
+			mb_type += (CodedBlockPatternChroma << 2);
+			if (CodedBlockPatternLuma == 15)
+			{
+				mb_type += 12;
+			}
+		}
+	}
 
 	totalSize+=expgolomb_UC_codes[mb_type][0]*2+1;
 
