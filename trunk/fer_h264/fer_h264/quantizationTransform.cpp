@@ -272,19 +272,29 @@ void forwardTransformDCLumaIntra(int f[4][4], int c[4][4]) //(int input[4][4], i
 
 // --------------------------------------------------
 // 8.5.11.1 Transformation process for chroma DC transform coefficients
-void transformDCChromaF (int c[2][2], int f[2][2])
+void forwardTransformDCChroma (int f[2][2], int c[2][2])
 {
 	int d[2][2];
 
-	d[0][0] = c[0][0] + c[1][0];
+	/*d[0][0] = c[0][0] + c[1][0];
 	d[0][1] = c[0][1] + c[1][1];
 	d[1][0] = c[0][0] - c[1][0];
-	d[1][1] = c[0][1] - c[1][1];
+	d[1][1] = c[0][1] - c[1][1];*/
 
-	f[0][0] = (d[0][0] + d[0][1]) >> 2;
+	d[0][0] = (f[0][0] + f[0][1]) >> 1;
+	d[0][1] = (f[0][0] - f[0][1]) >> 1;
+	d[1][0] = (f[1][0] + f[1][1]) >> 1;
+	d[1][1] = (f[1][0] - f[1][1]) >> 1;
+
+	c[0][0] = (d[0][0] + d[1][0]) >> 1;
+	c[0][1] = (d[0][1] + d[1][1]) >> 1;
+	c[1][0] = (d[0][0] - d[1][0]) >> 1;
+	c[1][1] = (d[0][1] - d[1][1]) >> 1;
+
+	/*f[0][0] = (d[0][0] + d[0][1]) >> 2;
 	f[0][1] = (d[0][0] - d[0][1]) >> 2;
 	f[1][0] = (d[1][0] + d[1][1]) >> 2;
-	f[1][1] = (d[1][0] - d[1][1]) >> 2;
+	f[1][1] = (d[1][0] - d[1][1]) >> 2;*/
 	
 	/*for (int i = 0; i < 2; i++)
 		for (int j = 0; j < 2; j++)
@@ -340,7 +350,7 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra, boo
 void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 {
 	int qP_calculate = qP/6;
-	int scaleL = LevelScale[qP%6][0][0];
+	int quantizeL = LevelQuantize[qP%6][0][0];
 	int qbits;
 	
 	if (qP >= 36)
@@ -350,7 +360,7 @@ void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				c[i][j] = (f[i][j] >> qbits) / scaleL;
+				c[i][j] = ((f[i][j] >> qbits) * quantizeL) >> 15;
 			}
 		}
 	}
@@ -363,28 +373,28 @@ void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				c[i][j] = ((f[i][j] << qbits) - adjust) / scaleL;
+				c[i][j] = (((f[i][j] << qbits) - adjust) * quantizeL) >> 15;
 			}
 		}
 	}
 
-	// Glupi rièardson.
-	//int qbits = 15 + qP/6;
-	//int qPMod = qP % 6;
-	//int f_adjust;	
+	
+	/*qbits = 15 + qP/6;
+	int qPMod = qP % 6;
+	int f_adjust;	
 
-	//f_adjust = (1 << qbits) / 3;	
+	f_adjust = (1 << qbits) / 3;	
 
-	//for (int i = 0; i < 4; i++)
-	//{
-	//	for (int j = 0; j < 4; j++)
-	//	{
-	//		int sign = ExtractSign(f[i][j]);
-	//		if (sign) f[i][j] =  sign * f[i][j];	
-	//		c[i][j] = (f[i][j] * MF[qPMod][0][0] + 2 * f_adjust) >> (qbits + 3);
-	//		if (sign) c[i][j] =  sign * c[i][j];
-	//	}
-	//}
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			int sign = ExtractSign(f[i][j]);
+			if (sign) f[i][j] =  sign * f[i][j];	
+			c[i][j] = (f[i][j] * MF[qPMod][0][0] + 2 * f_adjust) >> (qbits + 3);
+			if (sign) c[i][j] =  sign * c[i][j];
+		}
+	}*/
 }
 
 void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
@@ -393,18 +403,18 @@ void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
 	int qPMod = qP % 6;
 	int f_adjust;	
 
-	/*int qP_calculate = qP/6;
-	int scaleL = LevelScale[qPMod][0][0];
+	int qP_calculate = qP/6;
+	int quantizeL = LevelQuantize[qPMod][0][0];
 
 	for (int i = 0; i < 2; i++)
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			c[i][j] = ((f[i][j] << 5) >> qP_calculate) / scaleL;
+			c[i][j] = (((f[i][j] << 5) >> qP_calculate) * quantizeL) >> 15;
 		}
-	}*/
+	}
 
-	if (Intra)
+	/*if (Intra)
 	{
 		f_adjust = (1 << qbits) / 3;
 	}
@@ -422,7 +432,7 @@ void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
 			c[i][j] = (f[i][j] * MF[qPMod][0][0] + 2 * f_adjust) >> (qbits + 3);
 			if (sign) c[i][j] =  sign * c[i][j];
 		}
-	}
+	}*/
 }
 
 void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra, bool Intra16x16OrChroma)
@@ -447,7 +457,7 @@ void forwardDCChroma (int qP, int dcC[2][2], int c[2][2], bool Intra)
 {
 	int f[2][2];
 
-	transformDCChromaF(dcC, f);
+	forwardTransformDCChroma(dcC, f);
 	quantisationChromaDC(f, qP, c, Intra);
 }
 
