@@ -73,8 +73,6 @@ void golombRice_SC(int codeNum, unsigned int VLCNum)
 
 	if (VLCNum!=0)
 	{
-		//UINT_to_RBSP_size_known(suffix,VLCNum,buffer);
-		//writeRawBits(VLCNum,buffer);
 		writeRawBits(VLCNum, suffix);
 	}
 }
