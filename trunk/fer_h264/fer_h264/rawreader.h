@@ -13,7 +13,7 @@ void skipRawBits(int N);
 unsigned int peekRawBits(int N);
 
 unsigned int getRawBits(int N);
-bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode=0);
+
 bool writeRawBits(int N, unsigned int data);
 void writeFlag(int flag);
 void writeZeros(int N);
