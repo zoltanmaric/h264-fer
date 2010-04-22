@@ -29,20 +29,43 @@ extern struct cavlc_table *RunBeforeCodeTable[6];
 
 extern int RunBeforeCodeTableCoder_length[6][7];
 extern unsigned char RunBeforeCodeTableCoder_data[6][7][4];
+extern unsigned int RunBeforeCodeTableCoder_data_int[6][7];
+
 extern int TotalZerosCodeTableCoder_ChromaDC_length[3][4];
 extern unsigned char TotalZerosCodeTableCoder_ChromaDC_data[3][4][4];
+extern unsigned int TotalZerosCodeTableCoder_ChromaDC_data_int[3][4];
+
+
 extern int TotalZerosCodeTableCoder_4x4_length[15][16];
 extern unsigned char TotalZerosCodeTableCoder_4x4_data[15][16][4];
+extern unsigned int TotalZerosCodeTableCoder_4x4_data_int[15][16];
+
+
 extern int CoeffTokenCodeTableCoder_ChromaDC_length[17][4];
 extern unsigned char CoeffTokenCodeTableCoder_ChromaDC_data[17][4][4];
+extern unsigned int CoeffTokenCodeTableCoder_ChromaDC_data_int[17][4];
+
+
 extern int CoeffTokenCodesCoder_nC_8_to_max_length[17][4];
 extern unsigned char CoeffTokenCodesCoder_nC_8_to_max_data[17][4][4];
+extern unsigned int CoeffTokenCodesCoder_nC_8_to_max_data_int[17][4];
+
+
 extern int CoeffTokenCodesCoder_nC_4_to_8_length[17][4];
 extern unsigned char CoeffTokenCodesCoder_nC_4_to_8_data[17][4][4];
+extern unsigned int CoeffTokenCodesCoder_nC_4_to_8_data_int[17][4];
+
+
 extern int CoeffTokenCodesCoder_nC_2_to_4_length[17][4];
 extern unsigned char CoeffTokenCodesCoder_nC_2_to_4_data[17][4][4];
+extern unsigned int CoeffTokenCodesCoder_nC_2_to_4_data_int[17][4];
+
+
 extern int CoeffTokenCodesCoder_nC_0_to_2_length[17][4];
 extern unsigned char CoeffTokenCodesCoder_nC_0_to_2_data[17][4][4];
+extern unsigned int CoeffTokenCodesCoder_nC_0_to_2_data_int[17][4];
+
+
 extern int CoeffTokenCodes[4][64][3];
 extern int CoeffTokenCodes_ChromaDC[15][3];
 extern int TotalZerosCodes_4x4[15][18][3];

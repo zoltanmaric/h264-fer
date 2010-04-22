@@ -107,63 +107,6 @@ void dumpWriteBuffer()
 	printf("Ending bit: %d\n",RBSP_write_current_bit);
 }
 
-bool writeRawBits(int N, unsigned char *data_to_write, int CAVLC_table_mode)
-{
-
-	unsigned int count=0, offset;
-	while(count<N)
-	{
-		if (CAVLC_table_mode==1)
-		{
-			//offset = 8 - (count%8) - 1;
-			// TEST:
-			offset = (8 - (N & 7)) & 7;
-			unsigned int data = 0;
-			while (count < N)
-			{
-				data |= data_to_write[count/8];
-				count += 8;
-				if (count < N)
-				{
-					data <<= 8;
-				}
-			}
-			// The data in the CAVLC tables is aligned to
-			// the left, so it has to be moved to
-			// correspond to the right value.
-			data >>= offset;
-				bitcount=RBSP_write_current_byte*8+RBSP_write_current_bit;
-			return writeRawBits(N, data);
-		}
-		else
-		{
-			offset = N - count - 1;
-		}
-
-		//8-byte fast forward 
-		if ((N-count)>7 && RBSP_write_current_bit==0 && ((N-count)&7) == 0)
-		{
-			//int shift = offset + 1;
-			RBSP_write_data[RBSP_write_current_byte]=data_to_write[offset>>3];
-			count+=8;
-			RBSP_write_current_byte++;
-			continue;
-		}
-
-		//Classic bit by bit loading
-		RBSP_write_data[RBSP_write_current_byte]=	(RBSP_write_data[RBSP_write_current_byte]<<1) + ((data_to_write[offset/8]>>(offset%8))&1);
-		RBSP_write_current_bit++;
-		if (RBSP_write_current_bit==8)
-		{
-			RBSP_write_current_bit=0;
-			RBSP_write_current_byte++;
-		}
-		count++;
-	}
-
-		bitcount=RBSP_write_current_byte*8+RBSP_write_current_bit;
-	return true;
-}
 
 // Write up to 32 bits of data
 bool writeRawBits(int N, unsigned int data)
