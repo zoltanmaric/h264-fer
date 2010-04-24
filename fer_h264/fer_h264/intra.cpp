@@ -1033,7 +1033,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	int min = INT_MAX;
 
 	int p[33];
-	//FetchPredictionSamplesIntra16x16(p);
+	FetchPredictionSamplesIntra16x16(p);
 
 	// 16x16 prediction:
 	for (int i = 0; i < 4; i++)
@@ -1045,8 +1045,8 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		{
 			continue;
 		}
-		Intra16x16SamplePrediction(predL, i);
-		//performIntra16x16Prediction(p, predL, i);
+		//Intra16x16SamplePrediction(predL, i);
+		performIntra16x16Prediction(p, predL, i);
 
 		// Choose the same prediction mode for chroma:
 		intra_chroma_pred_mode = intraToChromaPredMode[i];
@@ -1077,30 +1077,30 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		getNeighbourAddresses(luma4x4BlkIdx, false, &temp, &luma4x4BlkIdxB);
 
 		int p[13];
-		//FetchPredictionSamplesIntra4x4(luma4x4BlkIdx, p);
-		for(int intra4x4PredMode = 0; intra4x4PredMode < 9; intra4x4PredMode++)
+		FetchPredictionSamplesIntra4x4(luma4x4BlkIdx, p);
+		for(int predMode = 0; predMode < 9; predMode++)
 		{
 			// Skip prediction if required neighbouring submacroblocks are not available
-			if (((intra4x4PredMode == 0) && (luma4x4BlkIdxB == -1)) ||
-				((intra4x4PredMode == 1) && (luma4x4BlkIdxA == -1)) ||
-				((intra4x4PredMode == 3) && (luma4x4BlkIdxB == -1)) ||
-				((intra4x4PredMode == 4) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
-				((intra4x4PredMode == 5) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
-				((intra4x4PredMode == 6) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
-				((intra4x4PredMode == 7) && (luma4x4BlkIdxB == -1)) ||
-				((intra4x4PredMode == 8) && (luma4x4BlkIdxA == -1)))
+			if (((predMode == 0) && (luma4x4BlkIdxB == -1)) ||
+				((predMode == 1) && (luma4x4BlkIdxA == -1)) ||
+				((predMode == 3) && (luma4x4BlkIdxB == -1)) ||
+				((predMode == 4) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
+				((predMode == 5) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
+				((predMode == 6) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
+				((predMode == 7) && (luma4x4BlkIdxB == -1)) ||
+				((predMode == 8) && (luma4x4BlkIdxA == -1)))
 			{
 				continue;
 			}
 			
-			Intra4x4SamplePrediction(luma4x4BlkIdx, intra4x4PredMode, pred4x4L);
-			//performIntra4x4Prediction(luma4x4BlkIdx, Intra4x4PredMode[luma4x4BlkIdx], pred4x4L, p);
+			//Intra4x4SamplePrediction(luma4x4BlkIdx, predMode, pred4x4L);
+			performIntra4x4Prediction(luma4x4BlkIdx, predMode, pred4x4L, p);
 
 			int satd4x4 = satdLuma4x4(pred4x4L, luma4x4BlkIdx);
 			if (satd4x4 < min4x4)
 			{
 				int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;
-				Intra4x4PredMode[absIdx] = intra4x4PredMode;
+				Intra4x4PredMode[absIdx] = predMode;
 				min4x4 = satd4x4;
 				if (min4x4 == 0)
 				{
@@ -1117,6 +1117,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
 
+	int originalMB[16][16];
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
 		setIntra4x4PredMode(luma4x4BlkIdx);
@@ -1133,6 +1134,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			for (int x = 0; x < 4; x++)
 			{
 				predL[y0+y][x0+x] = pred4x4L[y][x];
+				originalMB[y0+y][x0+x] = frame.L[yP + y0 + y][xP + x0 + x];
 				diffL4x4[y][x] = frame.L[yP + y0 + y][xP + x0 + x] - pred4x4L[y][x];
 			}
 		}
@@ -1151,6 +1153,17 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	}
 	else
 	{
+		int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
+		int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+
+		// Restore the original frame samples
+		for (int i = 0; i < 16; i++)
+		{
+			for (int j = 0; j < 16; j++)
+			{
+				frame.L[yP + i][xP + j] = originalMB[i][j];
+			}
+		}
 		// Reset the best intra16x16 prediction
 		Intra16x16SamplePrediction(predL, Intra16x16PredMode);
 	}
