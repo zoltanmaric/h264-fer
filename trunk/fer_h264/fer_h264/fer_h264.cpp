@@ -14,7 +14,7 @@
 void decode()
 {
 	stream=fopen("big_buck_bunny.264","rb");
-	yuvoutput = fopen("Bourne.yuv","wb");
+	yuvoutput = fopen("Bourne.y4m","wb");
 
 	generate_residual_level_tables();
 
@@ -80,9 +80,9 @@ void encode()
 		RBSP_encode(nu);
 
 		writeNAL(nu);
-		//writeToPPM("reconstruct");
+		writeToPPM("reconstruct");
 
-		if (frameCount == 401) break;
+		if (frameCount == 301) break;
 	}
 
 	fclose(stream);
