@@ -1023,7 +1023,7 @@ void setIntra4x4PredMode(int luma4x4BlkIdx)
 // The chroma prediction mode is assigned to intra_chroma_pred_mode.
 int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 {
-	int sad, Intra16x16PredMode;
+	int Intra16x16PredMode;
 	int pred4x4L[4][4];
 	int mbAddrA, mbAddrB;
 	int bitLoad;
@@ -1045,7 +1045,6 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		{
 			continue;
 		}
-		//Intra16x16SamplePrediction(predL, i);
 		performIntra16x16Prediction(p, predL, i);
 
 		// Choose the same prediction mode for chroma:
@@ -1093,7 +1092,6 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 				continue;
 			}
 			
-			//Intra4x4SamplePrediction(luma4x4BlkIdx, predMode, pred4x4L);
 			performIntra4x4Prediction(luma4x4BlkIdx, predMode, pred4x4L, p);
 
 			int satd4x4 = satdLuma4x4(pred4x4L, luma4x4BlkIdx);
@@ -1109,7 +1107,6 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			}
 		}
 	}
-
 
 	// set the best intra4x4 pred modes:
 	mb_type_array[CurrMbAddr] = 0;
@@ -1167,36 +1164,6 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		// Reset the best intra16x16 prediction
 		Intra16x16SamplePrediction(predL, Intra16x16PredMode);
 	}
-
-	//min = INT_MAX;
-	//int finalPredMode;
-	//for (int i = 0; i < 4; i++)
-	//{
-	//	// Skip prediction if required neighbouring macroblocks are not available
-	//	if (((i == 1) && (mbAddrA == -1)) ||
-	//		((i == 2) && (mbAddrB == -1)) ||
-	//		((i == 3) && ((mbAddrA == -1) || (mbAddrB == -1))))
-	//	{
-	//		continue;
-	//	}
-	//	
-	//	intra_chroma_pred_mode = i;
-	//	IntraChromaSamplePrediction(predCr, predCb);
-	//	sad = sadChroma(predCb, predCr);
-	//	if (sad < min)
-	//	{
-	//		min = sad;
-	//		finalPredMode = i;
-	//		if (min == 0)
-	//		{
-	//			break;
-	//		}
-	//	}
-	//}
-
-	//// Store the chosen prediction result in predCb and predCr
-	//intra_chroma_pred_mode = finalPredMode;
-	//IntraChromaSamplePrediction(predCr, predCb);
 
 	return Intra16x16PredMode;
 }
