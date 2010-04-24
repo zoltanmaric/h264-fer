@@ -1065,6 +1065,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	IntraChromaSamplePrediction(predCr, predCb);
 
 	// 4x4 prediction:
+	mb_type_array[CurrMbAddr] = 0;
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
 		int min4x4 = INT_MAX;
@@ -1109,8 +1110,6 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	}
 
 	// set the best intra4x4 pred modes:
-	mb_type_array[CurrMbAddr] = 0;
-
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
 
