@@ -41,10 +41,3 @@ int Clip1C(int x)
 
 	return x;
 }
-
-// Shifts the variable x to the right by
-// n bits WITH ROUNDING.
-int roundRightShift(int x, int n)
-{
-	return (x >> n) + ((x >> (n-1)) & 1);
-}
