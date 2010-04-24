@@ -564,13 +564,6 @@ void RBSP_encode(NALunit &nal_unit)
 				mb_type_array[CurrMbAddr] = mb_type;
 			}
 
-			//macroblock_size=coded_mb_size();
-			
-			//Zoltan: Nakon ove linije u macroblock_size je velicina MB-a u bitovima, odnosno zbroj svega
-			//			sto ce slijediti iz donjeg koda (inter MV-ovi ili intra podaci)
-
-
-			// Norm: start macroblock_layer()
 			expGolomb_UC(mb_type);
 
 			if ((mb_type != I_4x4) && (MbPartPredMode(mb_type,0) != Intra_16x16) && (NumMbPart(mb_type) == 4))

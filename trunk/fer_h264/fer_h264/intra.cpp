@@ -1140,7 +1140,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
 	}
 
-	bitLoad = coded_mb_size(-1, predL, predCb, predCr);
+	bitLoad = 0;//coded_mb_size(-1, predL, predCb, predCr);
 	if (bitLoad < min)
 	{
 		// Choose 4x4 prediction mode, the prediction samples
