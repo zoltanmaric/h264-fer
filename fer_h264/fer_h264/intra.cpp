@@ -412,13 +412,11 @@ void Intra_4x4_Horizontal_Up(int *p, int pred4x4L[4][4])
 	}
 }
 
-// Intra_4x4 sample prediction (8.3.1.2)
-void Intra4x4SamplePrediction(int luma4x4BlkIdx, int intra4x4PredMode, int pred4x4L[4][4])
+void FetchPredictionSamplesIntra4x4(int luma4x4BlkIdx, int p[13])
 {
 	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
 
-	int p[13];
 	for (int i = 0; i < 13; i++)
 	{
 		int x, y;
@@ -456,10 +454,12 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int intra4x4PredMode, int pred4
 			int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
 
 			p[i] = frame.L[yM + yW][xM + xW];
-			int test = 0;
 		}
 	}
+}
 
+void performIntra4x4Prediction(int luma4x4BlkIdx, int intra4x4PredMode, int pred4x4L[4][4], int p[13])
+{
 	switch (intra4x4PredMode)
 	{
 		case 0:
@@ -489,9 +489,15 @@ void Intra4x4SamplePrediction(int luma4x4BlkIdx, int intra4x4PredMode, int pred4
 		case 8:
 			Intra_4x4_Horizontal_Up(p, pred4x4L);
 			break;
-		default:
-			break;
 	}
+}
+
+// Intra_4x4 sample prediction (8.3.1.2)
+void Intra4x4SamplePrediction(int luma4x4BlkIdx, int intra4x4PredMode, int pred4x4L[4][4])
+{
+	int p[13];
+	FetchPredictionSamplesIntra4x4(luma4x4BlkIdx, p);
+	performIntra4x4Prediction(luma4x4BlkIdx,intra4x4PredMode,pred4x4L,p);	
 }
 
 #undef p
@@ -595,10 +601,8 @@ void Intra_16x16_Plane(int *p, int predL[16][16])
 	}
 }
 
-// (8.3.3)
-void Intra16x16SamplePrediction(int predL[16][16], int Intra16x16PredMode)
+void FetchPredictionSamplesIntra16x16(int p[33])
 {
-	int p[33];
 	for (int i = 0; i < 33; i++)
 	{
 		int x, y;
@@ -627,10 +631,12 @@ void Intra16x16SamplePrediction(int predL[16][16], int Intra16x16PredMode)
 			int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
 
 			p(x,y) = frame.L[yM+yW][xM+xW];
-			int test = 0;
 		}
 	}
+}
 
+void performIntra16x16Prediction(int *p, int predL[16][16], int Intra16x16PredMode)
+{
 	switch(Intra16x16PredMode)
 	{
 		case 0:
@@ -646,6 +652,14 @@ void Intra16x16SamplePrediction(int predL[16][16], int Intra16x16PredMode)
 			Intra_16x16_Plane(p, predL);
 			break;				
 	}
+}
+
+// (8.3.3)
+void Intra16x16SamplePrediction(int predL[16][16], int Intra16x16PredMode)
+{
+	int p[33];
+	FetchPredictionSamplesIntra16x16(p);
+	performIntra16x16Prediction(p,predL,Intra16x16PredMode);
 }
 
 #undef p
@@ -899,26 +913,6 @@ void intraPrediction(int predL[16][16], int predCr[8][8], int predCb[8][8])
 
 // ENCODING:
 
-// Çalculates the sum of absolute differences
-// for a predicted luma macroblock.
-int sadLuma16x16(int predL[16][16])
-{
-	int sad = 0;
-
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
-
-	for (int i = 0; i < 16; i++)
-	{
-		for (int j = 0; j < 16; j++)
-		{
-			sad += ABS(frame.L[yP+i][xP+j] - predL[i][j]);
-		}
-	}
-
-	return sad;
-}
-
 // Çalculates the sum of absolute transformed differences
 // for a predicted 4x4 luma submacroblock.
 int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx)
@@ -952,28 +946,6 @@ int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx)
 	}
 
 	return satd;
-}
-
-// Calculates the sum of absolute differences
-// for a predicted chroma macroblock. The
-// resulting SAD is the sum total of differences
-// of both chroma planes.
-int sadChroma(int predCb[8][8], int predCr[8][8])
-{
-	int sad = 0;
-
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0) >> 1;
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1) >> 1;
-
-	for (int i = 0; i < 8; i++)
-	{
-		for (int j = 0; j < 8; j++)
-		{
-			sad += ABS(frame.C[0][yP+i][xP+j] - predCb[i][j]);
-			sad += ABS(frame.C[1][yP+i][xP+j] - predCr[i][j]);
-		}
-	}
-	return sad;	// I am disappoint.
 }
 
 // Sets the global variables prev_intra4x4_pred_mode_flag
@@ -1060,6 +1032,9 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	getNeighbouringMacroblocks(&mbAddrA, &mbAddrB);
 	int min = INT_MAX;
 
+	int p[33];
+	//FetchPredictionSamplesIntra16x16(p);
+
 	// 16x16 prediction:
 	for (int i = 0; i < 4; i++)
 	{
@@ -1071,6 +1046,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			continue;
 		}
 		Intra16x16SamplePrediction(predL, i);
+		//performIntra16x16Prediction(p, predL, i);
 
 		// Choose the same prediction mode for chroma:
 		intra_chroma_pred_mode = intraToChromaPredMode[i];
@@ -1099,6 +1075,9 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		int luma4x4BlkIdxA, luma4x4BlkIdxB, temp;
 		getNeighbourAddresses(luma4x4BlkIdx, true, &temp, &luma4x4BlkIdxA);
 		getNeighbourAddresses(luma4x4BlkIdx, false, &temp, &luma4x4BlkIdxB);
+
+		int p[13];
+		//FetchPredictionSamplesIntra4x4(luma4x4BlkIdx, p);
 		for(int intra4x4PredMode = 0; intra4x4PredMode < 9; intra4x4PredMode++)
 		{
 			// Skip prediction if required neighbouring submacroblocks are not available
@@ -1115,6 +1094,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			}
 			
 			Intra4x4SamplePrediction(luma4x4BlkIdx, intra4x4PredMode, pred4x4L);
+			//performIntra4x4Prediction(luma4x4BlkIdx, Intra4x4PredMode[luma4x4BlkIdx], pred4x4L, p);
 
 			int satd4x4 = satdLuma4x4(pred4x4L, luma4x4BlkIdx);
 			if (satd4x4 < min4x4)
@@ -1122,16 +1102,6 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 				int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;
 				Intra4x4PredMode[absIdx] = intra4x4PredMode;
 				min4x4 = satd4x4;
-
-				int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
-				int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
-				for (int y = 0; y < 4; y++)
-				{
-					for (int x = 0; x < 4; x++)
-					{
-						predL[y0+y][x0+x] = pred4x4L[y][x];
-					}
-				}
 				if (min4x4 == 0)
 				{
 					break;
@@ -1140,47 +1110,48 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		}
 	}
 
+
+	// set the best intra4x4 pred modes:
+	mb_type_array[CurrMbAddr] = 0;
+
+	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
+	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+
+	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+	{
+		setIntra4x4PredMode(luma4x4BlkIdx);
+		
+		int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;				
+		Intra4x4SamplePrediction(luma4x4BlkIdx, Intra4x4PredMode[absIdx], pred4x4L);
+
+		int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
+		int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
+
+		int diffL4x4[4][4], rLuma[4][4];
+		for (int y = 0; y < 4; y++)
+		{
+			for (int x = 0; x < 4; x++)
+			{
+				predL[y0+y][x0+x] = pred4x4L[y][x];
+				diffL4x4[y][x] = frame.L[yP + y0 + y][xP + x0 + x] - pred4x4L[y][x];
+			}
+		}
+
+		forwardResidual(QPy, diffL4x4, rLuma, true, false);
+		transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
+		transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
+	}
+
 	bitLoad = coded_mb_size(-1, predL, predCb, predCr);
 	if (bitLoad < min)
 	{
-		Intra16x16PredMode = -1;		// Choose 4x4 prediction mode
-	}
-
-	// Store the chosen prediction result in predL[16][16]
-	if (Intra16x16PredMode == -1)
-	{
-		mb_type_array[CurrMbAddr] = 0;
-
-		int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-		int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
-
-		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
-		{
-			setIntra4x4PredMode(luma4x4BlkIdx);
-			
-			int absIdx = (CurrMbAddr << 4) + luma4x4BlkIdx;				
-			Intra4x4SamplePrediction(luma4x4BlkIdx, Intra4x4PredMode[absIdx], pred4x4L);
-
-			int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
-			int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
-
-			int diffL4x4[4][4], rLuma[4][4];
-			for (int y = 0; y < 4; y++)
-			{
-				for (int x = 0; x < 4; x++)
-				{
-					predL[y0+y][x0+x] = pred4x4L[y][x];
-					diffL4x4[y][x] = frame.L[yP + y0 + y][xP + x0 + x] - pred4x4L[y][x];
-				}
-			}
-
-			forwardResidual(QPy, diffL4x4, rLuma, true, false);
-			transformScan(rLuma, LumaLevel[luma4x4BlkIdx], false);
-			transformDecoding4x4LumaResidual(LumaLevel, predL, luma4x4BlkIdx, QPy);
-		}
+		// Choose 4x4 prediction mode, the prediction samples
+		// and other variables are already set for Intra4x4
+		Intra16x16PredMode = -1;	
 	}
 	else
 	{
+		// Reset the best intra16x16 prediction
 		Intra16x16SamplePrediction(predL, Intra16x16PredMode);
 	}
 
