@@ -1,5 +1,5 @@
 #include "residual_tables.h"
-#include "rawreader.h"
+#include "rbsp_IO.h"
 
 int levelcode_to_outputstream[MAX_LEVELCODE_VALUE][7][4];
 int inputstream_to_levelcode[16][7][MAX_SUFFIX_VALUE];

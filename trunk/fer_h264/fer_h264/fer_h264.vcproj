@@ -248,11 +248,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\rawreader.cpp"
+				RelativePath=".\rbsp_decoding.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\rbsp_decoding.cpp"
+				RelativePath=".\rbsp_encoding.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\rbsp_IO.cpp"
 				>
 			</File>
 			<File
@@ -330,11 +334,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\rawreader.h"
+				RelativePath=".\rbsp_decoding.h"
 				>
 			</File>
 			<File
-				RelativePath=".\rbsp_decoding.h"
+				RelativePath=".\rbsp_encoding.h"
+				>
+			</File>
+			<File
+				RelativePath=".\rbsp_IO.h"
 				>
 			</File>
 			<File
