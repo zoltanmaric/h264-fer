@@ -7,7 +7,7 @@
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
 #include "rbsp_decoding.h"
-
+#include "rbsp_encoding.h"
 
 const int intraToChromaPredMode[4] = {2,1,0,3};
 
