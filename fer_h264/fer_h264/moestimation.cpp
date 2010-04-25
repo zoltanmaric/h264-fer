@@ -8,6 +8,39 @@
 #include "limits.h"
 
 #define P_Skip_Treshold 0.9
+int zigZagIdx[16][2] = {{0, 0}, {1, 0}, {0, 1}, {0, 2},
+				  {1, 1}, {2, 0}, {3, 0}, {2, 1},
+				  {1, 2}, {0, 3}, {1, 3}, {2, 2},
+				  {3, 1}, {3, 2}, {2, 3}, {3, 3}};
+int tmpVar[16];
+
+int zigZagSADLuma8x8(int predL[16][16], int luma8x8BlkIdx)
+{
+	int sad = 0;
+
+	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
+	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+
+	int x0 = (luma8x8BlkIdx%2) << 3;
+	int y0 = (luma8x8BlkIdx&2) << 2;
+
+	for (int i = 0; i < 4; i++)
+	{
+		x0 = ((luma8x8BlkIdx%2) << 3) + ((i%2) << 2);
+		y0 = ((luma8x8BlkIdx&2) << 2) + ((i&2) << 1);
+		for (int j = 0; j < 16; j++)
+		{
+			tmpVar[j] = frame.L[yP+y0+zigZagIdx[j][1]][xP+x0+zigZagIdx[j][0]] - predL[y0+zigZagIdx[j][1]][x0+zigZagIdx[j][0]];
+			if (j)
+				sad += ABS(tmpVar[j]-tmpVar[j-1]);
+			else 
+				sad += ABS(tmpVar[j]);
+		}
+	}
+
+	return sad;
+
+}
 
 int sadLuma8x8(int predL[16][16], int luma8x8BlkIdx)
 {
@@ -23,10 +56,18 @@ int sadLuma8x8(int predL[16][16], int luma8x8BlkIdx)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			sad += ABS(frame.L[yP+y0+i][xP+x0+j] - predL[x0+i][y0+j]);
+			sad += ABS(frame.L[yP+y0+i][xP+x0+j] - predL[y0+i][x0+j]);
 		}
 	}
-
+	int sred = sad/64;
+	sad = 0;
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			sad += ABS(ABS(frame.L[yP+y0+i][xP+x0+j] - predL[x0+i][y0+j])-sred);
+		}
+	}
 	return sad;
 }
 
@@ -50,10 +91,10 @@ int ExactPixels(int predL[16][16])
 
 int sadLuma(int predL[16][16], int partId)
 {
-	if (mb_type == P_8x8 || mb_type == P_8x8ref0) return sadLuma8x8(predL, partId);
-	if (mb_type == P_L0_L0_16x8) return sadLuma8x8(predL, partId*2) + sadLuma8x8(predL, partId*2+1);
-	if (mb_type == P_L0_L0_8x16) return sadLuma8x8(predL, partId) + sadLuma8x8(predL, partId+2);
-	if (mb_type == P_L0_16x16 || mb_type == P_Skip) return sadLuma8x8(predL, 0) + sadLuma8x8(predL, 1) + sadLuma8x8(predL, 2) + sadLuma8x8(predL, 3);
+	if (mb_type == P_8x8 || mb_type == P_8x8ref0) return zigZagSADLuma8x8(predL, partId);
+	if (mb_type == P_L0_L0_16x8) return zigZagSADLuma8x8(predL, partId*2) + zigZagSADLuma8x8(predL, partId*2+1);
+	if (mb_type == P_L0_L0_8x16) return zigZagSADLuma8x8(predL, partId) + zigZagSADLuma8x8(predL, partId+2);
+	if (mb_type == P_L0_16x16 || mb_type == P_Skip) return zigZagSADLuma8x8(predL, 0) + zigZagSADLuma8x8(predL, 1) + zigZagSADLuma8x8(predL, 2) + zigZagSADLuma8x8(predL, 3);
 }
 
 void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8]) 
@@ -86,8 +127,8 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			DeriveMVs();
 			Decode(predL, predCr, predCb);
 			bmin = sadLuma(predL, i);
-			for (int tx = -4; tx <= 4; tx+=4)
-				for (int ty = -4; ty <= 4; ty+=4)
+			for (int tx = -12; tx <= 12; tx+=4)
+				for (int ty = -12; ty <= 12; ty+=4)
 				{
 					mvd_l0[i][0][0] = tx;
 					mvd_l0[i][0][1] = ty;
@@ -102,9 +143,9 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				}
 			mvd_l0[i][0][0] = bx;
 			mvd_l0[i][0][1] = by;
-			for (int tx = 0; tx <= 2; tx+=2)
-				for (int ty = 0; ty <= 2; ty+=2)
-				{
+			for (int tx = 0; tx <= 2; tx+=1)
+				for (int ty = 0; ty <= 2; ty+=1)
+				if (tx+ty) {
 					mvd_l0[i][0][0] += tx;
 					mvd_l0[i][0][1] += ty;
 					DeriveMVs();
