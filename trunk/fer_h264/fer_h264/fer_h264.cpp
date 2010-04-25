@@ -71,7 +71,7 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 301) continue;
+		if (frameCount < 379) continue;
 
 		printf("Frame #%d\n", frameCount);
 		writeToYUV();
@@ -80,7 +80,7 @@ void encode()
 		RBSP_encode(nu);
 
 		writeNAL(nu);
-		writeToPPM("reconstruct");
+		//writeToPPM("reconstruct");
 
 		if (frameCount == 401) break;
 	}
