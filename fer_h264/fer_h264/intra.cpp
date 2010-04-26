@@ -132,16 +132,16 @@ void getNeighbourAddresses(int luma4x4BlkIdx, bool nA, int *mbAddrN, int *luma4x
 
 void getNeighbouringMacroblocks(int *mbAddrA, int *mbAddrB)
 {
-	if (CurrMbAddr < frame.Lwidth)
+	if (CurrMbAddr < PicWidthInMbs)
 	{
 		*mbAddrB = -1;
 	}
 	else
 	{
-		*mbAddrB = CurrMbAddr - frame.Lwidth;
+		*mbAddrB = CurrMbAddr - PicWidthInMbs;
 	}
 
-	if (CurrMbAddr % frame.Lwidth == 0)
+	if (CurrMbAddr % PicWidthInMbs == 0)
 	{
 		*mbAddrA = -1;
 	}

@@ -152,12 +152,8 @@ void RBSP_encode(NALunit &nal_unit)
 		int mb_skip_run = 0;
 
 
-		unsigned int macroblock_size;
-
 		for (CurrMbAddr = 0; CurrMbAddr < shd.PicSizeInMbs; CurrMbAddr++)
 		{
-			macroblock_size=0;
-
 			// TODO: Try avoiding this.
 			clear_residual_structures();
 			if ((shd.slice_type != I_SLICE) && (shd.slice_type != SI_SLICE))
