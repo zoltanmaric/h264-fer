@@ -358,10 +358,10 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 	}
 	DeriveMVs();
 	//printf("Trenutni MB = %d> ", CurrMbAddr);
-	for (int i = 0; i < 4; i++)
-	{
-		//printf("(%d:%d, %d:%d), ", MPI_mvL0x(CurrMbAddr, i), mvd_l0[i][0][0], MPI_mvL0y(CurrMbAddr, i), mvd_l0[i][0][1]);
-	}
+	//for (int i = 0; i < 4; i++)
+	//{
+	//	printf("(%d:%d, %d:%d), ", MPI_mvL0x(CurrMbAddr, i), mvd_l0[i][0][0], MPI_mvL0y(CurrMbAddr, i), mvd_l0[i][0][1]);
+	//}
 	//printf("\n");
 	Decode(predL, predCr, predCb);
 }
