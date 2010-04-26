@@ -334,7 +334,6 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra, boo
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			//c[i][j] = ((d[i][j] << qbits) - adjust) / LevelScale[qPMod][i][j];
 			c[i][j] = roundRightShift(((d[i][j] << qbits) - adjust) * LevelQuantize[qPMod][i][j], 15);
 		}
 	}
@@ -372,7 +371,7 @@ void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				c[i][j] = ((f[i][j] >> qbits) * quantizeL) >> 15;
+				c[i][j] = roundRightShift((f[i][j] >> qbits) * quantizeL, 15);
 			}
 		}
 	}
@@ -385,7 +384,7 @@ void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				c[i][j] = (((f[i][j] << qbits) - adjust) * quantizeL) >> 15;
+				c[i][j] = roundRightShift(((f[i][j] << qbits) - adjust) * quantizeL, 15);
 			}
 		}
 	}
@@ -424,7 +423,7 @@ void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			c[i][j] = (((f[i][j] << 5) >> qP_calculate) * quantizeL) >> 15;
+			c[i][j] = roundRightShift(((f[i][j] << 5) >> qP_calculate) * quantizeL, 15);
 		}
 	}
 
@@ -577,6 +576,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		if (MbPartPredMode(mb_type , 0) == Intra_16x16)
 		{
 			forwardDCLumaIntra(QPy, DCLuma, rDCLuma);
+
 			transformScan(rDCLuma, Intra16x16DCLevel, false);
 
 			//picture reconstruction:

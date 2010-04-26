@@ -9,11 +9,6 @@ void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool intra1
 void InverseDCLumaIntra (int bitDepth, int qP, int c[4][4], int dcY[4][4]);
 void InverseDCChroma (int bitDepth, int qP, int c[2][2], int dcC[2][2]);
 
+// TEST:
 void transformDCChromaFast (int c[2][2], int f[2][2]);
 void scaleChromaDC(int f[2][2], int qP, int dcC[2][2]);
-
-// TEST:
-void scaleResidualBlock(int c[4][4], int d[4][4], int qP, bool intra16x16OrChroma);
-void inverseTransform4x4(int d[4][4], int r[4][4]);
-//void InverseDCChroma (int bitDepth, int qP, int c[2][2], int dcC[2][2]);
-extern int LevelScale[6][4][4];
