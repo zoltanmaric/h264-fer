@@ -8,7 +8,3 @@ void transformInverseScan(int list[16], int c[4][4]);
 void inverseResidual(int bitDepth, int qP, int c[4][4], int r[4][4], bool intra16x16OrChroma);
 void InverseDCLumaIntra (int bitDepth, int qP, int c[4][4], int dcY[4][4]);
 void InverseDCChroma (int bitDepth, int qP, int c[2][2], int dcC[2][2]);
-
-// TEST:
-void transformDCChromaFast (int c[2][2], int f[2][2]);
-void scaleChromaDC(int f[2][2], int qP, int dcC[2][2]);
