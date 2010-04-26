@@ -49,7 +49,7 @@ void forwardTransform4x4(int r[4][4], int d[4][4])
 	{
 		for (j = 0; j < 4; j++)
 		{
-			h[i][j] = ((r[i][j] << 6) - 32);
+			h[i][j] = (r[i][j] == 0) ? 0 : ((r[i][j] << 6) - 32);
 		}
 	}
 
