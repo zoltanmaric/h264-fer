@@ -163,6 +163,7 @@ void RBSP_encode(NALunit &nal_unit)
 				if (mb_type == P_Skip)
 				{
 					mb_skip_run++;
+					transformDecodingP_Skip(predL, predCb, predCr, QPy);
 					continue;
 				}
 				expGolomb_UC(mb_skip_run);
