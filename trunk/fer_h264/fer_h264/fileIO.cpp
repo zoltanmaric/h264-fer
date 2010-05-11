@@ -10,6 +10,13 @@ int *blue;
 FILE *yuvoutput;
 FILE *yuvinput;
 
+const unsigned int BUFFER_SIZE = 100000000; //(100MB)
+
+unsigned int inputBufferSize;
+char *inputBuffer;
+unsigned long inputBufferPos;
+
+
 // The dimensions of the input frames (may not be multiples of 16)
 int inputWidth;
 int inputHeight;
@@ -169,6 +176,17 @@ void writeToY4M()
 
 
 // ENCODING:
+void initInputBuffer()
+{
+	inputBufferSize = BUFFER_SIZE;
+	inputBufferPos = 0;
+	inputBuffer = new char[inputBufferSize];
+	while (inputBuffer == NULL)
+	{
+		inputBufferSize >>= 1;
+		inputBuffer = new char[inputBufferSize];
+	}
+}
 
 // Returns the offset of the start of the
 // next frame in the input buffer
@@ -258,21 +276,15 @@ int readFromY4M()
 		int cropRight = cropLeft + frame.Lwidth;
 
 		k = 0;
-		for (i = 0; i < inputHeight; i++)
+		for (i = cropTop; i < cropBottom; i++)
 		{
-			if ((i >= cropTop) && (i < cropBottom))
+			l = 0;
+			for (j = cropLeft; j < cropRight; j++)
 			{
-				l = 0;
-				for (j = 0; j < inputWidth; j++)
-				{
-					if ((j >= cropLeft) && (j < cropRight))
-					{
-						frame.L[k][l] = input[i*inputWidth + j];
-						l++;
-					}
-				}
-				k++;
+				frame.L[k][l] = input[i*inputWidth + j];
+				l++;
 			}
+			k++;
 		}
 		unsigned int  pos = lumaSize;
 
@@ -285,61 +297,34 @@ int readFromY4M()
 		int inputWidthC = inputWidth >> 1;
 
 		k = 0;
-		for (i = 0; i < inputHeightC; i++)
+		for (i = cropTop; i < cropBottom; i++)
 		{
-			if ((i >= cropTop) && (i < cropBottom))
+			l = 0;
+			for (j = cropLeft; j < cropRight; j++)
 			{
-				l = 0;
-				for (j = 0; j < inputWidthC; j++)
-				{
-					if ((j >= cropLeft) && (j < cropRight))
-					{
-						frame.C[0][k][l] = input[pos + i*inputWidthC + j];
-						//frame.C[0][k][l] = 0;
-						l++;
-					}
-				}
-				k++;
+				frame.C[0][k][l] = input[pos + i*inputWidthC + j];
+				l++;
 			}
+			k++;
 		}
 
 		pos += chromaSize;
 		
 		k = 0;
-		for (i = 0; i < inputHeightC; i++)
+		for (i = cropTop; i < cropBottom; i++)
 		{
-			if ((i >= cropTop) && (i < cropBottom))
+			l = 0;
+			for (j = cropLeft; j < cropRight; j++)
 			{
-				l = 0;
-				for (j = 0; j < inputWidthC; j++)
-				{
-					if ((j >= cropLeft) && (j < cropRight))
-					{
-						frame.C[1][k][l] = input[pos + i*inputWidthC + j];
-						//frame.C[1][k][l] = 0;
-						l++;
-					}
-				}
-				k++;
+				frame.C[1][k][l] = input[pos + i*inputWidthC + j];
+				l++;
 			}
+			k++;
 		}
 
 		pos = findStartOfFrame(input);
 		fseek(yuvinput, pos - bufSize, SEEK_CUR);
 		free(input);
 		return 0;
-
-		//memcpy(frame.L, input, lumaSize);
-		//unsigned int pos = lumaSize;
-
-		//memcpy(frame.C[0], &input[pos], chromaSize);
-		//pos += chromaSize;
-
-		//memcpy(frame.C[1], &input[pos], chromaSize);
-		//pos = findStartOfFrame(input);
-
-		//fseek(yuvinput, pos - bufSize, SEEK_CUR);
-		//free(input);
-		//return 0;
 	}
 }
