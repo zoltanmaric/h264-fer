@@ -224,36 +224,39 @@ void RBSP_encode(NALunit &nal_unit)
 				}
 				// Norm: end sub_mb_pred()
 			}
-
-			// Norm: start mb_pred()
-			if ((MbPartPredMode(mb_type,0) == Intra_4x4) || (MbPartPredMode(mb_type,0) == Intra_16x16))
-			{
-				if (MbPartPredMode(mb_type, 0) == Intra_4x4)
-				{
-					for(int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
-					{
-						writeFlag(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]);
-						if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == false)
-						{
-							writeRawBits(3, rem_intra4x4_pred_mode[luma4x4BlkIdx]);
-						}
-					}
-					
-				}
-
-				expGolomb_UC(intra_chroma_pred_mode);
-			}
 			else
 			{
-				// Norm: currently there is no support for reference picture list
-				// modifications in the encoder
-				for (int mbPartIdx = 0; mbPartIdx < NumMbPart(mb_type); mbPartIdx++)
+
+				// Norm: start mb_pred()
+				if ((MbPartPredMode(mb_type,0) == Intra_4x4) || (MbPartPredMode(mb_type,0) == Intra_16x16))
 				{
-					expGolomb_SC(mvd_l0[mbPartIdx][0][0]);
-					expGolomb_SC(mvd_l0[mbPartIdx][0][1]);
+					if (MbPartPredMode(mb_type, 0) == Intra_4x4)
+					{
+						for(int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+						{
+							writeFlag(prev_intra4x4_pred_mode_flag[luma4x4BlkIdx]);
+							if (prev_intra4x4_pred_mode_flag[luma4x4BlkIdx] == false)
+							{
+								writeRawBits(3, rem_intra4x4_pred_mode[luma4x4BlkIdx]);
+							}
+						}
+						
+					}
+
+					expGolomb_UC(intra_chroma_pred_mode);
 				}
+				else
+				{
+					// Norm: currently there is no support for reference picture list
+					// modifications in the encoder
+					for (int mbPartIdx = 0; mbPartIdx < NumMbPart(mb_type); mbPartIdx++)
+					{
+						expGolomb_SC(mvd_l0[mbPartIdx][0][0]);
+						expGolomb_SC(mvd_l0[mbPartIdx][0][1]);
+					}
+				}
+				// Norm: end mb_pred()
 			}
-			// Norm: end mb_pred()
 
 			if (MbPartPredMode(mb_type, 0) != Intra_16x16)
 			{
