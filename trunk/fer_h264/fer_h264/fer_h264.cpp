@@ -74,7 +74,7 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 2000) continue;
+		if (frameCount < 201) continue;
 
 		printf("Frame #%d\n", frameCount);
 		writeToYUV();
@@ -115,7 +115,7 @@ void encode()
 		//}
 		//writeToPPM("reconstruct");
 
-		if (frameCount == 2050) break;
+		if (frameCount == 202) break;
 	}
 
 	fclose(stream);
@@ -125,8 +125,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//decode();
-	encode();
+	decode();
+	//encode();
 
 	return 0;
 }
