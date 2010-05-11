@@ -74,7 +74,7 @@ void encode()
 	while (readFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 201) continue;
+		if (frameCount < 350) continue;
 
 		printf("Frame #%d\n", frameCount);
 		writeToYUV();
@@ -83,7 +83,7 @@ void encode()
 		RBSP_encode(nu);
 
 		writeNAL(nu);
-		//FillInterpolatedRefFrame();
+		FillInterpolatedRefFrame();
 		//for (int frac = 0; frac < 16; frac++)
 		//{
 		//	for (int i = 0; i < frame.Lheight; i++)
@@ -115,7 +115,7 @@ void encode()
 		//}
 		//writeToPPM("reconstruct");
 
-		if (frameCount == 202) break;
+		if (frameCount == 380) break;
 	}
 
 	fclose(stream);
@@ -125,8 +125,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	decode();
-	//encode();
+	//decode();
+	encode();
 
 	return 0;
 }
