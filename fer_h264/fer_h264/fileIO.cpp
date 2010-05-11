@@ -12,10 +12,11 @@ FILE *yuvinput;
 
 const unsigned int BUFFER_SIZE = 100000000; //(100MB)
 
-unsigned int inputBufferSize;
-char *inputBuffer;
-unsigned long inputBufferPos;
+unsigned int streamBufferSize;
+char *streamBuffer;
+unsigned long streamBufferPos;
 
+char *input;	// the array holding one frame read from the stream
 
 // The dimensions of the input frames (may not be multiples of 16)
 int inputWidth;
@@ -176,16 +177,18 @@ void writeToY4M()
 
 
 // ENCODING:
-void initInputBuffer()
+void initStreamBuffer()
 {
-	inputBufferSize = BUFFER_SIZE;
-	inputBufferPos = 0;
-	inputBuffer = new char[inputBufferSize];
-	while (inputBuffer == NULL)
+	streamBufferSize = BUFFER_SIZE;
+	streamBufferPos = 0;
+	streamBuffer = new char[streamBufferSize];
+	while (streamBuffer == NULL)
 	{
-		inputBufferSize >>= 1;
-		inputBuffer = new char[inputBufferSize];
+		streamBufferSize >>= 1;
+		streamBuffer = new char[streamBufferSize];
 	}
+
+	int test = fread(streamBuffer, 1, streamBufferSize, yuvinput);
 }
 
 // Returns the offset of the start of the
@@ -327,4 +330,102 @@ int readFromY4M()
 		free(input);
 		return 0;
 	}
+}
+
+// This function expects the file pointer to be set
+// at the begining of the frame data when invoked.
+// This implies invoking loadY4MHeader() for reading
+// the first frame.
+int bufferedReadFromY4M()
+{
+	static bool firstFrame = true;
+	int i, j, k, l;
+	static int lumaSize, chromaSize, bufSize;
+
+	if (firstFrame == true)
+	{
+		firstFrame = false;
+		lumaSize = inputWidth*inputHeight;
+		chromaSize = lumaSize >> 2;
+		bufSize = lumaSize + (chromaSize << 1) + 1000;	// == lumaSize + 2*chromaSize + 1000
+		input = new char[bufSize];
+
+		initStreamBuffer();
+	}
+
+	if ((streamBufferSize - streamBufferPos) < bufSize)
+	{
+		// fetch more data from the input stream
+		fseek(yuvinput, streamBufferPos - streamBufferSize, SEEK_CUR);
+		int test = fread(streamBuffer, 1, streamBufferSize, yuvinput);
+		streamBufferPos = 0;
+		// TODO: handle end of file
+	}
+	else
+	{
+		memcpy(input, &streamBuffer[streamBufferPos], bufSize);
+
+		int cropTop = (inputHeight - frame.Lheight) >> 1;
+		int cropBottom = cropTop + frame.Lheight;
+		int cropLeft = (inputWidth - frame.Lwidth) >> 1;
+		int cropRight = cropLeft + frame.Lwidth;
+
+		k = 0;
+		for (i = cropTop; i < cropBottom; i++)
+		{
+			l = 0;
+			for (j = cropLeft; j < cropRight; j++)
+			{
+				frame.L[k][l] = input[i*inputWidth + j];
+				l++;
+			}
+			k++;
+		}
+		unsigned int  pos = lumaSize;
+
+		cropTop >>= 1;
+		cropBottom >>= 1;
+		cropLeft >>= 1;
+		cropRight >>= 1;
+
+		int inputHeightC = inputHeight >> 1;
+		int inputWidthC = inputWidth >> 1;
+
+		k = 0;
+		for (i = cropTop; i < cropBottom; i++)
+		{
+			l = 0;
+			for (j = cropLeft; j < cropRight; j++)
+			{
+				frame.C[0][k][l] = input[pos + i*inputWidthC + j];
+				l++;
+			}
+			k++;
+		}
+
+		pos += chromaSize;
+		
+		k = 0;
+		for (i = cropTop; i < cropBottom; i++)
+		{
+			l = 0;
+			for (j = cropLeft; j < cropRight; j++)
+			{
+				frame.C[1][k][l] = input[pos + i*inputWidthC + j];
+				l++;
+			}
+			k++;
+		}
+
+		pos = findStartOfFrame(input);
+		streamBufferPos += pos;
+		return 0;
+	}
+}
+
+void FileIOCleanup()
+{
+	delete [] input;
+	fclose(yuvinput);
+	fclose(yuvoutput);
 }
