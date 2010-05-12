@@ -222,7 +222,7 @@ unsigned int findStartOfFrame(char *input)
 	return pos;
 }
 
-void loadY4MHeader()
+void LoadY4MHeader()
 {
 	char input[1000];
 	fread(input, 1, 1000, yuvinput);
@@ -252,91 +252,7 @@ void loadY4MHeader()
 // at the begining of the frame data when invoked.
 // This implies invoking loadY4MHeader() for reading
 // the first frame.
-int readFromY4M()
-{
-	static bool firstFrame = true;
-	char *input;
-	int i, j, k, l;
-
-	int lumaSize = inputWidth*inputHeight;
-	int chromaSize = lumaSize >> 2;
-	int bufSize = lumaSize + (chromaSize << 1) + 1000;	// == lumaSize + 2*chromaSize + 1000
-	
-	input = new char[bufSize];
-
-	int test = ftell(yuvinput);
-	
-	if (fread(input, 1, bufSize, yuvinput) < (lumaSize + (chromaSize << 1)))
-	{
-		free(input);
-		return -1;
-	}
-	else
-	{
-		int cropTop = (inputHeight - frame.Lheight) >> 1;
-		int cropBottom = cropTop + frame.Lheight;
-		int cropLeft = (inputWidth - frame.Lwidth) >> 1;
-		int cropRight = cropLeft + frame.Lwidth;
-
-		k = 0;
-		for (i = cropTop; i < cropBottom; i++)
-		{
-			l = 0;
-			for (j = cropLeft; j < cropRight; j++)
-			{
-				frame.L[k][l] = input[i*inputWidth + j];
-				l++;
-			}
-			k++;
-		}
-		unsigned int  pos = lumaSize;
-
-		cropTop >>= 1;
-		cropBottom >>= 1;
-		cropLeft >>= 1;
-		cropRight >>= 1;
-
-		int inputHeightC = inputHeight >> 1;
-		int inputWidthC = inputWidth >> 1;
-
-		k = 0;
-		for (i = cropTop; i < cropBottom; i++)
-		{
-			l = 0;
-			for (j = cropLeft; j < cropRight; j++)
-			{
-				frame.C[0][k][l] = input[pos + i*inputWidthC + j];
-				l++;
-			}
-			k++;
-		}
-
-		pos += chromaSize;
-		
-		k = 0;
-		for (i = cropTop; i < cropBottom; i++)
-		{
-			l = 0;
-			for (j = cropLeft; j < cropRight; j++)
-			{
-				frame.C[1][k][l] = input[pos + i*inputWidthC + j];
-				l++;
-			}
-			k++;
-		}
-
-		pos = findStartOfFrame(input);
-		fseek(yuvinput, pos - bufSize, SEEK_CUR);
-		free(input);
-		return 0;
-	}
-}
-
-// This function expects the file pointer to be set
-// at the begining of the frame data when invoked.
-// This implies invoking loadY4MHeader() for reading
-// the first frame.
-int bufferedReadFromY4M()
+int ReadFromY4M()
 {
 	static bool firstFrame = true;
 	int i, j, k, l;
