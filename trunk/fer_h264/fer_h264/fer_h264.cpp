@@ -55,7 +55,7 @@ void encode()
 
 	nu.forbidden_zero_bit = 0;
 
-	loadY4MHeader();
+	LoadY4MHeader();
 
 	// write sequence parameter set:
 	nu.nal_ref_idc = 1;			// non-zero for sps
@@ -71,10 +71,10 @@ void encode()
 
 	nu.nal_ref_idc = 1;		// non-zero for reference
 	InitializeInterpolatedRefFrame();
-	while (readFromY4M() != -1)
+	while (ReadFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 350) continue;
+		if (frameCount < 1000) continue;
 
 		printf("Frame #%d\n", frameCount);
 		writeToYUV();
@@ -84,43 +84,12 @@ void encode()
 
 		writeNAL(nu);
 		FillInterpolatedRefFrame();
-		//for (int frac = 0; frac < 16; frac++)
-		//{
-		//	for (int i = 0; i < frame.Lheight; i++)
-		//		for (int j = 0; j < frame.Lwidth; j++)
-		//		{
-		//			int tmp = frame.L[i][j]; frame.L[i][j] = refFrameInterpolated[frac].L[i][j]; refFrameInterpolated[frac].L[i][j] = tmp;
-		//		}
-		//	for (int i = 0; i < frame.Cheight; i++)
-		//		for (int j = 0; j <  frame.Cwidth; j++)
-		//		{
-		//			int tmp = frame.C[0][i][j]; frame.C[0][i][j] = refFrameInterpolated[frac].C[0][i][j]; refFrameInterpolated[frac].C[0][i][j] = tmp;
-		//				tmp = frame.C[1][i][j]; frame.C[1][i][j] = refFrameInterpolated[frac].C[1][i][j]; refFrameInterpolated[frac].C[1][i][j] = tmp;
-		//		}
-		//	char a = 'A' + frac;
-		//	char name[20] = "interpolated_fracA";
-		//	name[17] += frac;
-		//	writeToPPM(name);
-		//	for (int i = 0; i < frame.Lheight; i++)
-		//		for (int j = 0; j <  frame.Lwidth; j++)
-		//		{
-		//			int tmp = frame.L[i][j]; frame.L[i][j] = refFrameInterpolated[frac].L[i][j]; refFrameInterpolated[frac].L[i][j] = tmp;
-		//		}
-		//	for (int i = 0; i < frame.Cheight; i++)
-		//		for (int j = 0; j <  frame.Cwidth; j++)
-		//		{
-		//			int tmp = frame.C[0][i][j]; frame.C[0][i][j] = refFrameInterpolated[frac].C[0][i][j]; refFrameInterpolated[frac].C[0][i][j] = tmp;
-		//				tmp = frame.C[1][i][j]; frame.C[1][i][j] = refFrameInterpolated[frac].C[1][i][j]; refFrameInterpolated[frac].C[1][i][j] = tmp;
-		//		}
-		//}
-		//writeToPPM("reconstruct");
 
-		if (frameCount == 380) break;
+		if (frameCount == 1300) break;
 	}
 
 	fclose(stream);
-	fclose(yuvinput);
-	fclose(yuvoutput);
+	FileIOCleanup();
 }
 
 int _tmain(int argc, _TCHAR* argv[])

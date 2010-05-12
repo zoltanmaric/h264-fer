@@ -8,8 +8,7 @@ void writeToPPM(char *namePrefix);
 void writeToY4M();
 void writeToYUV();
 
-int readFromY4M();
-int bufferedReadFromY4M();
-void loadY4MHeader();
+int ReadFromY4M();
+void LoadY4MHeader();
 
 void FileIOCleanup();
