@@ -192,14 +192,19 @@ void initStreamBuffer()
 }
 
 // Returns the offset of the start of the
-// next frame in the input buffer
-unsigned int findStartOfFrame(char *input)
+// next frame in the input buffer.
+// length - the length of the input string.
+unsigned int findStartOfFrame(char *input, int length)
 {
 	unsigned int pos;
-	char frameString[6];
-	sprintf(frameString, "FRAME");
-	
-	pos = (unsigned int)(strstr(input, frameString) - input) + 5;
+
+	pos = (unsigned int)(strstr(input, "FRAME") - input);
+	if (pos > length)
+	{
+		return length - 1;
+	}
+
+	pos += 5;
 	pos = ((unsigned int)memchr(&input[pos], 0x0a, 1000) - (unsigned int)input) + 1;
 
 	// frame parameters are not allowed
@@ -244,7 +249,7 @@ void LoadY4MHeader()
 	frame.Cheight = frame.Lheight >> 1;
 
 	// TODO: handle interlaced frames
-	pos = findStartOfFrame(input);
+	pos = findStartOfFrame(input, 1000);
 	fseek(yuvinput, pos, SEEK_SET);
 }
 
@@ -256,7 +261,7 @@ int ReadFromY4M()
 {
 	static bool firstFrame = true;
 	int i, j, k, l;
-	static int lumaSize, chromaSize, bufSize;
+	static unsigned int lumaSize, chromaSize, bufSize;
 
 	if (firstFrame == true)
 	{
@@ -264,7 +269,6 @@ int ReadFromY4M()
 		lumaSize = inputWidth*inputHeight;
 		chromaSize = lumaSize >> 2;
 		bufSize = lumaSize + (chromaSize << 1) + 1000;	// == lumaSize + 2*chromaSize + 1000
-		input = new char[bufSize];
 
 		initStreamBuffer();
 	}
@@ -273,75 +277,72 @@ int ReadFromY4M()
 	{
 		// fetch more data from the input stream
 		fseek(yuvinput, streamBufferPos - streamBufferSize, SEEK_CUR);
-		int test = fread(streamBuffer, 1, streamBufferSize, yuvinput);
+		streamBufferSize = fread(streamBuffer, 1, streamBufferSize, yuvinput);
 		streamBufferPos = 0;
-		// TODO: handle end of file
-	}
-	else
-	{
-		memcpy(input, &streamBuffer[streamBufferPos], bufSize);
-
-		int cropTop = (inputHeight - frame.Lheight) >> 1;
-		int cropBottom = cropTop + frame.Lheight;
-		int cropLeft = (inputWidth - frame.Lwidth) >> 1;
-		int cropRight = cropLeft + frame.Lwidth;
-
-		k = 0;
-		for (i = cropTop; i < cropBottom; i++)
-		{
-			l = 0;
-			for (j = cropLeft; j < cropRight; j++)
-			{
-				frame.L[k][l] = input[i*inputWidth + j];
-				l++;
-			}
-			k++;
-		}
-		unsigned int  pos = lumaSize;
-
-		cropTop >>= 1;
-		cropBottom >>= 1;
-		cropLeft >>= 1;
-		cropRight >>= 1;
-
-		int inputHeightC = inputHeight >> 1;
-		int inputWidthC = inputWidth >> 1;
-
-		k = 0;
-		for (i = cropTop; i < cropBottom; i++)
-		{
-			l = 0;
-			for (j = cropLeft; j < cropRight; j++)
-			{
-				frame.C[0][k][l] = input[pos + i*inputWidthC + j];
-				l++;
-			}
-			k++;
-		}
-
-		pos += chromaSize;
 		
-		k = 0;
-		for (i = cropTop; i < cropBottom; i++)
+		if (streamBufferSize < lumaSize + (chromaSize << 1))
 		{
-			l = 0;
-			for (j = cropLeft; j < cropRight; j++)
-			{
-				frame.C[1][k][l] = input[pos + i*inputWidthC + j];
-				l++;
-			}
-			k++;
+			printf("End of stream found.\n");
+			return -1;
 		}
-
-		pos = findStartOfFrame(input);
-		streamBufferPos += pos;
-		return 0;
 	}
-}
+	
+	input = &streamBuffer[streamBufferPos];
 
-void FileIOCleanup()
-{
-	delete [] input;
-	fclose(yuvinput);
-	fclose(yuvoutput);
+	int cropTop = (inputHeight - frame.Lheight) >> 1;
+	int cropBottom = cropTop + frame.Lheight;
+	int cropLeft = (inputWidth - frame.Lwidth) >> 1;
+	int cropRight = cropLeft + frame.Lwidth;
+
+	k = 0;
+	for (i = cropTop; i < cropBottom; i++)
+	{
+		l = 0;
+		for (j = cropLeft; j < cropRight; j++)
+		{
+			frame.L[k][l] = input[i*inputWidth + j];
+			l++;
+		}
+		k++;
+	}
+	unsigned int pos = lumaSize;
+
+	cropTop >>= 1;
+	cropBottom >>= 1;
+	cropLeft >>= 1;
+	cropRight >>= 1;
+
+	int inputHeightC = inputHeight >> 1;
+	int inputWidthC = inputWidth >> 1;
+
+	k = 0;
+	for (i = cropTop; i < cropBottom; i++)
+	{
+		l = 0;
+		for (j = cropLeft; j < cropRight; j++)
+		{
+			frame.C[0][k][l] = input[pos + i*inputWidthC + j];
+			l++;
+		}
+		k++;
+	}
+	pos += chromaSize;
+	
+	k = 0;
+	for (i = cropTop; i < cropBottom; i++)
+	{
+		l = 0;
+		for (j = cropLeft; j < cropRight; j++)
+		{
+			frame.C[1][k][l] = input[pos + i*inputWidthC + j];
+			l++;
+		}
+		k++;
+	}
+	pos += chromaSize;
+
+	streamBufferPos += pos;
+	streamBufferPos += findStartOfFrame(&input[pos], streamBufferSize - streamBufferPos);
+
+	return 0;
 }

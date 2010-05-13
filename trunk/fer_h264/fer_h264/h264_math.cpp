@@ -1,15 +1,6 @@
 // This file contains some helper functions defined in chapter 5.7 (Mathematical functions) in the standard.
 #include "h264_math.h"
 
-
-int InverseRasterScan(int a, int b, int c, int d, int e)
-{
-	if (e == 0)
-		return (a % (d/b)) * b;
-	else
-		return (a / (d/b)) * c;
-}
-
 int Clip3(int x, int y, int z)
 {
 	if (z < x)

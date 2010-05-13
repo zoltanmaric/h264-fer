@@ -10,5 +10,3 @@ void writeToYUV();
 
 int ReadFromY4M();
 void LoadY4MHeader();
-
-void FileIOCleanup();
