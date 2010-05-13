@@ -77,7 +77,7 @@ void encode()
 	while (ReadFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 1000) continue;
+		if (frameCount < 600) continue;
 
 		printf("Frame #%d\n", frameCount);
 		//writeToYUV();
@@ -88,9 +88,8 @@ void encode()
 		writeNAL(nu);
 		FillInterpolatedRefFrame();
 
-		if (frameCount == 1005) break;
+		if (frameCount == 605) break;
 	}
-	FlushNAL();
 
 	CloseNAL();
 	fclose(stream);
@@ -99,8 +98,8 @@ void encode()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	decode();
-	//encode();
+	//decode();
+	encode();
 
 	return 0;
 }

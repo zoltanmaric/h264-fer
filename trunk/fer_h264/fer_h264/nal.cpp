@@ -1,8 +1,10 @@
 #include "nal.h"
 
 unsigned char *NALbytes;
+const unsigned int maxNalSize = 102400;		// =100kB
+
 unsigned char *nalStreamBuffer;
-unsigned int nalStreamBufferSize = 1048576;		// =10 MB
+unsigned int nalStreamBufferSize = 10485760;		// =10 MB
 unsigned int nalStreamBufferPos;
 FILE *stream;
 
@@ -12,7 +14,7 @@ FILE *stream;
 // program startup.
 void InitNAL()
 {
-	NALbytes = new unsigned char[500000];
+	//NALbytes = new unsigned char[500000];
 	nalStreamBuffer = new unsigned char[nalStreamBufferSize];
 	while (nalStreamBuffer == NULL)
 	{
@@ -21,19 +23,28 @@ void InitNAL()
 		nalStreamBuffer = new unsigned char[nalStreamBufferSize];
 	}
 	nalStreamBufferPos = 0;
+	
+	NALbytes = nalStreamBuffer;
 }
 
+// NALbytes is a subarray of nalStreamBuffer or effectively
+// just a pointer to a subarray within nalStreamBuffer.
+// This means that the data is already written into the stream
+// buffer. Therefore this function only moves the NALbytes pointer
+// forward and flushes the stream buffer if the remaining allocated
+// memory within the stream buffer is less than the expected maximum
+// NAL size (maxNalSize).
 void writeToBuffer(int numBytes)
 {
-	if (nalStreamBufferPos + numBytes > nalStreamBufferSize)
+	nalStreamBufferPos += numBytes;
+	if (nalStreamBufferPos + maxNalSize > nalStreamBufferSize)
 	{
 		// Flush the stream buffer to the output stream.
 		fwrite(nalStreamBuffer, 1, nalStreamBufferPos, stream);
 		nalStreamBufferPos = 0;
 	}
 
-	memcpy(&nalStreamBuffer[nalStreamBufferPos], NALbytes, numBytes);
-	nalStreamBufferPos += numBytes;
+	NALbytes = &nalStreamBuffer[nalStreamBufferPos];
 }
 
 // Flushes the stream buffer to the output stream.
@@ -50,7 +61,6 @@ void CloseNAL()
 	fwrite(nalStreamBuffer, 1, nalStreamBufferPos, stream);
 	nalStreamBufferPos = 0;
 
-	delete [] NALbytes;
 	delete [] nalStreamBuffer;
 }
 
