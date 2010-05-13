@@ -19,6 +19,7 @@ void decode()
 	yuvoutput = fopen("Bourne.y4m","wb");
 
 	generate_residual_level_tables();
+	InitNAL();
 
 	NALunit nu;
 	nu.rbsp_byte = new unsigned char[500000];
@@ -36,6 +37,7 @@ void decode()
 		RBSP_decode(nu);
 	}		
 
+	CloseNAL();
 	fclose(stream);
 	fclose(yuvoutput);
 }
@@ -48,6 +50,7 @@ void encode()
 
 	generate_residual_level_tables();
 	init_expgolomb_UC_codes();
+	InitNAL();
 
 	frameCount = 0;
 	NALunit nu;
@@ -77,7 +80,7 @@ void encode()
 		if (frameCount < 1000) continue;
 
 		printf("Frame #%d\n", frameCount);
-		writeToYUV();
+		//writeToYUV();
 
 		nu.nal_unit_type = selectNALUnitType();
 		RBSP_encode(nu);
@@ -85,17 +88,19 @@ void encode()
 		writeNAL(nu);
 		FillInterpolatedRefFrame();
 
-		if (frameCount == 1300) break;
+		if (frameCount == 1005) break;
 	}
+	FlushNAL();
 
+	CloseNAL();
 	fclose(stream);
 	FileIOCleanup();
 }
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//decode();
-	encode();
+	decode();
+	//encode();
 
 	return 0;
 }
