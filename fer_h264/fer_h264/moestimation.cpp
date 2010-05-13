@@ -55,7 +55,7 @@ void FillInterpolatedRefFrame()
 	int predL[16][16], predCr[8][8], predCb[8][8];
 	for (int frac = 0; frac < 16; frac++)
 	{
-		int mvx = frac&3, mvy = (frac&12)/4;
+		int mvx = frac&3, mvy = (frac&12)>>2;
 		for (int tmpMbAddr = 0; tmpMbAddr < shd.PicSizeInMbs; tmpMbAddr++)
 		{
 			for (int i = 0; i < 4; i++)
@@ -70,7 +70,7 @@ void FillInterpolatedRefFrame()
 			for (int i = 0; i < 16; i++)
 				for (int j = 0; j < 16; j++)
 					refFrameInterpolated[frac].L[y0+i][x0+j] = predL[i][j];
-			x0 /= 2; y0 /= 2;
+			x0 >>= 1; y0 >>= 1;
 			for (int i = 0; i < 8; i++)
 				for (int j = 0; j < 8; j++)
 				{
@@ -139,8 +139,8 @@ void FillInterpolatedRefFrame()
 					for (int kar = 0; kar < 4; kar++) refFrameKar[kar][i][ty][tx] += (8-frame.Lwidth+tx) * refFrameKar[kar][i][ty][frame.Lwidth-1];
 					refFrameKar[5][i][ty][tx] += (8-frame.Lwidth+tx) * refFrameKar[5][i][ty][frame.Lwidth-1];
 				}
-				if ((tx%2)) refFrameKar[2][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[2][i][ty][tx];
-				if ((ty%2)) refFrameKar[3][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[3][i][ty][tx];
+				if ((tx&1)) refFrameKar[2][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[2][i][ty][tx];
+				if ((ty&1)) refFrameKar[3][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[3][i][ty][tx];
 			}
 		}
 	}
@@ -154,12 +154,12 @@ int satdLuma8x8MVs(int mvx, int mvy, int luma8x8BlkIdx)
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
 	int xPi = xP + (mvx>>2); if (xPi < 0) xPi = 0; if (xPi >= frame.Lwidth) xPi = frame.Lwidth-1;
 	int yPi = yP + (mvy>>2); if (yPi < 0) yPi = 0; if (yPi >= frame.Lheight) yPi = frame.Lheight-1;
-	int frac = (mvx&3) + (mvy&3)*4;
+	int frac = (mvx&3) + ((mvy&3)<<2);
 	int diffL4x4[4][4], rLuma[4][4], x0, y0, px, py;
 	
 	for (int part4x4idx = 0; part4x4idx < 4; part4x4idx++)
 	{
-		x0 = ((luma8x8BlkIdx%2) << 3) + ((part4x4idx%2) << 2);
+		x0 = ((luma8x8BlkIdx&1) << 3) + ((part4x4idx&1) << 2);
 		y0 = ((luma8x8BlkIdx&2) << 2) + ((part4x4idx&2) << 1);
 		for (int i = 0; i < 4; i++)
 			for (int j = 0; j < 4; j++)
@@ -187,7 +187,7 @@ int satdLuma8x8(int predL[16][16], int luma8x8BlkIdx)
 	
 	for (int part4x4idx = 0; part4x4idx < 4; part4x4idx++)
 	{
-		x0 = ((luma8x8BlkIdx%2) << 3) + ((part4x4idx%2) << 2);
+		x0 = ((luma8x8BlkIdx&1) << 3) + ((part4x4idx&1) << 2);
 		y0 = ((luma8x8BlkIdx&2) << 2) + ((part4x4idx&2) << 1);
 		for (int i = 0; i < 4; i++)
 			for (int j = 0; j < 4; j++)
@@ -210,7 +210,7 @@ int zigZagSADLuma8x8(int predL[16][16], int luma8x8BlkIdx)
 
 	for (int i = 0; i < 4; i++)
 	{
-		x0 = ((luma8x8BlkIdx%2) << 3) + ((i%2) << 2);
+		x0 = ((luma8x8BlkIdx&1) << 3) + ((i&1) << 2);
 		y0 = ((luma8x8BlkIdx&2) << 2) + ((i&2) << 1);
 		for (int j = 0; j < 16; j++)
 		{
@@ -233,7 +233,7 @@ int sadLuma8x8(int predL[16][16], int luma8x8BlkIdx)
 	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
 	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
 
-	int x0 = (luma8x8BlkIdx%2) << 3;
+	int x0 = (luma8x8BlkIdx&1) << 3;
 	int y0 = (luma8x8BlkIdx&2) << 2;
 
 	for (int i = 0; i < 8; i++)
@@ -268,7 +268,7 @@ int ExactPixels(int predL[16][16])
 int sadLuma(int predL[16][16], int partId)
 {
 	if (mb_type == P_8x8 || mb_type == P_8x8ref0) return satdLuma8x8(predL, partId);
-	if (mb_type == P_L0_L0_16x8) return satdLuma8x8(predL, partId*2) + satdLuma8x8(predL, partId*2+1);
+	if (mb_type == P_L0_L0_16x8) return satdLuma8x8(predL, partId<<1) + satdLuma8x8(predL, (partId<<1)+1);
 	if (mb_type == P_L0_L0_8x16) return satdLuma8x8(predL, partId) + satdLuma8x8(predL, partId+2);
 	if (mb_type == P_L0_16x16 || mb_type == P_Skip) return satdLuma8x8(predL, 0) + satdLuma8x8(predL, 1) + satdLuma8x8(predL, 2) + satdLuma8x8(predL, 3);
 }
@@ -276,7 +276,7 @@ int sadLuma(int predL[16][16], int partId)
 int sadLumaMVs(int mvx, int mvy, int partId)
 {
 	if (mb_type == P_8x8 || mb_type == P_8x8ref0) return satdLuma8x8MVs(mvx, mvy, partId);
-	if (mb_type == P_L0_L0_16x8) return satdLuma8x8MVs(mvx, mvy, partId*2) + satdLuma8x8MVs(mvx, mvy, partId*2+1);
+	if (mb_type == P_L0_L0_16x8) return satdLuma8x8MVs(mvx, mvy, partId<<1) + satdLuma8x8MVs(mvx, mvy, (partId<<1)+1);
 	if (mb_type == P_L0_L0_8x16) return satdLuma8x8MVs(mvx, mvy, partId) + satdLuma8x8MVs(mvx, mvy, partId+2);
 	if (mb_type == P_L0_16x16 || mb_type == P_Skip) return satdLuma8x8MVs(mvx, mvy, 0) + satdLuma8x8MVs(mvx, mvy, 1) + satdLuma8x8MVs(mvx, mvy, 2) + satdLuma8x8MVs(mvx, mvy, 3);
 }
@@ -308,7 +308,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			DeriveMVs();
 			int genx = MPI_mvL0x(CurrMbAddr, i) >> 2;
 			int geny = MPI_mvL0y(CurrMbAddr, i) >> 2;
-			int suma[6] = {0, 0, 0, 0, 0, 0}, relx = (i%2) * 8, rely = (i/2) * 8, tmp;
+			int suma[6] = {0, 0, 0, 0, 0, 0}, relx = ((i&1) << 3), rely = ((i>>1) << 3), tmp;
 			if (CurrMbAddr == 235)
 			{
 				int u = 1;
@@ -340,7 +340,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 						refy = rely+yp+tmpy;
 						if (refy >= 0 && refy < frame.Lheight && refx>=0 && refx<frame.Lwidth) 
 						{
-							trenRazlika = (8+ABS(frac/4)+ABS(tmpx)+ABS(2*tmpy))*( ABS(suma[0]-refFrameKar[0][frac][refy][refx])
+							trenRazlika = (8+ABS(frac>>2)+ABS(tmpx)+ABS(tmpy<<1))*( ABS(suma[0]-refFrameKar[0][frac][refy][refx])
 											+ ABS(suma[1]-refFrameKar[1][frac][refy][refx])
 											+ ABS(suma[2]-refFrameKar[2][frac][refy][refx])
 											+ ABS(suma[3]-refFrameKar[3][frac][refy][refx])
