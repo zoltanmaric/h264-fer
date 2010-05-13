@@ -233,14 +233,6 @@ frame_type frame;
 int **ref_idx_l0_array;
 int mvd_l0[4][4][2];
 
-unsigned int ABS(int a)
-{
-	if (a>0)
-		return a;
-	else
-		return -a;
-}
-
 int init_h264_structures()
 {
 	TotalCoeff_luma_array = new int*[sps.PicWidthInMbs];

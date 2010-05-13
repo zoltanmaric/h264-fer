@@ -93,7 +93,8 @@ void encode()
 
 	CloseNAL();
 	fclose(stream);
-	FileIOCleanup();
+	fclose(yuvinput);
+	fclose(yuvoutput);
 }
 
 int _tmain(int argc, _TCHAR* argv[])
