@@ -13,6 +13,14 @@ typedef struct
 }
 NALunit;
 
+// Allocates the buffers. To be invoked only once upon
+// program startup.
+void InitNAL();
+// Flushes the stream buffer to the output stream.
+void FlushNAL();
+// Frees allocated memory. Invoke once at program termination.
+void CloseNAL();
+
 // Returns the NAL unit data in a NALunit structure.
 // fPtr - the current position in the input file
 void getNAL(unsigned long *fPtr, NALunit &nu);

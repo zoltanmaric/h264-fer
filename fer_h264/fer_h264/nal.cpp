@@ -1,7 +1,62 @@
 #include "nal.h"
 
-unsigned char NALbytes[500000];
+unsigned char *NALbytes;
+unsigned char *nalStreamBuffer;
+unsigned int nalStreamBufferSize = 1048576;		// =10 MB
+unsigned int nalStreamBufferPos;
 FILE *stream;
+
+// HOUSEKEEPING:
+
+// Allocates the buffers. To be invoked only once upon
+// program startup.
+void InitNAL()
+{
+	NALbytes = new unsigned char[500000];
+	nalStreamBuffer = new unsigned char[nalStreamBufferSize];
+	while (nalStreamBuffer == NULL)
+	{
+		// if insufficient memory
+		nalStreamBufferSize >>= 1;		// try allocating half as much
+		nalStreamBuffer = new unsigned char[nalStreamBufferSize];
+	}
+	nalStreamBufferPos = 0;
+}
+
+void writeToBuffer(int numBytes)
+{
+	if (nalStreamBufferPos + numBytes > nalStreamBufferSize)
+	{
+		// Flush the stream buffer to the output stream.
+		fwrite(nalStreamBuffer, 1, nalStreamBufferPos, stream);
+		nalStreamBufferPos = 0;
+	}
+
+	memcpy(&nalStreamBuffer[nalStreamBufferPos], NALbytes, numBytes);
+	nalStreamBufferPos += numBytes;
+}
+
+// Flushes the stream buffer to the output stream.
+void FlushNAL()
+{
+	fwrite(nalStreamBuffer, 1, nalStreamBufferPos, stream);
+	nalStreamBufferPos = 0;
+}
+
+// Frees allocated memory. Invoke once at program termination.
+void CloseNAL()
+{
+	// Flush the stream buffer to the output stream.
+	fwrite(nalStreamBuffer, 1, nalStreamBufferPos, stream);
+	nalStreamBufferPos = 0;
+
+	delete [] NALbytes;
+	delete [] nalStreamBuffer;
+}
+
+
+
+// DECODING:
 
 // Returns the address of the subsequent NAL unit in the 
 // input file.
@@ -193,7 +248,6 @@ void getNAL(unsigned long *fPtr, NALunit &nu)
 }
 
 // ENCODING:
-
 void writeNAL(NALunit nu)
 {
 	unsigned int pos = 0;
@@ -230,5 +284,6 @@ void writeNAL(NALunit nu)
 		}		
 	}
 
-	fwrite(NALbytes, 1, pos, stream);
+	//fwrite(NALbytes, 1, pos, stream);
+	writeToBuffer(pos);
 }
