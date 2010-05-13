@@ -19,7 +19,7 @@ int tmpVar[16];
 frame_type refFrameInterpolated[16];
 //frame_type refFrameKar[16];
 
-unsigned int **refFrameKar[6][16];
+int **refFrameKar[6][16];
 
 void InitializeInterpolatedRefFrame()
 {
@@ -31,11 +31,11 @@ void InitializeInterpolatedRefFrame()
 		refFrameInterpolated[i].Cwidth = frame.Cwidth;
 
 		refFrameInterpolated[i].L = new unsigned char*[frame.Lheight];
-		for (int kar = 0; kar < 6; kar++) refFrameKar[kar][i] = new unsigned int*[frame.Lheight];
+		for (int kar = 0; kar < 6; kar++) refFrameKar[kar][i] = new int*[frame.Lheight];
 		for (int it = 0; it < frame.Lheight; it++)
 		{
 			refFrameInterpolated[i].L[it] = new unsigned char[frame.Lwidth];
-			for (int kar = 0; kar < 6; kar++) refFrameKar[kar][i][it] = new unsigned int[frame.Lwidth];
+			for (int kar = 0; kar < 6; kar++) refFrameKar[kar][i][it] = new int[frame.Lwidth];
 		}
 
 		refFrameInterpolated[i].C[0] = new unsigned char*[frame.Cheight];
@@ -86,9 +86,9 @@ void FillInterpolatedRefFrame()
 			for (int ty = frame.Lheight-1; ty >= 0; ty--)
 			{
 				for (int kar = 0; kar < 4; kar++) refFrameKar[kar][i][ty][tx] = refFrameInterpolated[i].L[ty][tx];
-				refFrameKar[1][i][ty][tx] = ABS((int)refFrameKar[1][i][ty][tx]-128);
-				refFrameKar[2][i][ty][tx] = ABS((int)refFrameKar[1][i][ty][tx]-176);
-				refFrameKar[3][i][ty][tx] = ABS((int)refFrameKar[1][i][ty][tx]-96);
+				refFrameKar[1][i][ty][tx] = ABS(refFrameKar[1][i][ty][tx]-128);
+				refFrameKar[2][i][ty][tx] = ABS(refFrameKar[1][i][ty][tx]-176);
+				refFrameKar[3][i][ty][tx] = ABS(refFrameKar[1][i][ty][tx]-96);
 				if (ty < frame.Lheight-1)
 					for (int kar = 0; kar < 4; kar++)
 						refFrameKar[kar][i][ty][tx] += refFrameKar[kar][i][ty+1][tx];
@@ -340,12 +340,12 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 						refy = rely+yp+tmpy;
 						if (refy >= 0 && refy < frame.Lheight && refx>=0 && refx<frame.Lwidth) 
 						{
-							trenRazlika = (8+ABS(frac/4)+ABS(tmpx)+ABS(2*tmpy))*( ABS(suma[0]-(int)refFrameKar[0][frac][refy][refx])
-											+ ABS(suma[1]-(int)refFrameKar[1][frac][refy][refx])
-											+ ABS(suma[2]-(int)refFrameKar[2][frac][refy][refx])
-											+ ABS(suma[3]-(int)refFrameKar[3][frac][refy][refx])
-											+ ABS(suma[4]-(int)refFrameKar[4][frac][refy][refx])
-											+ ABS(suma[5]-(int)refFrameKar[5][frac][refy][refx])
+							trenRazlika = (8+ABS(frac/4)+ABS(tmpx)+ABS(2*tmpy))*( ABS(suma[0]-refFrameKar[0][frac][refy][refx])
+											+ ABS(suma[1]-refFrameKar[1][frac][refy][refx])
+											+ ABS(suma[2]-refFrameKar[2][frac][refy][refx])
+											+ ABS(suma[3]-refFrameKar[3][frac][refy][refx])
+											+ ABS(suma[4]-refFrameKar[4][frac][refy][refx])
+											+ ABS(suma[5]-refFrameKar[5][frac][refy][refx])
 											+ ABS(suma[0]-(int)suma[4]+refFrameKar[4][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
 											+ ABS(suma[0]-(int)suma[5]+refFrameKar[5][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
 											//+ ABS(suma[0]-suma[1]+refFrameKar[1][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
