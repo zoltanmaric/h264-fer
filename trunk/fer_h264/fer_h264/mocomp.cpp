@@ -85,8 +85,8 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 	int mvx, mvy;
 	org_y = ((subMbIdx & 2)<<2) + ((subMbPartIdx & 2)<<1);
 	org_x = ((subMbIdx & 1)<<3) + ((subMbPartIdx & 1)<<2);
-	mvx = MPI_mvSubL0x_byIdx(mbPartIdx,subMbIdx,subMbPartIdx);
-	mvy = MPI_mvSubL0y_byIdx(mbPartIdx,subMbIdx,subMbPartIdx);
+	mvx = mvL0x[mbPartIdx][subMbIdx][subMbPartIdx];
+	mvy = mvL0y[mbPartIdx][subMbIdx][subMbPartIdx];
 	int xAl = InverseRasterScan(mbPartIdx, 16, 16, frame.Lwidth, 0) + org_x;
 	int yAl = InverseRasterScan(mbPartIdx, 16, 16, frame.Lwidth, 1) + org_y;
 	// Fills temp tables used in fractional interpolation (luma) and linear interpolation (chroma).

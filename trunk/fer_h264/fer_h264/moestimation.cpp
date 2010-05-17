@@ -69,7 +69,7 @@ int diffTransformedLuma(int a, int b)
 
 void FillInterpolatedRefFrame()
 {
-	frame_type * refPic = RefPicList0[*(refIdxL0+CurrMbAddr)].frame;
+	frame_type * refPic = RefPicList0[0].frame;
 	int predL[16][16], predCr[8][8], predCb[8][8];
 	for (int frac = 0; frac < 16; frac++)
 	{
@@ -79,8 +79,8 @@ void FillInterpolatedRefFrame()
 			for (int i = 0; i < 4; i++)
 				for (int j = 0; j < 4; j++)
 				{
-					MPI_mvSubL0x_byIdx(tmpMbAddr,i,j) = mvx;
-					MPI_mvSubL0y_byIdx(tmpMbAddr,i,j) = mvy;
+					mvL0x[tmpMbAddr][i][j] = mvx;
+					mvL0y[tmpMbAddr][i][j] = mvy;
 					MotionCompensateSubMBPart(predL, predCr, predCb, refPic, tmpMbAddr, i, j);
 				}
 			int x0 = InverseRasterScan(tmpMbAddr, 16, 16, frame.Lwidth, 0);
@@ -368,8 +368,8 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			//int mvdx = 0, mvdy = 0;
 			mvd_l0[i][0][0] = mvd_l0[i][0][1] = 0;
 			DeriveMVs();
-			int genx = MPI_mvL0x(CurrMbAddr, i) >> 2;
-			int geny = MPI_mvL0y(CurrMbAddr, i) >> 2;
+			int genx = mvL0x[CurrMbAddr][i][0] >> 2;
+			int geny = mvL0y[CurrMbAddr][i][0] >> 2;
 			int suma[6] = {0, 0, 0, 0, 0, 0}, relx = (i%2) * 8, rely = (i/2) * 8, tmp;
 			if (CurrMbAddr == 235)
 			{
@@ -530,8 +530,8 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				Pogorsaj(bx, by, i);
 			}
 			mvx[i] = bx; mvy[i] = by;
-			bx -= MPI_mvL0x(CurrMbAddr, i);
-			by -= MPI_mvL0y(CurrMbAddr, i);
+			bx -= mvL0x[CurrMbAddr][i][0];
+			by -= mvL0y[CurrMbAddr][i][0];
 			mvd_l0[i][0][0] = mvdL0[i][0] = bx;
 			mvd_l0[i][0][1] = mvdL0[i][1] = by;
 			//bmin = sadLuma(predL, i);
@@ -596,18 +596,18 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			DeriveMVs();
 			if (i == 1 && mb_type == P_L0_L0_16x8)
 			{
-				mvd_l0[i][0][0] = mvx[i] - MPI_mvL0x(CurrMbAddr, 2);
-				mvd_l0[i][0][1] = mvy[i] - MPI_mvL0y(CurrMbAddr, 2);
+				mvd_l0[i][0][0] = mvx[i] - mvL0x[CurrMbAddr][2][0];
+				mvd_l0[i][0][1] = mvy[i] - mvL0y[CurrMbAddr][2][0];
 			} else {
-				mvd_l0[i][0][0] = mvx[i] - MPI_mvL0x(CurrMbAddr, i);
-				mvd_l0[i][0][1] = mvy[i] - MPI_mvL0y(CurrMbAddr, i);
+				mvd_l0[i][0][0] = mvx[i] - mvL0x[CurrMbAddr][i][0];
+				mvd_l0[i][0][1] = mvy[i] - mvL0y[CurrMbAddr][i][0];
 			}
 		}
 
 		DeriveMVs();
 		for (int i = 0; i < 4; i++){
-			mvx[i] = MPI_mvL0x(CurrMbAddr, i);
-			mvy[i] = MPI_mvL0y(CurrMbAddr, i);
+			mvx[i] = mvL0x[CurrMbAddr][i][0];
+			mvy[i] = mvL0y[CurrMbAddr][i][0];
 		}
 		Decode(predL, predCr, predCb);
 	//	if (currMin < minBlock)
@@ -621,19 +621,4 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 	//		}
 	//	}
 	//}
-	//mb_type = P_8x8;
-	//mb_type_array[CurrMbAddr] = P_8x8;
-	//for (int i = 0; i < 4; i++)
-	//{
-	//	mvd_l0[i][0][0] = mvdL0[i][0];
-	//	mvd_l0[i][0][1] = mvdL0[i][1];
-	//}
-	//DeriveMVs();
-	////printf("Trenutni MB = %d> ", CurrMbAddr);
-	//for (int i = 0; i < 4; i++)
-	//{
-	//	//printf("(%d:%d, %d:%d), ", MPI_mvL0x(CurrMbAddr, i), mvd_l0[i][0][0], MPI_mvL0y(CurrMbAddr, i), mvd_l0[i][0][1]);
-	//}
-	////printf("\n");
-	//Decode(predL, predCr, predCb);
 }
