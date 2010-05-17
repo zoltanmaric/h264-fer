@@ -36,9 +36,11 @@ void FillTemp_4x4_refPart(frame_type *ref, int org_Lx, int org_Ly, int org_Cx, i
 
 
 #define Tap6Filter(E,F,G,H,I,J) Border(((E)-5*(F)+20*(G)+20*(H)-5*(I)+(J)+16)>>5)
-int Border(int i) {
-  if(i<0) return 0; else if(i>255) return 255; else return i;
-}
+#define Border(i) (((i)>0)?(((i)<255)?(i):255):0)
+
+//int Border(int i) {
+//  if(i<0) return 0; else if(i>255) return 255; else return i;
+//}
 
 #define iffrac(x,y) if(frac==y*4+x)
 #define Middle(a,b) (((a)+(b)+1)>>1)
