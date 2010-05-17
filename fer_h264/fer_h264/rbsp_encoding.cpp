@@ -122,6 +122,7 @@ void RBSP_encode(NALunit &nal_unit)
 	{
 		sps_write();
 		init_h264_structures_encoder();
+		AllocateMemory();
 		RBSP_trailing_bits();
 		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;
 	}

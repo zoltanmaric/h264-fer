@@ -34,6 +34,7 @@ void RBSP_decode(NALunit nal_unit)
 	{
 		fill_sps(&nal_unit);
 		init_h264_structures();
+		AllocateMemory();
 	}
 	//TYPE 8 = Picture parameter set TODO: Provjera postoji li veæ PPS i SPS
 	else if (nal_unit.nal_unit_type==NAL_UNIT_TYPE_PPS)
