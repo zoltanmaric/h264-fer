@@ -1,12 +1,15 @@
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <cassert>
+
+#include <CL/cl.h>
+
 #include "h264_globals.h"
 #include "headers_and_parameter_sets.h"
 #include "ref_frames.h"
 #include "h264_math.h"
 #include "openCL_functions.h"
-
-#include <cstdlib>
-#include <cstring>
-#include <string>
 ref_pic_type RefPicList0[50000];
 frame_type dpb;
 int iskoristeno;
@@ -184,6 +187,83 @@ void modificationProcess()
 	RefPicList0[shd.num_ref_idx_l0_active_minus1+1].RefPicPresent = false;
 }
 
+void subtractFramesCL(int *result)
+{
+	cl_int err = 0;
+	size_t returned_size = 0;
+	
+	cl_mem a_mem, b_mem, ans_mem;
+
+	int *a_buff, *b_buff;
+
+	a_buff = new int[frame.Lwidth*frame.Lheight];
+	b_buff = new int[frame.Lwidth*frame.Lheight];
+
+	for (int i = 0; i < frame.Lheight; i++)
+	{
+		for (int j = 0; j < frame.Lwidth; j++)
+		{
+			a_buff[i*frame.Lwidth+j] = frame.L[i][j];
+			b_buff[i*frame.Lwidth+j] = dpb.L[i][j];
+		}
+	}
+		
+
+	// MEMORY ALLOCATION
+	// Allocate memory on the device to hold our data and store the result into
+	size_t buffer_size = frame.Lwidth*frame.Lheight * sizeof(int);
+	cl_event event_wait_list[3];
+	cl_uint num_events = 0;
+
+	// Input array a
+	a_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
+	err = clEnqueueWriteBuffer(cmd_queue, a_mem, CL_FALSE, 0, buffer_size,		// TEST: currently non-blocking, may cause errors
+							   (void*)a_buff, 0, NULL, &event_wait_list[num_events++]);
+	
+	// Input array b
+	b_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
+	err |= clEnqueueWriteBuffer(cmd_queue, b_mem, CL_FALSE, 0, buffer_size,
+								(void*)b_buff, 0, NULL, &event_wait_list[num_events++]);
+	assert(err == CL_SUCCESS);
+	
+	// result array
+	ans_mem	= clCreateBuffer(context, CL_MEM_READ_WRITE, buffer_size, NULL, NULL);
+	
+	// Get all of the stuff written and allocated 
+	//clFinish(cmd_queue);
+	
+	
+	// KERNEL ARGUMENTS
+	// Now setup the arguments to our kernel
+	err  = clSetKernelArg(kernel[0],  0, sizeof(cl_mem), &a_mem);
+	err |= clSetKernelArg(kernel[0],  1, sizeof(cl_mem), &b_mem);
+	err |= clSetKernelArg(kernel[0],  2, sizeof(cl_mem), &ans_mem);
+	assert(err == CL_SUCCESS);
+	
+	// EXECUTION AND READ
+	// Run the calculation by enqueuing it and forcing the 
+	// command queue to complete the task
+	size_t global_work_size = frame.Lwidth*frame.Lheight;
+	cl_event evnt;
+	err = clEnqueueNDRangeKernel(cmd_queue, kernel[0], 1, NULL, 
+								 &global_work_size, NULL, num_events, event_wait_list, &evnt);
+	assert(err == CL_SUCCESS);
+	event_wait_list[0] = evnt;
+	num_events = 1;
+	
+	// Once finished read back the result from the answer 
+	// array into the result array
+	err = clEnqueueReadBuffer(cmd_queue, ans_mem, CL_TRUE, 0, buffer_size, 
+							  result, num_events, event_wait_list, NULL);
+	assert(err == CL_SUCCESS);
+	//clFinish(cmd_queue);
+	
+	// TEARDOWN
+	clReleaseMemObject(a_mem);
+	clReleaseMemObject(b_mem);
+	clReleaseMemObject(ans_mem);
+}
+
 int selectNALUnitType()
 {
 	unsigned long sad = 0;
@@ -197,14 +277,15 @@ int selectNALUnitType()
 
 	int frameSize = frame.Lwidth * frame.Lheight;
 
-	int *results = new int[frameSize];
-	RunCL(frame.L, dpb.L, results);
+	int *result = new int[frameSize];
+	subtractFramesCL(result);
+	//RunCL(frame.L, dpb.L, results);
 
 	for (int i = 0; i < frameSize; i++)
 	{
-		sad += results[i];
+		sad += result[i];
 	}
-	delete [] results;
+	delete [] result;
 
 	//for (int i = 0; i < frame.Lheight; i++)
 	//{

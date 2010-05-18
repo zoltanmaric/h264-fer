@@ -110,8 +110,6 @@ int RunCL(unsigned char **a, unsigned char **b, int *results)
 	cl_mem a_mem, b_mem, ans_mem;
 
 	int *a_buff, *b_buff;
-	
-	size_t buffer_size = frame.Lwidth*frame.Lheight * sizeof(int);
 
 	a_buff = new int[frame.Lwidth*frame.Lheight];
 	b_buff = new int[frame.Lwidth*frame.Lheight];
@@ -128,22 +126,26 @@ int RunCL(unsigned char **a, unsigned char **b, int *results)
 
 	// MEMORY ALLOCATION
 	// Allocate memory on the device to hold our data and store the results into
+	size_t buffer_size = frame.Lwidth*frame.Lheight * sizeof(int);
+	cl_event event_wait_list[3];
+	cl_uint num_events = 0;
+
 	// Input array a
 	a_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
-	err = clEnqueueWriteBuffer(cmd_queue, a_mem, CL_TRUE, 0, buffer_size,
-							   (void*)a_buff, 0, NULL, NULL);
+	err = clEnqueueWriteBuffer(cmd_queue, a_mem, CL_FALSE, 0, buffer_size,		// TEST: currently non-blocking, may cause errors
+							   (void*)a_buff, 0, NULL, &event_wait_list[num_events++]);
 	
 	// Input array b
 	b_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
-	err |= clEnqueueWriteBuffer(cmd_queue, b_mem, CL_TRUE, 0, buffer_size,
-								(void*)b_buff, 0, NULL, NULL);
+	err |= clEnqueueWriteBuffer(cmd_queue, b_mem, CL_FALSE, 0, buffer_size,
+								(void*)b_buff, 0, NULL, &event_wait_list[num_events++]);
 	assert(err == CL_SUCCESS);
 	
 	// Results array
 	ans_mem	= clCreateBuffer(context, CL_MEM_READ_WRITE, buffer_size, NULL, NULL);
 	
 	// Get all of the stuff written and allocated 
-	clFinish(cmd_queue);
+	//clFinish(cmd_queue);
 	
 	
 	// KERNEL ARGUMENTS
@@ -157,17 +159,19 @@ int RunCL(unsigned char **a, unsigned char **b, int *results)
 	// Run the calculation by enqueuing it and forcing the 
 	// command queue to complete the task
 	size_t global_work_size = frame.Lwidth*frame.Lheight;
+	cl_event evnt;
 	err = clEnqueueNDRangeKernel(cmd_queue, kernel[0], 1, NULL, 
-								 &global_work_size, NULL, 0, NULL, NULL);
+								 &global_work_size, NULL, num_events, event_wait_list, &evnt);
 	assert(err == CL_SUCCESS);
-	clFinish(cmd_queue);
+	event_wait_list[0] = evnt;
+	num_events = 1;
 	
 	// Once finished read back the results from the answer 
 	// array into the results array
 	err = clEnqueueReadBuffer(cmd_queue, ans_mem, CL_TRUE, 0, buffer_size, 
-							  results, 0, NULL, NULL);
+							  results, num_events, event_wait_list, NULL);
 	assert(err == CL_SUCCESS);
-	clFinish(cmd_queue);
+	//clFinish(cmd_queue);
 	
 	// TEARDOWN
 	clReleaseMemObject(a_mem);
