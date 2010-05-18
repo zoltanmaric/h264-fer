@@ -136,9 +136,23 @@ void RBSP_encode(NALunit &nal_unit)
 	{
 		if (nal_unit.nal_unit_type == NAL_UNIT_TYPE_IDR)
 		{
+			static bool firstFrame = true;
 			shd.slice_type = I_SLICE;
+			if (firstFrame == true)
+			{
+				firstFrame = false;
+				shd.idr_pic_id = 0;	
+			}
+			else if (shd.frame_num == 0)	// if previous frame was IDR
+			{
+				shd.idr_pic_id++;
+			}
+			else
+			{
+				shd.idr_pic_id = 0;	
+			}
+
 			shd.frame_num = 0;
-			shd.idr_pic_id = 0;		// There will be no 2 consecutive idr frames
 		}
 		else
 		{

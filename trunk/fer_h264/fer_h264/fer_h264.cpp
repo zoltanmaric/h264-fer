@@ -12,6 +12,7 @@
 #include "expgolomb.h"
 #include "rbsp_encoding.h"
 #include "moestimation.h"
+#include "openCL_functions.h"
 
 void decode()
 {
@@ -44,13 +45,14 @@ void decode()
 
 void encode()
 {
-	stream = fopen("big_buck_bunny.264", "wb");
-	yuvinput = fopen("big_buck_bunny.y4m", "rb");
-	yuvoutput = fopen("reference.yuv","wb");
+	stream = fopen("c:\\big_buck_bunny.264", "wb");
+	yuvinput = fopen("c:\\big_buck_bunny_360p24.y4m", "rb");
+	yuvoutput = fopen("c:\\reference.yuv","wb");
 
 	generate_residual_level_tables();
 	init_expgolomb_UC_codes();
 	InitNAL();
+	InitCL();
 
 	frameCount = 0;
 	NALunit nu;
@@ -77,7 +79,7 @@ void encode()
 	while (ReadFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 600) continue;
+		if (frameCount < 200) continue;
 
 		printf("Frame #%d\n", frameCount);
 		//writeToYUV();
@@ -88,9 +90,10 @@ void encode()
 		writeNAL(nu);
 		FillInterpolatedRefFrame();
 
-		if (frameCount == 605) break;
+		if (frameCount == 203) break;
 	}
 
+	CloseCL();
 	CloseNAL();
 	fclose(stream);
 	fclose(yuvinput);

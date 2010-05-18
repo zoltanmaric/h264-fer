@@ -8,3 +8,5 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
                         int mbPartIdx,
                         int subMbIdx, 
 						int subMbPartIdx);
+
+extern int PR_WIDTH;

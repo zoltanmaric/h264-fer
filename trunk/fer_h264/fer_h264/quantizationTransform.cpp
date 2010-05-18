@@ -628,8 +628,8 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 
 	// Luma transform and quantization process
 
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 
 	qP = QPy;
 

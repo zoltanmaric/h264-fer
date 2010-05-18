@@ -61,8 +61,8 @@ void scaleAndTransform4x4Residual(int c[4][4], int r[4][4], bool intra16x16OrChr
 // (8.5.14) partial
 void pictureConstruction4x4Luma(int u[4][4], int luma4x4BlkIdx)
 {
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 
 	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
@@ -81,8 +81,8 @@ void pictureConstruction4x4Luma(int u[4][4], int luma4x4BlkIdx)
 // (8.5.14) partial
 void pictureConstructionIntra_16x16Luma(int u[16][16])
 {
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 
 	int x0 = 0;
 	int y0 = 0;
@@ -101,8 +101,8 @@ void pictureConstructionIntra_16x16Luma(int u[16][16])
 // (8.5.14) partial
 void pictureConstructionChroma(int u[8][8], bool Cb)
 {
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 	
 	for (int i = 0; i < 8; i++)
 	{
