@@ -2,6 +2,8 @@
 #include "headers_and_parameter_sets.h"
 #include "ref_frames.h"
 #include "h264_math.h"
+#include "openCL_functions.h"
+
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -193,18 +195,29 @@ int selectNALUnitType()
 		return NAL_UNIT_TYPE_IDR;
 	}
 
-	for (int i = 0; i < frame.Lheight; i++)
+	int frameSize = frame.Lwidth * frame.Lheight;
+
+	int *results = new int[frameSize];
+	RunCL(frame.L, dpb.L, results);
+
+	for (int i = 0; i < frameSize; i++)
 	{
-		for (int j = 0; j < frame.Lwidth; j++)
-		{
-			sad += ABS(frame.L[i][j] - dpb.L[i][j]);
-		}
+		sad += results[i];
 	}
+	delete [] results;
+
+	//for (int i = 0; i < frame.Lheight; i++)
+	//{
+	//	for (int j = 0; j < frame.Lwidth; j++)
+	//	{
+	//		sad += ABS(frame.L[i][j] - dpb.L[i][j]);
+	//	}
+	//}
 
 	// The chosen average treshold difference per macroblock
 	// is 4096, which corresponds to 16 per pixel. Therefore
 	// the treshold SAD is picSizeInMBs * 4096 or picSizeInMBs << 12
-	if ((sad > (picSizeInMBs << 12)) || (pFrameRun == 59))
+	if ((sad > (picSizeInMBs << 12)))
 	{
 		pFrameRun = 0;
 		return NAL_UNIT_TYPE_IDR;

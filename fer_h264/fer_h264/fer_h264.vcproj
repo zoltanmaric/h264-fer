@@ -132,6 +132,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="OpenCL.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -244,6 +245,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\openCL_functions.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\quantizationTransform.cpp"
 				>
 			</File>
@@ -330,6 +335,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\openCL_functions.h"
+				>
+			</File>
+			<File
 				RelativePath=".\quantizationTransform.h"
 				>
 			</File>
@@ -377,7 +386,7 @@
 			>
 		</Filter>
 		<File
-			RelativePath=".\ReadMe.txt"
+			RelativePath=".\OpenCL.lib"
 			>
 		</File>
 	</Files>

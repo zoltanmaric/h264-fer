@@ -19,10 +19,13 @@ int tmpVar[16];
 frame_type refFrameInterpolated[16];
 //frame_type refFrameKar[16];
 
-unsigned int **refFrameKar[6][16];
+int **refFrameKar[6][16];
+unsigned char * PostLuma[9];
 
 void InitializeInterpolatedRefFrame()
 {
+	for (int i = 0; i < 9; i++)
+		PostLuma[i] = new unsigned char[frame.Lwidth + 5];
 	for (int i = 0; i < 16; i++)
 	{
 		refFrameInterpolated[i].Lheight = frame.Lheight;
@@ -31,11 +34,11 @@ void InitializeInterpolatedRefFrame()
 		refFrameInterpolated[i].Cwidth = frame.Cwidth;
 
 		refFrameInterpolated[i].L = new unsigned char*[frame.Lheight];
-		for (int kar = 0; kar < 6; kar++) refFrameKar[kar][i] = new unsigned int*[frame.Lheight];
+		for (int kar = 0; kar < 6; kar++) refFrameKar[kar][i] = new int*[frame.Lheight];
 		for (int it = 0; it < frame.Lheight; it++)
 		{
 			refFrameInterpolated[i].L[it] = new unsigned char[frame.Lwidth];
-			for (int kar = 0; kar < 6; kar++) refFrameKar[kar][i][it] = new unsigned int[frame.Lwidth];
+			for (int kar = 0; kar < 6; kar++) refFrameKar[kar][i][it] = new int[frame.Lwidth];
 		}
 
 		refFrameInterpolated[i].C[0] = new unsigned char*[frame.Cheight];
@@ -83,8 +86,8 @@ void FillInterpolatedRefFrame()
 					mvL0y[tmpMbAddr][i][j] = mvy;
 					MotionCompensateSubMBPart(predL, predCr, predCb, refPic, tmpMbAddr, i, j);
 				}
-			int x0 = InverseRasterScan(tmpMbAddr, 16, 16, frame.Lwidth, 0);
-			int y0 = InverseRasterScan(tmpMbAddr, 16, 16, frame.Lwidth, 1);
+			int x0 = ((tmpMbAddr%PicWidthInMbs)<<4);
+			int y0 = ((tmpMbAddr/PicWidthInMbs)<<4);
 			for (int i = 0; i < 16; i++)
 				for (int j = 0; j < 16; j++)
 					refFrameInterpolated[frac].L[y0+i][x0+j] = predL[i][j];
@@ -105,33 +108,33 @@ void FillInterpolatedRefFrame()
 			{
 				for (int kar = 0; kar < 4; kar++) refFrameKar[kar][i][ty][tx] = refFrameInterpolated[i].L[ty][tx];
 				refFrameKar[1][i][ty][tx] = ABS((int)refFrameKar[1][i][ty][tx]-128);
-				refFrameKar[2][i][ty][tx] = ABS((int)refFrameKar[2][i][ty][tx]-176);
-				refFrameKar[3][i][ty][tx] = transformedLuma(refFrameKar[3][i][ty][tx]);
+				refFrameKar[2][i][ty][tx] = transformedLuma(refFrameKar[2][i][ty][tx]);
 				if (ty < frame.Lheight-1)
 					for (int kar = 0; kar < 4; kar++)
 						refFrameKar[kar][i][ty][tx] += refFrameKar[kar][i][ty+1][tx];
 			}
 			for (int ty = 0; ty < frame.Lheight; ty++)
 			{
+				refFrameKar[4][i][ty][tx] = refFrameKar[0][i][ty][tx] + (4-frame.Lheight+ty) * refFrameKar[0][i][frame.Lheight-1][tx];
 				if (ty < frame.Lheight-4)
-				{
-					refFrameKar[5][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+4][tx];
-				}
-				else
-				{
-					refFrameKar[5][i][ty][tx] = refFrameKar[0][i][ty][tx] + (4-frame.Lheight+ty) * refFrameKar[0][i][frame.Lheight-1][tx];
-				}
+					refFrameKar[4][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+4][tx];
 				if (ty < frame.Lheight-8)
 				{
-					for (int kar = 0; kar < 4; kar++) refFrameKar[kar][i][ty][tx] -= refFrameKar[kar][i][ty+8][tx];
+					refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+8][tx];
+					refFrameKar[1][i][ty][tx] -= refFrameKar[1][i][ty+8][tx];
+					refFrameKar[2][i][ty][tx] -= refFrameKar[2][i][ty+8][tx];
 				}
 				else
 				{
-					for (int kar = 0; kar < 4; kar++) refFrameKar[kar][i][ty][tx] += (8-frame.Lheight+ty) * refFrameKar[kar][i][frame.Lheight-1][tx];
+					refFrameKar[0][i][ty][tx] += (8-frame.Lheight+ty) * refFrameKar[0][i][frame.Lheight-1][tx];
+					refFrameKar[1][i][ty][tx] += (8-frame.Lheight+ty) * refFrameKar[1][i][frame.Lheight-1][tx];
+					refFrameKar[2][i][ty][tx] += (8-frame.Lheight+ty) * refFrameKar[2][i][frame.Lheight-1][tx];
 				}
 				if (tx < frame.Lwidth-1)
 				{
-					for (int kar = 0; kar < 4; kar++) refFrameKar[kar][i][ty][tx] += refFrameKar[kar][i][ty][tx+1];
+					refFrameKar[0][i][ty][tx] += refFrameKar[0][i][ty][tx+1];
+					refFrameKar[1][i][ty][tx] += refFrameKar[1][i][ty][tx+1];
+					refFrameKar[2][i][ty][tx] += refFrameKar[2][i][ty][tx+1];
 				}
 			}
 		}
@@ -139,26 +142,23 @@ void FillInterpolatedRefFrame()
 		{
 			for (int ty = 0; ty < frame.Lheight; ty++)
 			{
+				refFrameKar[3][i][ty][tx] = refFrameKar[0][i][ty][tx] + (4-frame.Lwidth+tx) * refFrameKar[0][i][ty][frame.Lwidth-1];
 				if (tx < frame.Lwidth-4)
-				{
-					refFrameKar[4][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty][tx+4];
-				}
-				else
-				{
-					refFrameKar[4][i][ty][tx] = refFrameKar[0][i][ty][tx] + (4-frame.Lwidth+tx) * refFrameKar[0][i][ty][frame.Lwidth-1];
-				}
+					refFrameKar[3][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty][tx+4];
 				if (tx < frame.Lwidth-8)
 				{
-					for (int kar = 0; kar < 4; kar++) refFrameKar[kar][i][ty][tx] -= refFrameKar[kar][i][ty][tx+8];
-					refFrameKar[5][i][ty][tx] -= refFrameKar[5][i][ty][tx+8];
+					refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty][tx+8];
+					refFrameKar[1][i][ty][tx] -= refFrameKar[1][i][ty][tx+8];
+					refFrameKar[2][i][ty][tx] -= refFrameKar[2][i][ty][tx+8];
+					refFrameKar[4][i][ty][tx] -= refFrameKar[4][i][ty][tx+8];
 				}
 				else
 				{
-					for (int kar = 0; kar < 4; kar++) refFrameKar[kar][i][ty][tx] += (8-frame.Lwidth+tx) * refFrameKar[kar][i][ty][frame.Lwidth-1];
-					refFrameKar[5][i][ty][tx] += (8-frame.Lwidth+tx) * refFrameKar[5][i][ty][frame.Lwidth-1];
+					refFrameKar[0][i][ty][tx] += (8-frame.Lwidth+tx) * refFrameKar[0][i][ty][frame.Lwidth-1];
+					refFrameKar[1][i][ty][tx] += (8-frame.Lwidth+tx) * refFrameKar[1][i][ty][frame.Lwidth-1];
+					refFrameKar[2][i][ty][tx] += (8-frame.Lwidth+tx) * refFrameKar[2][i][ty][frame.Lwidth-1];
+					refFrameKar[4][i][ty][tx] += (8-frame.Lwidth+tx) * refFrameKar[4][i][ty][frame.Lwidth-1];
 				}
-				//if ((tx%2)) refFrameKar[2][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[2][i][ty][tx];
-				//if ((ty%2)) refFrameKar[3][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[3][i][ty][tx];
 			}
 		}
 	}
@@ -166,8 +166,8 @@ void FillInterpolatedRefFrame()
 
 void Pogorsaj(int mvx,  int mvy, int luma8x8BlkIdx)
 {
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 	int xPi = xP + (mvx>>2); if (xPi < 0) xPi = 0; if (xPi >= frame.Lwidth) xPi = frame.Lwidth-1;
 	int yPi = yP + (mvy>>2); if (yPi < 0) yPi = 0; if (yPi >= frame.Lheight) yPi = frame.Lheight-1;
 	int frac = (mvx&3) + (mvy&3)*4;
@@ -199,12 +199,13 @@ int satdLuma8x8MVs(int mvx, int mvy, int luma8x8BlkIdx)
 {
 	int satd = 0, pretvori = 1;
 
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xP = (CurrMbAddr%PicWidthInMbs)<<4;
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 	int xPi = xP + (mvx>>2); if (xPi < 0) xPi = 0; if (xPi >= frame.Lwidth) xPi = frame.Lwidth-1;
 	int yPi = yP + (mvy>>2); if (yPi < 0) yPi = 0; if (yPi >= frame.Lheight) yPi = frame.Lheight-1;
 	int frac = (mvx&3) + (mvy&3)*4;
-	int diffL4x4[4][4], rLuma[4][4], x0, y0, px, py;
+	//int diffL4x4[4][4], rLuma[4][4];
+	int x0, y0, px, py;
 	
 	for (int part4x4idx = 0; part4x4idx < 4; part4x4idx++)
 	{
@@ -216,7 +217,7 @@ int satdLuma8x8MVs(int mvx, int mvy, int luma8x8BlkIdx)
 				px = xPi+x0+j; if (px >= frame.Lwidth) px = frame.Lwidth-1;
 				py = yPi+y0+i; if (py >= frame.Lheight) py = frame.Lheight-1;
 				satd += ABS(frame.L[yP+y0+i][xP+x0+j] - refFrameInterpolated[frac].L[py][px]);
-				if (ABS(frame.L[yP+y0+i][xP+x0+j] - refFrameInterpolated[frac].L[py][px]) > 4)
+				if (ABS(frame.L[yP+y0+i][xP+x0+j] - refFrameInterpolated[frac].L[py][px]) > 2)
 					pretvori = 0;
 			}
 		for (int boja = 0; boja < 2; boja++)
@@ -226,7 +227,7 @@ int satdLuma8x8MVs(int mvx, int mvy, int luma8x8BlkIdx)
 					px = (xPi+x0)/2 + j; if (px >= frame.Cwidth) px = frame.Cwidth-1;
 					py = (yPi+y0)/2 + i; if (py >= frame.Cheight) py = frame.Cheight-1;
 					satd += ABS(frame.C[boja][(yP+y0)/2+i][(xP+x0)/2+j] - refFrameInterpolated[frac].C[boja][py][px]);
-					if (ABS(frame.L[(yP+y0)/2+i][(xP+x0)/2+j] - refFrameInterpolated[frac].C[boja][py][px]) > 16)
+					if (ABS(frame.L[(yP+y0)/2+i][(xP+x0)/2+j] - refFrameInterpolated[frac].C[boja][py][px]) > 6)
 						pretvori = 0;
 				}
 		//forwardResidual(QPy, diffL4x4, rLuma, true, false);
@@ -237,83 +238,83 @@ int satdLuma8x8MVs(int mvx, int mvy, int luma8x8BlkIdx)
 	if (pretvori) return 0;
 	return satd;
 }
-
-int satdLuma8x8(int predL[16][16], int luma8x8BlkIdx)
-{
-	int satd = 0;
-
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
-	int diffL4x4[4][4], rLuma[4][4], x0, y0;
-	
-	for (int part4x4idx = 0; part4x4idx < 4; part4x4idx++)
-	{
-		x0 = ((luma8x8BlkIdx%2) << 3) + ((part4x4idx%2) << 2);
-		y0 = ((luma8x8BlkIdx&2) << 2) + ((part4x4idx&2) << 1);
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
-				satd += ABS(frame.L[yP+y0+i][xP+x0+j] - predL[y0+i][x0+j]);
-		//forwardResidual(QPy, diffL4x4, rLuma, true, false);
-		//for (int i = 0; i < 4; i++)
-		//	for (int j = 0; j < 4; j++)
-		//		satd += ABS(rLuma[i][j]);
-	}
-
-	return satd;
-}
-
-int zigZagSADLuma8x8(int predL[16][16], int luma8x8BlkIdx)
-{
-	int sad = 0;
-
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1), x0, y0;
-
-	for (int i = 0; i < 4; i++)
-	{
-		x0 = ((luma8x8BlkIdx%2) << 3) + ((i%2) << 2);
-		y0 = ((luma8x8BlkIdx&2) << 2) + ((i&2) << 1);
-		for (int j = 0; j < 16; j++)
-		{
-			tmpVar[j] = frame.L[yP+y0+zigZagIdx[j][1]][xP+x0+zigZagIdx[j][0]] - predL[y0+zigZagIdx[j][1]][x0+zigZagIdx[j][0]];
-			if (j)
-				sad += ABS(tmpVar[j]-tmpVar[j-1]);
-			else 
-				sad += ABS(tmpVar[j]);
-		}
-	}
-
-	return sad;
-
-}
-
-int sadLuma8x8(int predL[16][16], int luma8x8BlkIdx)
-{
-	int sad = 0;
-
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
-
-	int x0 = (luma8x8BlkIdx%2) << 3;
-	int y0 = (luma8x8BlkIdx&2) << 2;
-
-	for (int i = 0; i < 8; i++)
-	{
-		for (int j = 0; j < 8; j++)
-		{
-			sad += ABS(frame.L[yP+y0+i][xP+x0+j] - predL[x0+i][y0+j]);
-		}
-	}
-
-	return sad;
-}
+//
+//int satdLuma8x8(int predL[16][16], int luma8x8BlkIdx)
+//{
+//	int satd = 0;
+//
+//	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+//	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
+//	int diffL4x4[4][4], rLuma[4][4], x0, y0;
+//	
+//	for (int part4x4idx = 0; part4x4idx < 4; part4x4idx++)
+//	{
+//		x0 = ((luma8x8BlkIdx%2) << 3) + ((part4x4idx%2) << 2);
+//		y0 = ((luma8x8BlkIdx&2) << 2) + ((part4x4idx&2) << 1);
+//		for (int i = 0; i < 4; i++)
+//			for (int j = 0; j < 4; j++)
+//				satd += ABS(frame.L[yP+y0+i][xP+x0+j] - predL[y0+i][x0+j]);
+//		//forwardResidual(QPy, diffL4x4, rLuma, true, false);
+//		//for (int i = 0; i < 4; i++)
+//		//	for (int j = 0; j < 4; j++)
+//		//		satd += ABS(rLuma[i][j]);
+//	}
+//
+//	return satd;
+//}
+//
+//int zigZagSADLuma8x8(int predL[16][16], int luma8x8BlkIdx)
+//{
+//	int sad = 0;
+//
+//	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+//	int yP = ((CurrMbAddr/PicWidthInMbs)<<4), x0, y0;
+//
+//	for (int i = 0; i < 4; i++)
+//	{
+//		x0 = ((luma8x8BlkIdx%2) << 3) + ((i%2) << 2);
+//		y0 = ((luma8x8BlkIdx&2) << 2) + ((i&2) << 1);
+//		for (int j = 0; j < 16; j++)
+//		{
+//			tmpVar[j] = frame.L[yP+y0+zigZagIdx[j][1]][xP+x0+zigZagIdx[j][0]] - predL[y0+zigZagIdx[j][1]][x0+zigZagIdx[j][0]];
+//			if (j)
+//				sad += ABS(tmpVar[j]-tmpVar[j-1]);
+//			else 
+//				sad += ABS(tmpVar[j]);
+//		}
+//	}
+//
+//	return sad;
+//
+//}
+//
+//int sadLuma8x8(int predL[16][16], int luma8x8BlkIdx)
+//{
+//	int sad = 0;
+//
+//	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+//	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
+//
+//	int x0 = (luma8x8BlkIdx%2) << 3;
+//	int y0 = (luma8x8BlkIdx&2) << 2;
+//
+//	for (int i = 0; i < 8; i++)
+//	{
+//		for (int j = 0; j < 8; j++)
+//		{
+//			sad += ABS(frame.L[yP+y0+i][xP+x0+j] - predL[x0+i][y0+j]);
+//		}
+//	}
+//
+//	return sad;
+//}
 
 int ExactPixels(int predL[16][16])
 {
 	int exactLumaPixels = 0;
 
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 
 	for (int i = 0; i < 16; i++)
 	{
@@ -326,26 +327,26 @@ int ExactPixels(int predL[16][16])
 	return exactLumaPixels;	
 }
 
-int sadLuma(int predL[16][16], int partId)
-{
-	if (mb_type == P_8x8 || mb_type == P_8x8ref0) return satdLuma8x8(predL, partId);
-	if (mb_type == P_L0_L0_16x8) return satdLuma8x8(predL, partId*2) + satdLuma8x8(predL, partId*2+1);
-	if (mb_type == P_L0_L0_8x16) return satdLuma8x8(predL, partId) + satdLuma8x8(predL, partId+2);
-	if (mb_type == P_L0_16x16 || mb_type == P_Skip) return satdLuma8x8(predL, 0) + satdLuma8x8(predL, 1) + satdLuma8x8(predL, 2) + satdLuma8x8(predL, 3);
-}
+//int sadLuma(int predL[16][16], int partId)
+//{
+//	if (mb_type == P_8x8 || mb_type == P_8x8ref0) return satdLuma8x8(predL, partId);
+//	if (mb_type == P_L0_L0_16x8) return satdLuma8x8(predL, partId*2) + satdLuma8x8(predL, partId*2+1);
+//	if (mb_type == P_L0_L0_8x16) return satdLuma8x8(predL, partId) + satdLuma8x8(predL, partId+2);
+//	if (mb_type == P_L0_16x16 || mb_type == P_Skip) return satdLuma8x8(predL, 0) + satdLuma8x8(predL, 1) + satdLuma8x8(predL, 2) + satdLuma8x8(predL, 3);
+//}
 
 int sadLumaMVs(int mvx, int mvy, int partId)
 {
 	if (mb_type == P_8x8 || mb_type == P_8x8ref0) return satdLuma8x8MVs(mvx, mvy, partId);
 	if (mb_type == P_L0_L0_16x8) return satdLuma8x8MVs(mvx, mvy, partId*2) + satdLuma8x8MVs(mvx, mvy, partId*2+1);
 	if (mb_type == P_L0_L0_8x16) return satdLuma8x8MVs(mvx, mvy, partId) + satdLuma8x8MVs(mvx, mvy, partId+2);
-	if (mb_type == P_L0_16x16 || mb_type == P_Skip) return satdLuma8x8MVs(mvx, mvy, 0) + satdLuma8x8MVs(mvx, mvy, 1) + satdLuma8x8MVs(mvx, mvy, 2) + satdLuma8x8MVs(mvx, mvy, 3);
+	return satdLuma8x8MVs(mvx, mvy, 0) + satdLuma8x8MVs(mvx, mvy, 1) + satdLuma8x8MVs(mvx, mvy, 2) + satdLuma8x8MVs(mvx, mvy, 3);
 }
 
 void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8]) 
 {
-	int xp = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yp = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xp = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yp = ((CurrMbAddr/PicWidthInMbs)<<4);
 
 	int minBlock = INT_MAX;
 	int bestMbType = P_Skip, mvdL0[4][2] = {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, mvx[4], mvy[4];
@@ -370,7 +371,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			DeriveMVs();
 			int genx = mvL0x[CurrMbAddr][i][0] >> 2;
 			int geny = mvL0y[CurrMbAddr][i][0] >> 2;
-			int suma[6] = {0, 0, 0, 0, 0, 0}, relx = (i%2) * 8, rely = (i/2) * 8, tmp;
+			int suma[6] = {0, 0, 0, 0, 0, 0}, relx = (i%2) * 8, rely = (i/2) * 8;
 			if (CurrMbAddr == 235)
 			{
 				int u = 1;
@@ -381,16 +382,15 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				{
 					suma[0] += frame.L[ty+rely+yp][tx+relx+xp];
 					suma[1] += ABS((int)frame.L[ty+rely+yp][tx+relx+xp]-128);
-					suma[2] += ABS((int)frame.L[ty+rely+yp][tx+relx+xp]-176);
-					suma[3] += transformedLuma(frame.L[ty+rely+yp][tx+relx+xp]);
-					suma[4] += (tx>3)?0:frame.L[ty+rely+yp][tx+relx+xp];
-					suma[5] += (ty>3)?0:frame.L[ty+rely+yp][tx+relx+xp];
+					suma[2] += transformedLuma(frame.L[ty+rely+yp][tx+relx+xp]);
+					suma[3] += (tx>3)?0:frame.L[ty+rely+yp][tx+relx+xp];
+					suma[4] += (ty>3)?0:frame.L[ty+rely+yp][tx+relx+xp];
 				}
 				int u = 1;
 			}
 			int bx = 0, by = 0, bmin = 1000000000, refx, refy, trenRazlika;
-			int bxs[65], bys[65], bmins[65];
-			for (int j = 0; j < 65; j++)
+			int bxs[85], bys[85], bmins[85];
+			for (int j = 0; j < 85; j++)
 			{
 				bmins[j] = 1000000000;
 				bxs[j] = bys[j] = 100000000;
@@ -407,21 +407,17 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 						{
 							trenRazlika = (8+ABS(frac/4)+ABS(tmpx)+ABS(2*tmpy))*( ABS(suma[0]-refFrameKar[0][frac][refy][refx])
 											+ ABS(suma[1]-refFrameKar[1][frac][refy][refx])
-											//+ ABS(suma[2]-refFrameKar[2][frac][refy][refx])
-											+ diffTransformedLuma(suma[3], refFrameKar[3][frac][refy][refx])
+											+ diffTransformedLuma(suma[2], refFrameKar[2][frac][refy][refx])
+											+ ABS(suma[3]-refFrameKar[3][frac][refy][refx])
 											+ ABS(suma[4]-refFrameKar[4][frac][refy][refx])
-											+ ABS(suma[5]-refFrameKar[5][frac][refy][refx])
+											+ ABS(suma[0]-suma[3]+refFrameKar[3][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
 											+ ABS(suma[0]-suma[4]+refFrameKar[4][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
-											+ ABS(suma[0]-suma[5]+refFrameKar[5][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
-											//+ ABS(suma[0]-suma[1]+refFrameKar[1][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
-											//+ ABS(suma[0]-suma[2]+refFrameKar[2][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
-											//+ ABS(suma[0]-suma[3]+refFrameKar[3][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
 											);
-							if (bmins[31] > trenRazlika)
-							bmins[32] = trenRazlika;
-							bxs[32] = (tmpx<<2) | (frac&3);
-							bys[32] = (tmpy<<2) | ((frac>>2)&3);
-							for (int j = 32; j > 0; j--)
+							if (bmins[51] > trenRazlika)
+							bmins[52] = trenRazlika;
+							bxs[52] = (tmpx<<2) | (frac&3);
+							bys[52] = (tmpy<<2) | ((frac>>2)&3);
+							for (int j = 52; j > 0; j--)
 							{
 								if (bmins[j] < bmins[j-1]) 
 								{
@@ -456,11 +452,11 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 											//+ ABS(suma[0]-suma[2]+refFrameKar[2][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
 											//+ ABS(suma[0]-suma[3]+refFrameKar[3][frac][refy][refx]-refFrameKar[0][frac][refy][refx])
 											);
-							if (bmins[63] > trenRazlika)
-							bmins[64] = trenRazlika;
-							bxs[64] = (tmpx<<2) | (frac&3);
-							bys[64] = (tmpy<<2) | ((frac>>2)&3);
-							for (int j = 64; j > 32; j--)
+							if (bmins[83] > trenRazlika)
+							bmins[84] = trenRazlika;
+							bxs[84] = (tmpx<<2) | (frac&3);
+							bys[84] = (tmpy<<2) | ((frac>>2)&3);
+							for (int j = 84; j > 52; j--)
 							{
 								if (bmins[j] < bmins[j-1]) 
 								{
@@ -487,7 +483,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			//		}
 			//	}
 			//bxs[20] = 0; bys[20] = -3;
-			for (int j = 0; j <= 64; j++)
+			for (int j = 0; j <= 84; j++)
 			if (bxs[j] < 100000000 && bys[j] < 100000000){
 				int tmpdif = sadLumaMVs(bxs[j], bys[j], i);
 				if (tmpdif < bmin)

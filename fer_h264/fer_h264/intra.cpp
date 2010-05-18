@@ -450,8 +450,8 @@ void FetchPredictionSamplesIntra4x4(int luma4x4BlkIdx, int p[13])
 		else
 		{
 			// the abosulte position of the upper-left sample in macroblock N (6.4.1)
-			int xM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
-			int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
+			int xM = ((mbAddrN%PicWidthInMbs)<<4);
+			int yM = ((mbAddrN/PicWidthInMbs)<<4);
 
 			p[i] = frame.L[yM + yW][xM + xW];
 		}
@@ -627,8 +627,8 @@ void FetchPredictionSamplesIntra16x16(int p[33])
 		else
 		{
 			// inverse macroblock scanning process (6.4.1)
-			int xM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
-			int yM = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
+			int xM = ((mbAddrN%PicWidthInMbs)<<4);
+			int yM = ((mbAddrN/PicWidthInMbs)<<4);
 
 			p(x,y) = frame.L[yM+yW][xM+xW];
 		}
@@ -830,8 +830,8 @@ void IntraChromaSamplePrediction(int predCr[8][8], int predCb[8][8])
 		else
 		{
 			// inverse macroblock scanning process (6.4.1)
-			int xL = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 0);
-			int yL = InverseRasterScan(mbAddrN, 16, 16, frame.Lwidth, 1);
+			int xL = ((mbAddrN%PicWidthInMbs)<<4);
+			int yL = ((mbAddrN/PicWidthInMbs)<<4);
 
 			int xM = (xL >> 4)*MbWidthC;
 			int yM = (yL >> 4)*MbHeightC + (yL & 1);
@@ -919,8 +919,8 @@ int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx)
 {
 	int satd = 0;
 
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 
 	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
@@ -1110,8 +1110,8 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	}
 
 	// set the best intra4x4 pred modes:
-	int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-	int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 
 	int originalMB[16][16];
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
@@ -1149,8 +1149,8 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	}
 	else
 	{
-		int xP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 0);
-		int yP = InverseRasterScan(CurrMbAddr, 16, 16, frame.Lwidth, 1);
+		int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+		int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 
 		// Restore the original frame samples
 		for (int i = 0; i < 16; i++)

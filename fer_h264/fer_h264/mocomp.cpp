@@ -6,6 +6,7 @@
 
 int L_Temp_4x4_refPart[9][9];
 int C_Temp_4x4_refPart[2][3][3];
+int PR_WIDTH = 9;
 
 void FillTemp_4x4_refPart(frame_type *ref, int org_Lx, int org_Ly, int org_Cx, int org_Cy) {
 	int x,y,sx,sy;
@@ -44,9 +45,9 @@ void FillTemp_4x4_refPart(frame_type *ref, int org_Lx, int org_Ly, int org_Cx, i
 
 #define iffrac(x,y) if(frac==y*4+x)
 #define Middle(a,b) (((a)+(b)+1)>>1)
+#define p(x,y) data[(y)*PR_WIDTH+(x)]
 
-int L_MC_frac_interpol(int *data, int frac) {
-#define p(x,y) data[(y)*9+(x)]
+inline int L_MC_frac_interpol(int *data, int frac) {
   int b,cc,dd,ee,ff,h,j,m,s;
   iffrac(0,0) return p(0,0);
   b=Tap6Filter(p(-2,0),p(-1,0),p(0,0),p(1,0),p(2,0),p(3,0));
@@ -74,7 +75,6 @@ int L_MC_frac_interpol(int *data, int frac) {
   iffrac(2,3) return Middle(j,s);
   iffrac(3,2) return Middle(j,m);
   return 128;  // some error
-#undef p
 }
 
 void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8][8], frame_type *refPic,
@@ -87,8 +87,8 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 	org_x = ((subMbIdx & 1)<<3) + ((subMbPartIdx & 1)<<2);
 	mvx = mvL0x[mbPartIdx][subMbIdx][subMbPartIdx];
 	mvy = mvL0y[mbPartIdx][subMbIdx][subMbPartIdx];
-	int xAl = InverseRasterScan(mbPartIdx, 16, 16, frame.Lwidth, 0) + org_x;
-	int yAl = InverseRasterScan(mbPartIdx, 16, 16, frame.Lwidth, 1) + org_y;
+	int xAl = ((mbPartIdx%PicWidthInMbs)<<4) + org_x;
+	int yAl = ((mbPartIdx/PicWidthInMbs)<<4) + org_y;
 	// Fills temp tables used in fractional interpolation (luma) and linear interpolation (chroma).
 	FillTemp_4x4_refPart(refPic, xAl + (mvx>>2) - 2, yAl + (mvy>>2) - 2, xAl/2 + (mvx>>3), yAl/2 + (mvy>>3));
 
