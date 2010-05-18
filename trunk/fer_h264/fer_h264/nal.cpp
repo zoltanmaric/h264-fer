@@ -1,7 +1,7 @@
 #include "nal.h"
 
 unsigned char *NALbytes;
-const unsigned int maxNalSize = 102400;		// =100kB
+const unsigned int maxNalSize = 204800;		// =200kB
 
 unsigned char *nalStreamBuffer;
 unsigned int nalStreamBufferSize = 10485760;		// =10 MB

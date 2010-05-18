@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "cl.h"
+#include <CL/cl.h>
 
 #include "h264_globals.h"
 
@@ -113,8 +113,8 @@ int RunCL(unsigned char **a, unsigned char **b, int *results)
 	
 	size_t buffer_size = frame.Lwidth*frame.Lheight * sizeof(int);
 
-	a_buff = new int[buffer_size];
-	b_buff = new int[buffer_size];
+	a_buff = new int[frame.Lwidth*frame.Lheight];
+	b_buff = new int[frame.Lwidth*frame.Lheight];
 
 	for (int i = 0; i < frame.Lheight; i++)
 	{
@@ -156,7 +156,7 @@ int RunCL(unsigned char **a, unsigned char **b, int *results)
 	// EXECUTION AND READ
 	// Run the calculation by enqueuing it and forcing the 
 	// command queue to complete the task
-	size_t global_work_size = buffer_size;
+	size_t global_work_size = frame.Lwidth*frame.Lheight;
 	err = clEnqueueNDRangeKernel(cmd_queue, kernel[0], 1, NULL, 
 								 &global_work_size, NULL, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);

@@ -45,9 +45,9 @@ void decode()
 
 void encode()
 {
-	stream = fopen("c:\\big_buck_bunny.264", "wb");
-	yuvinput = fopen("c:\\big_buck_bunny_360p24.y4m", "rb");
-	yuvoutput = fopen("c:\\reference.yuv","wb");
+	stream = fopen("big_buck_bunny.264", "wb");
+	yuvinput = fopen("big_buck_bunny.y4m", "rb");
+	yuvoutput = fopen("reference.yuv","wb");
 
 	generate_residual_level_tables();
 	init_expgolomb_UC_codes();
