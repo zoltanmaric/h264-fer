@@ -82,8 +82,7 @@ void encode()
 		if (frameCount < 200) continue;
 
 		printf("Frame #%d\n", frameCount);
-		//writeToYUV();
-		//writeToPPM("Original");
+		writeToYUV();
 
 		nu.nal_unit_type = selectNALUnitType();
 		RBSP_encode(nu);

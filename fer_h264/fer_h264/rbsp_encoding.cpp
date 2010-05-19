@@ -13,6 +13,7 @@
 #include "moestimation.h"
 #include "quantizationTransform.h"
 #include "rbsp_decoding.h"
+#include "openCL_functions.h"
 
 // ENCODING:
 
@@ -153,6 +154,7 @@ void RBSP_encode(NALunit &nal_unit)
 			}
 
 			shd.frame_num = 0;
+			getPredictionSamples();
 		}
 		else
 		{

@@ -140,6 +140,9 @@ extern int rem_intra4x4_pred_mode[16];
 extern bool prev_intra4x4_pred_mode_flag[16];
 extern int intra_chroma_pred_mode;
 
+// TEST:
+extern int *predSamples;
+
 extern int Intra4x4ScanOrder[16][2];
 
 // Inter prediction globals

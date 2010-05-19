@@ -7,6 +7,12 @@
 
 #include "h264_globals.h"
 
+enum Kernel
+{
+	absDiff = 0,
+	getPred
+};
+
 cl_program program[1];
 cl_kernel kernel[2];
 
@@ -93,90 +99,53 @@ void InitCL()
 	assert(err == CL_SUCCESS);
 	
 	// Now create the kernel "objects" that we want to use in the example file 
-	kernel[0] = clCreateKernel(program[0], "absDiff", &err);
+	kernel[absDiff] = clCreateKernel(program[0], "absDiff", &err);
+	assert(err == CL_SUCCESS);
+	kernel[getPred] = clCreateKernel(program[0], "fetchPredictionSamples16", &err);
+	assert(err == CL_SUCCESS);
 }
 
 void CloseCL()
 {
 	clReleaseCommandQueue(cmd_queue);
 	clReleaseContext(context);
+	delete [] predSamples;
 }
 
-int RunCL(unsigned char **a, unsigned char **b, int *results)
+void getPredictionSamples()
 {
-	cl_int err = 0;
-	size_t returned_size = 0;
-	
-	cl_mem a_mem, b_mem, ans_mem;
+	size_t frameBufferSize = frame.Lwidth*frame.Lheight;
+	size_t predSamplesBufferSize = PicWidthInMbs*PicHeightInMbs*33 * sizeof(int);
 
-	int *a_buff, *b_buff;
-
-	a_buff = new int[frame.Lwidth*frame.Lheight];
-	b_buff = new int[frame.Lwidth*frame.Lheight];
-
-	for (int i = 0; i < frame.Lheight; i++)
-	{
-		for (int j = 0; j < frame.Lwidth; j++)
-		{
-			a_buff[i*frame.Lwidth+j] = a[i][j];
-			b_buff[i*frame.Lwidth+j] = b[i][j];
-		}
-	}
-		
-
-	// MEMORY ALLOCATION
-	// Allocate memory on the device to hold our data and store the results into
-	size_t buffer_size = frame.Lwidth*frame.Lheight * sizeof(int);
-	cl_event event_wait_list[3];
-	cl_uint num_events = 0;
-
-	// Input array a
-	a_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
-	err = clEnqueueWriteBuffer(cmd_queue, a_mem, CL_FALSE, 0, buffer_size,		// TEST: currently non-blocking, may cause errors
-							   (void*)a_buff, 0, NULL, &event_wait_list[num_events++]);
-	
-	// Input array b
-	b_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
-	err |= clEnqueueWriteBuffer(cmd_queue, b_mem, CL_FALSE, 0, buffer_size,
-								(void*)b_buff, 0, NULL, &event_wait_list[num_events++]);
+	cl_mem frame_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, frameBufferSize, NULL, NULL);
+	cl_int err = clEnqueueWriteBuffer(cmd_queue, frame_mem, CL_FALSE, 0, frameBufferSize, (void*)frame.L, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
-	
-	// Results array
-	ans_mem	= clCreateBuffer(context, CL_MEM_READ_WRITE, buffer_size, NULL, NULL);
-	
-	// Get all of the stuff written and allocated 
-	//clFinish(cmd_queue);
-	
+
+	cl_mem predSamples_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, predSamplesBufferSize, NULL, NULL);
 	
 	// KERNEL ARGUMENTS
-	// Now setup the arguments to our kernel
-	err  = clSetKernelArg(kernel[0],  0, sizeof(cl_mem), &a_mem);
-	err |= clSetKernelArg(kernel[0],  1, sizeof(cl_mem), &b_mem);
-	err |= clSetKernelArg(kernel[0],  2, sizeof(cl_mem), &ans_mem);
+	err = clSetKernelArg(kernel[getPred], 0, sizeof(cl_mem), &frame_mem);
+	err = clSetKernelArg(kernel[getPred], 1, sizeof(int), &frame.Lwidth);
+	err |= clSetKernelArg(kernel[getPred], 2, sizeof(cl_mem), &predSamples_mem);
 	assert(err == CL_SUCCESS);
-	
-	// EXECUTION AND READ
-	// Run the calculation by enqueuing it and forcing the 
-	// command queue to complete the task
-	size_t global_work_size = frame.Lwidth*frame.Lheight;
-	cl_event evnt;
-	err = clEnqueueNDRangeKernel(cmd_queue, kernel[0], 1, NULL, 
-								 &global_work_size, NULL, num_events, event_wait_list, &evnt);
+
+	clFinish(cmd_queue);
+
+	size_t global_work_size = PicWidthInMbs*PicHeightInMbs*33;	// one for each prediction sample
+	err = clEnqueueNDRangeKernel(cmd_queue, kernel[getPred], 1, NULL, &global_work_size, NULL, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
-	event_wait_list[0] = evnt;
-	num_events = 1;
-	
-	// Once finished read back the results from the answer 
-	// array into the results array
-	err = clEnqueueReadBuffer(cmd_queue, ans_mem, CL_TRUE, 0, buffer_size, 
-							  results, num_events, event_wait_list, NULL);
+
+	clFinish(cmd_queue);
+
+	// TEST:
+	for (int i = 0; i < predSamplesBufferSize/4; i++)
+	{
+		predSamples[i] = i;
+	}
+
+	err = clEnqueueReadBuffer(cmd_queue, predSamples_mem, CL_TRUE, 0, predSamplesBufferSize, predSamples, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
-	//clFinish(cmd_queue);
-	
-	// TEARDOWN
-	clReleaseMemObject(a_mem);
-	clReleaseMemObject(b_mem);
-	clReleaseMemObject(ans_mem);
-	
-	return CL_SUCCESS;
+
+	clReleaseMemObject(frame_mem);
+	clReleaseMemObject(predSamples_mem);
 }
