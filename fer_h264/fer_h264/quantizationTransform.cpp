@@ -647,7 +647,7 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			{
 				for (int j = 0; j < 4; j++)
 				{				
-					diffL4x4[i][j] = frame.L[yP + y0 + i][xP + x0 + j] - predL[y0 + i][x0 + j];
+					diffL4x4[i][j] = frame.L[(yP + y0 + i)*frame.Lwidth+(xP + x0 + j)] - predL[y0 + i][x0 + j];
 				}
 			}			
 
@@ -738,8 +738,8 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		{
 			for (int j = 0; j < 4; j++)
 			{				
-				diffCb4x4[i][j] = frame.C[0][yPC + y0C + i][xPC + x0C + j] - predCb[y0C + i][x0C + j];
-				diffCr4x4[i][j] = frame.C[1][yPC + y0C + i][xPC + x0C + j] - predCr[y0C + i][x0C + j];
+				diffCb4x4[i][j] = frame.C[0][(yPC + y0C + i)*frame.Cwidth+(xPC + x0C + j)] - predCb[y0C + i][x0C + j];
+				diffCr4x4[i][j] = frame.C[1][(yPC + y0C + i)*frame.Cwidth+(xPC + x0C + j)] - predCr[y0C + i][x0C + j];
 			}
 		}
 

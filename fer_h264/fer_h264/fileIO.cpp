@@ -38,9 +38,9 @@ void toRGB()
 		{
 			lumaIndex = i*frame.Lwidth + j;
 			chromaIndex = (i/2)*frame.Cwidth + (j/2);
-			y_shift = (frame.L[i][j] - 16) << 10;
-			cb_shift = (frame.C[0][i/2][j/2] - 128) << 10;
-			cr_shift = (frame.C[1][i/2][j/2] - 128) << 10;
+			y_shift = (frame.L[lumaIndex] - 16) << 10;
+			cb_shift = (frame.C[0][chromaIndex] - 128) << 10;
+			cr_shift = (frame.C[1][chromaIndex] - 128) << 10;
 
 			// 1.164 << 10 == 1192
 			// 1.596 << 10 == 1634
@@ -109,21 +109,21 @@ void writeToYUV()
 	{
 		for (j = 0; j < frame.Lwidth; j++)
 		{
-			output[pos++] = frame.L[i][j];
+			output[pos++] = frame.L[i*frame.Lwidth+j];
 		}
 	}
 	for (i = 0; i < frame.Cheight; i++)
 	{
 		for (j = 0; j < frame.Cwidth; j++)
 		{
-			output[pos++] = frame.C[0][i][j];
+			output[pos++] = frame.C[0][i*frame.Cwidth+j];
 		}
 	}
 	for (i = 0; i < frame.Cheight; i++)
 	{
 		for (j = 0; j < frame.Cwidth; j++)
 		{
-			output[pos++] = frame.C[1][i][j];
+			output[pos++] = frame.C[1][i*frame.Cwidth+j];
 		}
 	}
 
@@ -153,21 +153,21 @@ void writeToY4M()
 	{
 		for (j = 0; j < frame.Lwidth; j++)
 		{
-			output[pos++] = frame.L[i][j];
+			output[pos++] = frame.L[i*frame.Lwidth+j];
 		}
 	}
 	for (i = 0; i < frame.Cheight; i++)
 	{
 		for (j = 0; j < frame.Cwidth; j++)
 		{
-			output[pos++] = frame.C[0][i][j];
+			output[pos++] = frame.C[0][i*frame.Cwidth+j];
 		}
 	}
 	for (i = 0; i < frame.Cheight; i++)
 	{
 		for (j = 0; j < frame.Cwidth; j++)
 		{
-			output[pos++] = frame.C[1][i][j];
+			output[pos++] = frame.C[1][i*frame.Cwidth+j];
 		}
 	}
 
@@ -300,7 +300,7 @@ int ReadFromY4M()
 		l = 0;
 		for (j = cropLeft; j < cropRight; j++)
 		{
-			frame.L[k][l] = input[i*inputWidth + j];
+			frame.L[k*frame.Lwidth+l] = input[i*inputWidth + j];
 			l++;
 		}
 		k++;
@@ -321,7 +321,7 @@ int ReadFromY4M()
 		l = 0;
 		for (j = cropLeft; j < cropRight; j++)
 		{
-			frame.C[0][k][l] = input[pos + i*inputWidthC + j];
+			frame.C[0][k*frame.Cwidth+l] = input[pos + i*inputWidthC + j];
 			l++;
 		}
 		k++;
@@ -334,7 +334,7 @@ int ReadFromY4M()
 		l = 0;
 		for (j = cropLeft; j < cropRight; j++)
 		{
-			frame.C[1][k][l] = input[pos + i*inputWidthC + j];
+			frame.C[1][k*frame.Cwidth+l] = input[pos + i*inputWidthC + j];
 			l++;
 		}
 		k++;

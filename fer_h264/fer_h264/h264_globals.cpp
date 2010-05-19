@@ -261,32 +261,13 @@ int init_h264_structures()
 	frame.Lheight=sps.FrameHeightInMbs*16;
 	frame.Lwidth=sps.PicWidthInMbs*16;
 
-	frame.L=new unsigned char*[frame.Lheight];
-	for (int i = 0; i < frame.Lheight; i++)
-	{
-		frame.L[i] = new unsigned char[frame.Lwidth];
-	}
-
-	//for (int i=0;i<frame.Lheight*frame.Lwidth;i++)
-	//{
-	//	frame.L[i]=0;
-	//}
+	frame.L=new unsigned char[frame.Lheight*frame.Lwidth];
 
 	frame.Cheight=sps.FrameHeightInMbs*8;
 	frame.Cwidth=sps.PicWidthInMbs*8;
 
-	frame.C[0]=new unsigned char*[frame.Cheight];
-	frame.C[1]=new unsigned char*[frame.Cheight];
-	for (int i = 0; i < frame.Cheight; i++)
-	{
-		frame.C[0][i] = new unsigned char[frame.Cwidth];
-		frame.C[1][i] = new unsigned char[frame.Cwidth];
-	}
-
-	//for (int i=0;i<frame.Cheight*frame.Cwidth;i++)
-	//{
-	//	frame.C[0][i]=frame.C[1][i]=0;
-	//}
+	frame.C[0]=new unsigned char[frame.Cheight*frame.Cwidth];
+	frame.C[1]=new unsigned char[frame.Cheight*frame.Cwidth];
 
 	ref_idx_l0_array = new int*[sps.FrameHeightInMbs * sps.PicWidthInMbs];
 	for (int i = 0; i < sps.FrameHeightInMbs * sps.PicWidthInMbs; i++)
@@ -344,21 +325,12 @@ int init_h264_structures()
 
 int init_h264_structures_encoder()
 {
-	Intra4x4PredMode = new int[frame.Lwidth*frame.Lheight*16];
+	Intra4x4PredMode = new int[frame.Lwidth*frame.Lheight<<4];
 
-	frame.L=new unsigned char*[frame.Lheight];
-	for (int i = 0; i < frame.Lheight; i++)
-	{
-		frame.L[i] = new unsigned char[frame.Lwidth];
-	}
+	frame.L=new unsigned char[frame.Lheight*frame.Lwidth];
 
-	frame.C[0]=new unsigned char*[frame.Cheight];
-	frame.C[1]=new unsigned char*[frame.Cheight];
-	for (int i = 0; i < frame.Cheight; i++)
-	{
-		frame.C[0][i] = new unsigned char[frame.Cwidth];
-		frame.C[1][i] = new unsigned char[frame.Cwidth];
-	}
+	frame.C[0]=new unsigned char[frame.Cheight*frame.Cwidth];
+	frame.C[1]=new unsigned char[frame.Cheight*frame.Cwidth];
 
 	CodedBlockPatternLumaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];
 	CodedBlockPatternChromaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];

@@ -20,7 +20,7 @@ void frameDeepCopy()
 	{
 		for (int j = 0; j < frame.Lwidth; j++)
 		{
-			dpb.L[i][j]=frame.L[i][j];
+			dpb.L[i*frame.Lwidth+j]=frame.L[i*frame.Lwidth+j];
 		}
 	}
 
@@ -28,8 +28,8 @@ void frameDeepCopy()
 	{
 		for (int j = 0; j < frame.Cwidth; j++)
 		{
-			dpb.C[0][i][j]=frame.C[0][i][j];
-			dpb.C[1][i][j]=frame.C[1][i][j];
+			dpb.C[0][i*frame.Cwidth+j]=frame.C[0][i*frame.Cwidth+j];
+			dpb.C[1][i*frame.Cwidth+j]=frame.C[1][i*frame.Cwidth+j];
 		}
 	}
 }
@@ -59,20 +59,20 @@ void initialisationProcess()
 	dpb.Cheight=frame.Cheight;
 	dpb.Cwidth=frame.Cwidth;
 
-	dpb.L = new unsigned char*[frame.Lheight];
-	for (int i = 0; i < frame.Lheight; i++)
-	{
-		dpb.L[i] = new unsigned char[frame.Lwidth];
-	}
+	dpb.L = new unsigned char[frame.Lheight*frame.Lwidth];
+	//for (int i = 0; i < frame.Lheight; i++)
+	//{
+	//	dpb.L[i] = new unsigned char[frame.Lwidth];
+	//}
 
-	dpb.C[0] = new unsigned char*[frame.Cheight];
-	dpb.C[1] = new unsigned char*[frame.Cheight];
+	dpb.C[0] = new unsigned char[frame.Cheight*frame.Cwidth];
+	dpb.C[1] = new unsigned char[frame.Cheight*frame.Cwidth];
 
-	for (int i = 0; i < frame.Cheight; i++)
-	{
-		dpb.C[0][i] = new unsigned char[frame.Cwidth];
-		dpb.C[1][i] = new unsigned char[frame.Cwidth];
-	}
+	//for (int i = 0; i < frame.Cheight; i++)
+	//{
+	//	dpb.C[0][i] = new unsigned char[frame.Cwidth];
+	//	dpb.C[1][i] = new unsigned char[frame.Cwidth];
+	//}
 
 	for (int refPicIdx = 0; refPicIdx < shd.num_ref_idx_l0_active_minus1+1; refPicIdx++)
 	{
@@ -203,8 +203,8 @@ void subtractFramesCL(int *result)
 	{
 		for (int j = 0; j < frame.Lwidth; j++)
 		{
-			a_buff[i*frame.Lwidth+j] = frame.L[i][j];
-			b_buff[i*frame.Lwidth+j] = dpb.L[i][j];
+			a_buff[i*frame.Lwidth+j] = frame.L[i*frame.Lwidth+j];
+			b_buff[i*frame.Lwidth+j] = dpb.L[i*frame.Lwidth+j];
 		}
 	}
 		
@@ -291,7 +291,7 @@ int selectNALUnitType()
 	//{
 	//	for (int j = 0; j < frame.Lwidth; j++)
 	//	{
-	//		sad += ABS(frame.L[i][j] - dpb.L[i][j]);
+	//		sad += ABS(frame.L[i*frame.Lwidth+j] - dpb.L[i*frame.Lwidth+j]);
 	//	}
 	//}
 

@@ -328,7 +328,6 @@ void sps_write()
 	sps.frame_cropping_flag = 0;
 	sps.vui_parameters_present_flag = 0;
 
-	// TODO: handle non-multiple-of-16 frame dimensions
 	sps.PicWidthInMbs = frame.Lwidth >> 4;	// == /16
 	PicWidthInMbs = sps.PicWidthInMbs;
 	sps.PicHeightInMapUnits = frame.Lheight >> 4;
