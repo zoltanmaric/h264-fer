@@ -83,6 +83,7 @@ void encode()
 
 		printf("Frame #%d\n", frameCount);
 		//writeToYUV();
+		//writeToPPM("Original");
 
 		nu.nal_unit_type = selectNALUnitType();
 		RBSP_encode(nu);

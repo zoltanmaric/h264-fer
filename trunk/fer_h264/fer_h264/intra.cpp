@@ -453,7 +453,7 @@ void FetchPredictionSamplesIntra4x4(int luma4x4BlkIdx, int p[13])
 			int xM = ((mbAddrN%PicWidthInMbs)<<4);
 			int yM = ((mbAddrN/PicWidthInMbs)<<4);
 
-			p[i] = frame.L[yM + yW][xM + xW];
+			p[i] = frame.L[(yM + yW)*frame.Lwidth+(xM + xW)];
 		}
 	}
 }
@@ -630,7 +630,7 @@ void FetchPredictionSamplesIntra16x16(int p[33])
 			int xM = ((mbAddrN%PicWidthInMbs)<<4);
 			int yM = ((mbAddrN/PicWidthInMbs)<<4);
 
-			p(x,y) = frame.L[yM+yW][xM+xW];
+			p(x,y) = frame.L[(yM+yW)*frame.Lwidth+(xM+xW)];
 		}
 	}
 }
@@ -837,9 +837,9 @@ void IntraChromaSamplePrediction(int predCr[8][8], int predCb[8][8])
 			int yM = (yL >> 4)*MbHeightC + (yL & 1);
 
 			// Chrominance blue:
-			pCb(x,y) = frame.C[0][yM+yW][xM+xW];
+			pCb(x,y) = frame.C[0][(yM+yW)*frame.Cwidth+(xM+xW)];
 			// Chrominance red:
-			pCr(x,y) = frame.C[1][yM+yW][xM+xW];
+			pCr(x,y) = frame.C[1][(yM+yW)*frame.Cwidth+(xM+xW)];
 		}
 	}
 
@@ -930,7 +930,7 @@ int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			diffL4x4[i][j] = frame.L[yP+y0+i][xP+x0+j] - pred4x4L[i][j];
+			diffL4x4[i][j] = frame.L[(yP+y0+i)*frame.Lwidth+(xP+x0+j)] - pred4x4L[i][j];
 		}
 	}
 
@@ -1130,8 +1130,8 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			for (int x = 0; x < 4; x++)
 			{
 				predL[y0+y][x0+x] = pred4x4L[y][x];
-				originalMB[y0+y][x0+x] = frame.L[yP + y0 + y][xP + x0 + x];
-				diffL4x4[y][x] = frame.L[yP + y0 + y][xP + x0 + x] - pred4x4L[y][x];
+				originalMB[y0+y][x0+x] = frame.L[(yP + y0 + y)*frame.Lwidth+(xP + x0 + x)];
+				diffL4x4[y][x] = frame.L[(yP + y0 + y)*frame.Lwidth+(xP + x0 + x)] - pred4x4L[y][x];
 			}
 		}
 
@@ -1157,7 +1157,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		{
 			for (int j = 0; j < 16; j++)
 			{
-				frame.L[yP + i][xP + j] = originalMB[i][j];
+				frame.L[(yP+i)*frame.Lwidth+(xP+j)] = originalMB[i][j];
 			}
 		}
 		// Reset the best intra16x16 prediction

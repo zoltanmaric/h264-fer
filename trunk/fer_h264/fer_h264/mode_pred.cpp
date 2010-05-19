@@ -67,31 +67,31 @@ void DeriveNeighbourLocation(int xN, int yN, int * mbAddrN, int * xW, int * yW, 
 	*validN = true;
 	*mbAddrN = CurrMbAddr;
 	if (*xW >= 0 && *xW < 16 && *yW >= 0) return;
-	*mbAddrN = CurrMbAddr - frame.Lwidth/16;
+	*mbAddrN = CurrMbAddr - (frame.Lwidth>>4);
 	if (*xW >= 0 && *xW < 16) 
 	{ 
-		if (CurrMbAddr < frame.Lwidth/16) *validN = false;
+		if (CurrMbAddr < (frame.Lwidth>>4)) *validN = false;
 		*yW += 16; 
 		return; 
 	}
 	(*mbAddrN)++;
 	if (*xW > 15) 
 	{
-		if (CurrMbAddr < frame.Lwidth/16) *validN = false;
+		if (CurrMbAddr < (frame.Lwidth>>4)) *validN = false;
 		*xW -= 16; *yW += 16;
-		if ((*mbAddrN)%(frame.Lwidth/16) == 0) *validN = false;
+		if ((*mbAddrN)%(frame.Lwidth>>4) == 0) *validN = false;
 		return;
 	}
 	*xW += 16;
 	*mbAddrN -= 2;
 	if (*yW < 0) 
 	{ 
-		if (CurrMbAddr < frame.Lwidth/16) *validN = false;
-		if (CurrMbAddr % (frame.Lwidth/16) == 0) *validN = false;
+		if (CurrMbAddr < (frame.Lwidth>>4)) *validN = false;
+		if (CurrMbAddr % (frame.Lwidth>>4) == 0) *validN = false;
 		*yW += 16; 
 		return; 
 	}
-	if (CurrMbAddr % (frame.Lwidth/16) == 0) *validN = false;
+	if (CurrMbAddr % (frame.Lwidth>>4) == 0) *validN = false;
 	*mbAddrN = CurrMbAddr - 1;
 	return;
 }
@@ -102,11 +102,11 @@ void derivation_process_for_macroblock_and_submb_partition(int xP, int yP, int m
 	if (P_and_SP_macroblock_modes[mbType][2] == NA)
 		*mbPartIdx = 0;
 	else
-		*mbPartIdx = 2*(yP / P_and_SP_macroblock_modes[mbType][6]) + (xP / P_and_SP_macroblock_modes[mbType][5]);
+		*mbPartIdx = ((yP / P_and_SP_macroblock_modes[mbType][6])<<1) + (xP / P_and_SP_macroblock_modes[mbType][5]);
 	if (mbType != P_8x8 && mbType != P_8x8ref0)
 		*subMbPartIdx = 0;
 	else
-		*subMbPartIdx = 2*((yP%8)/4) + ((xP%8)/4); // only P_8x8 and P_8x8ref0 are allowed, and sub_mb_part 4x4
+		*subMbPartIdx = (((yP&7)>>2)<<1) + ((xP&7)>>2); // only P_8x8 and P_8x8ref0 are allowed, and sub_mb_part 4x4
 }
 
 // (6.4.10.7)
@@ -398,6 +398,10 @@ void PredictMV()
 		}
 	} else { // in baseline profile cannot occur B_* MB_TYPE, so, except P_SKIP, normal derivation for luma vector prediction is used
 		PredictMV_Luma(0);
+
+		// TEST:
+		refIdxL0[CurrMbAddr] = 0;
+		
 		mvL0x[CurrMbAddr][0][0] += mvd_l0[0][0][0];
 		mvL0y[CurrMbAddr][0][0] += mvd_l0[0][0][1];
 		if (NumMbPart(mb_type) > 1)
