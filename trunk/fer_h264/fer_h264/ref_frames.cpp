@@ -187,43 +187,28 @@ void modificationProcess()
 	RefPicList0[shd.num_ref_idx_l0_active_minus1+1].RefPicPresent = false;
 }
 
-void subtractFramesCL(int *result)
+void subtractFramesCL(unsigned char *result)
 {
 	cl_int err = 0;
 	size_t returned_size = 0;
 	
-	cl_mem a_mem, b_mem, ans_mem;
-
-	int *a_buff, *b_buff;
-
-	a_buff = new int[frame.Lwidth*frame.Lheight];
-	b_buff = new int[frame.Lwidth*frame.Lheight];
-
-	for (int i = 0; i < frame.Lheight; i++)
-	{
-		for (int j = 0; j < frame.Lwidth; j++)
-		{
-			a_buff[i*frame.Lwidth+j] = frame.L[i*frame.Lwidth+j];
-			b_buff[i*frame.Lwidth+j] = dpb.L[i*frame.Lwidth+j];
-		}
-	}
-		
+	cl_mem a_mem, b_mem, ans_mem;		
 
 	// MEMORY ALLOCATION
 	// Allocate memory on the device to hold our data and store the result into
-	size_t buffer_size = frame.Lwidth*frame.Lheight * sizeof(int);
+	size_t buffer_size = frame.Lwidth*frame.Lheight;
 	cl_event event_wait_list[3];
 	cl_uint num_events = 0;
 
 	// Input array a
 	a_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
 	err = clEnqueueWriteBuffer(cmd_queue, a_mem, CL_FALSE, 0, buffer_size,		// TEST: currently non-blocking, may cause errors
-							   (void*)a_buff, 0, NULL, &event_wait_list[num_events++]);
+							   (void*)frame.L, 0, NULL, &event_wait_list[num_events++]);
 	
 	// Input array b
 	b_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
 	err |= clEnqueueWriteBuffer(cmd_queue, b_mem, CL_FALSE, 0, buffer_size,
-								(void*)b_buff, 0, NULL, &event_wait_list[num_events++]);
+								(void*)dpb.L, 0, NULL, &event_wait_list[num_events++]);
 	assert(err == CL_SUCCESS);
 	
 	// result array
@@ -277,9 +262,8 @@ int selectNALUnitType()
 
 	int frameSize = frame.Lwidth * frame.Lheight;
 
-	int *result = new int[frameSize];
+	unsigned char *result = new unsigned char[frameSize];
 	subtractFramesCL(result);
-	//RunCL(frame.L, dpb.L, results);
 
 	for (int i = 0; i < frameSize; i++)
 	{
