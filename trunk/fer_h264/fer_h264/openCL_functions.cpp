@@ -32,7 +32,7 @@ cl_platform_id platform[1];
 
 bool OpenCLEnabled = true;
 
-char * load_program_source(const char *filename)
+char * load_program_source(const char *filename, size_t *length)
 { 
 	
 	struct stat statbuf;
@@ -46,7 +46,8 @@ char * load_program_source(const char *filename)
 	stat(filename, &statbuf);
 	source = (char *) malloc(statbuf.st_size + 1);
 	fread(source, statbuf.st_size, 1, fh);
-	source[statbuf.st_size] = '\0'; 
+	source[statbuf.st_size] = '\0';
+	*length = statbuf.st_size;
 	
 	return source; 
 } 
@@ -100,9 +101,10 @@ void InitCL()
 	// Load the program source from disk
 	// The kernel/program is the project directory and in Xcode the executable
 	// is set to launch from that directory hence we use a relative path
-	char *program_source = load_program_source("h264_kernels.cl");
+	size_t length;
+	char *program_source = load_program_source("h264_kernels.cl", &length);
 	program[0] = clCreateProgramWithSource(context, 1, (const char**)&program_source,
-										   NULL, &err);
+										   &length, &err);
 	assert(err == CL_SUCCESS);
 	
 	char buildLog[5000];
@@ -135,8 +137,9 @@ void CloseCL()
 void AllocateFrameBuffers()
 {
 	size_t frameBufferSize = frame.Lwidth*frame.Lheight;
-	size_t refFrameKarBufferSize = frameBufferSize*16*6*sizeof(int);
+	size_t refFrameKarBufferSize = (frame.Lwidth+8)*(frame.Lheight+8)*16*6*sizeof(int);
 	size_t refFrameInterpolatedBufferSize = frameBufferSize*16*sizeof(int);
+
 	frame_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, frameBufferSize, NULL, NULL);
 	dpb_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, frameBufferSize, NULL, NULL);
 	ans_mem	= clCreateBuffer(context, CL_MEM_READ_WRITE, frameBufferSize, NULL, NULL);
@@ -167,17 +170,32 @@ void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
 	//	refFrameInterpolatedL[i] = new int[frame.Lwidth*frame.Lheight];
 	//}
 
+	int *tempInterpolated[16];
+
+	for (int k = 0; k < 16; k++)
+	{
+		tempInterpolated[k] = new int[frame.Lwidth*frame.Lheight];
+		for (int i = 0; i < frame.Lheight; i++)
+		{
+			for (int j = 0; j < frame.Lwidth; j++)
+			{
+				tempInterpolated[k][i*frame.Lwidth+j] = refFrameInterpolated[k].L[i*frame.Lwidth+j];
+			}
+		}
+	}
+
 	size_t frameBufferSize = frame.Lwidth*frame.Lheight;
-	size_t refFrameBufferPartSize = frameBufferSize*sizeof(int);
+	size_t interpolBufferPartSize = frameBufferSize*sizeof(int);
+	size_t karBufferPartSize = (frame.Lwidth+8)*sizeof(int);
 	
 	cl_int err = 0;
 
 	size_t offset = 0;
 	for (int i = 0; i < 16; i++)
 	{
-		err |= clEnqueueWriteBuffer(cmd_queue, refFrameInterpolatedL_mem, CL_FALSE, offset, frame.Lwidth*frame.Lheight*sizeof(int),
-			(void*)(refFrameInterpolated[i].L), 0, NULL, NULL);
-		offset += refFrameBufferPartSize;
+		err |= clEnqueueWriteBuffer(cmd_queue, refFrameInterpolatedL_mem, CL_FALSE, offset, interpolBufferPartSize,
+			(void*)(tempInterpolated[i]), 0, NULL, NULL);
+		offset += interpolBufferPartSize;
 	}
 	assert(err == CL_SUCCESS);
 
@@ -185,13 +203,13 @@ void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
 	// KERNEL ARGUMENTS
 	err = clSetKernelArg(kernel[FillRefFrameKar],  0, sizeof(cl_mem), &refFrameKar_mem);
 	err |= clSetKernelArg(kernel[FillRefFrameKar], 1, sizeof(cl_mem), &refFrameInterpolatedL_mem);
-	int frameSize = frame.Lwidth*frame.Lheight;
-	err |= clSetKernelArg(kernel[FillRefFrameKar], 2, sizeof(int), &frameSize);
+	err |= clSetKernelArg(kernel[FillRefFrameKar], 2, sizeof(int), &frame.Lheight);
+	err |= clSetKernelArg(kernel[FillRefFrameKar], 3, sizeof(int), &frame.Lwidth);
 	assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
 
-	size_t global_work_size = frame.Lwidth*frame.Lheight;
+	size_t global_work_size = (frame.Lwidth+8)*(frame.Lheight+8);
 	err = clEnqueueNDRangeKernel(cmd_queue, kernel[FillRefFrameKar], 1, NULL,
 		&global_work_size, NULL, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
@@ -203,11 +221,11 @@ void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
 	{
 		for (int j = 0; j < 16; j++)
 		{
-			for (int y = 0; y < frame.Lheight; y++)
+			for (int y = 0; y < frame.Lheight+8; y++)
 			{
-				err |= clEnqueueReadBuffer(cmd_queue, refFrameKar_mem, CL_TRUE, offset, frame.Lwidth*sizeof(int),
+				err |= clEnqueueReadBuffer(cmd_queue, refFrameKar_mem, CL_TRUE, offset, karBufferPartSize,
 					refFrameKar[i][j][y], 0, NULL, NULL);
-				offset += frame.Lwidth*sizeof(int);
+				offset += karBufferPartSize;
 			}
 		}
 	}
