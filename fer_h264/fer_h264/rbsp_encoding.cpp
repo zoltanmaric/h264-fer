@@ -123,7 +123,9 @@ void RBSP_encode(NALunit &nal_unit)
 	{
 		sps_write();
 		init_h264_structures_encoder();
+		InitializeInterpolatedRefFrame();	
 		AllocateMemory();
+		AllocateFrameBuffers();
 		RBSP_trailing_bits();
 		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;
 	}
@@ -154,7 +156,6 @@ void RBSP_encode(NALunit &nal_unit)
 			}
 
 			shd.frame_num = 0;
-			getPredictionSamples();
 		}
 		else
 		{
@@ -164,8 +165,7 @@ void RBSP_encode(NALunit &nal_unit)
 
 		shd_write(nal_unit);
 
-		int predL[16][16] = {0}, predCb[8][8] = {0}, predCr[8][8] = {0};
-		int intra16x16PredMode;
+		int predL[16][16], predCb[8][8], predCr[8][8];
 		int mb_skip_run = 0;
 
 
@@ -192,7 +192,7 @@ void RBSP_encode(NALunit &nal_unit)
 			}
 			else
 			{
-				intra16x16PredMode = intraPredictionEncoding(predL, predCr, predCb);
+				int intra16x16PredMode = intraPredictionEncoding(predL, predCr, predCb);
 
 				// intra4x4 prediction
 				if (intra16x16PredMode == -1)
@@ -301,8 +301,7 @@ void RBSP_encode(NALunit &nal_unit)
 			{
 				clear_residual_structures();
 			}
-		}
-	
+		}	
 
 		if (mb_skip_run > 0)
 		{
@@ -316,14 +315,14 @@ void RBSP_encode(NALunit &nal_unit)
 		{
 			initialisationProcess();
 		}
-		modificationProcess();
+		modificationProcess();		
+		FillInterpolatedRefFrame();
 	}
-
 
 	flushWriteBuffer();
 }
 
-//MB size testing function used in coding process
+//MB size testing function used in prediction process
 
 unsigned int coded_mb_size(int intra16x16PredMode, int predL[16][16], int predCb[8][8], int predCr[8][8])
 {

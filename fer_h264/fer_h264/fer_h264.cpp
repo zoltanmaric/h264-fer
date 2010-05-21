@@ -11,7 +11,6 @@
 #include "ref_frames.h"
 #include "expgolomb.h"
 #include "rbsp_encoding.h"
-#include "moestimation.h"
 #include "openCL_functions.h"
 
 void decode()
@@ -75,7 +74,6 @@ void encode()
 	writeNAL(nu);
 
 	nu.nal_ref_idc = 1;		// non-zero for reference
-	InitializeInterpolatedRefFrame();
 	while (ReadFromY4M() != -1)
 	{		
 		frameCount++;
@@ -88,7 +86,6 @@ void encode()
 		RBSP_encode(nu);
 
 		writeNAL(nu);
-		FillInterpolatedRefFrame();
 
 		if (frameCount == 203) break;
 	}

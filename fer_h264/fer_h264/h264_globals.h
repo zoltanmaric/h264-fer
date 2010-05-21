@@ -187,3 +187,4 @@ extern int totalcoeff_array_luma[10000][16];
 extern int totalcoeff_array_chroma[2][10000][4];
 
 extern int invoked_for_Intra16x16DCLevel, invoked_for_Intra16x16ACLevel, invoked_for_LumaLevel, invoked_for_ChromaACLevel, invoked_for_ChromaDCLevel;
+extern bool OpenCLEnabled;

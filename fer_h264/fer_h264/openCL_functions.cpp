@@ -199,7 +199,7 @@ void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
 	clFinish(cmd_queue);
 
 	offset = 0;
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		for (int j = 0; j < 16; j++)
 		{

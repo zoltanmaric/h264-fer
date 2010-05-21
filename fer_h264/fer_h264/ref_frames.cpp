@@ -191,37 +191,23 @@ void subtractFramesCL(unsigned char *result)
 {
 	cl_int err = 0;
 	size_t returned_size = 0;
-	
-	cl_mem a_mem, b_mem, ans_mem;		
 
-	// MEMORY ALLOCATION
-	// Allocate memory on the device to hold our data and store the result into
 	size_t buffer_size = frame.Lwidth*frame.Lheight;
 	cl_event event_wait_list[3];
 	cl_uint num_events = 0;
 
-	// Input array a
-	a_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
-	err = clEnqueueWriteBuffer(cmd_queue, a_mem, CL_FALSE, 0, buffer_size,		// TEST: currently non-blocking, may cause errors
+	err = clEnqueueWriteBuffer(cmd_queue, frame_mem, CL_FALSE, 0, buffer_size,		// TEST: currently non-blocking, may cause errors
 							   (void*)frame.L, 0, NULL, &event_wait_list[num_events++]);
 	
-	// Input array b
-	b_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, buffer_size, NULL, NULL);
-	err |= clEnqueueWriteBuffer(cmd_queue, b_mem, CL_FALSE, 0, buffer_size,
+	err |= clEnqueueWriteBuffer(cmd_queue, dpb_mem, CL_FALSE, 0, buffer_size,
 								(void*)dpb.L, 0, NULL, &event_wait_list[num_events++]);
 	assert(err == CL_SUCCESS);
-	
-	// result array
-	ans_mem	= clCreateBuffer(context, CL_MEM_READ_WRITE, buffer_size, NULL, NULL);
-	
-	// Get all of the stuff written and allocated 
-	//clFinish(cmd_queue);
-	
+
 	
 	// KERNEL ARGUMENTS
 	// Now setup the arguments to our kernel
-	err  = clSetKernelArg(kernel[0],  0, sizeof(cl_mem), &a_mem);
-	err |= clSetKernelArg(kernel[0],  1, sizeof(cl_mem), &b_mem);
+	err  = clSetKernelArg(kernel[0],  0, sizeof(cl_mem), &frame_mem);
+	err |= clSetKernelArg(kernel[0],  1, sizeof(cl_mem), &dpb_mem);
 	err |= clSetKernelArg(kernel[0],  2, sizeof(cl_mem), &ans_mem);
 	assert(err == CL_SUCCESS);
 	
@@ -241,12 +227,6 @@ void subtractFramesCL(unsigned char *result)
 	err = clEnqueueReadBuffer(cmd_queue, ans_mem, CL_TRUE, 0, buffer_size, 
 							  result, num_events, event_wait_list, NULL);
 	assert(err == CL_SUCCESS);
-	//clFinish(cmd_queue);
-	
-	// TEARDOWN
-	clReleaseMemObject(a_mem);
-	clReleaseMemObject(b_mem);
-	clReleaseMemObject(ans_mem);
 }
 
 int selectNALUnitType()
@@ -260,26 +240,32 @@ int selectNALUnitType()
 		return NAL_UNIT_TYPE_IDR;
 	}
 
-	int frameSize = frame.Lwidth * frame.Lheight;
-
-	unsigned char *result = new unsigned char[frameSize];
-	subtractFramesCL(result);
-
-	for (int i = 0; i < frameSize; i++)
+	if (OpenCLEnabled == true)
 	{
-		sad += result[i];
+		int frameSize = frame.Lwidth * frame.Lheight;
+
+		unsigned char *result = new unsigned char[frameSize];
+		subtractFramesCL(result);
+
+		for (int i = 0; i < frameSize; i++)
+		{
+			sad += result[i];
+		}
+		delete [] result;
 	}
-	delete [] result;
 
-	//for (int i = 0; i < frame.Lheight; i++)
-	//{
-	//	for (int j = 0; j < frame.Lwidth; j++)
-	//	{
-	//		sad += ABS(frame.L[i*frame.Lwidth+j] - dpb.L[i*frame.Lwidth+j]);
-	//	}
-	//}
+	else
+	{
+		for (int i = 0; i < frame.Lheight; i++)
+		{
+			for (int j = 0; j < frame.Lwidth; j++)
+			{
+				sad += ABS(frame.L[i*frame.Lwidth+j] - dpb.L[i*frame.Lwidth+j]);
+			}
+		}
+	}
 
-	// The chosen average treshold difference per macroblock
+	// The chosen average threshold difference per macroblock
 	// is 4096, which corresponds to 16 per pixel. Therefore
 	// the treshold SAD is picSizeInMBs * 4096 or picSizeInMBs << 12
 	if ((sad > (picSizeInMBs << 12)))

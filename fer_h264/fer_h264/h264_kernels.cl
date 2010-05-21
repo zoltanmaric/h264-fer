@@ -8,11 +8,17 @@ absDiff(__global uchar16 *a,
 	answer[gid] = abs_diff(a[gid],b[gid]);
 }
 
+// The array frameLuma contains 16 luma samples
+// in one (vector) element.
 __kernel void
 fetchPredictionSamples16(__global uchar16 *frameLuma,
 	uint frameWidth,
 	__global int *predSamples)
 {
+	// xF and yF help addressing the vector elements
+	// within frameLuma which contain the prediction
+	// sample to be fetched. They DO NOT address
+	// the exact sample.
 	int xF, yF;
 	uint frameWidthInMbs = frameWidth >> 4;
 	uint numPredSamples = 33;
@@ -50,8 +56,8 @@ fetchPredictionSamples16(__global uchar16 *frameLuma,
 		else
 		{
 			mbAddrC = mbAddrB - 1;
-			xF = (mbAddrC % frameWidthInMbs) << 4;
-			yF = (mbAddrC<<4)+15;
+			xF = (mbAddrC % frameWidthInMbs);
+			yF = ((mbAddrC / frameWidthInMbs) << 4) + 15;
 			frameIdx = yF*frameWidthInMbs + xF;
 			predSamples[gid] = frameLuma[frameIdx].sF;
 		}
@@ -64,8 +70,8 @@ fetchPredictionSamples16(__global uchar16 *frameLuma,
 		}
 		else
 		{
-			xF = (mbAddrA % frameWidthInMbs) << 4;
-			yF = (mbAddrA<<4)+(lid-1);
+			xF = (mbAddrA % frameWidthInMbs);
+			yF = ((mbAddrA / frameWidthInMbs) << 4) + (lid-1);
 			frameIdx = yF*frameWidthInMbs + xF;
 			predSamples[gid] = frameLuma[frameIdx].sF;
 		}
@@ -78,8 +84,8 @@ fetchPredictionSamples16(__global uchar16 *frameLuma,
 		}
 		else
 		{
-			xF = (mbAddrB % frameWidthInMbs) << 4;
-			yF = (mbAddrB<<4) + 15;
+			xF = (mbAddrB % frameWidthInMbs);
+			yF = ((mbAddrB / frameWidthInMbs) << 4) + 15;
 			frameIdx = yF*frameWidthInMbs + xF;
 			switch(lid)
 			{
@@ -135,3 +141,20 @@ fetchPredictionSamples16(__global uchar16 *frameLuma,
 		}
 	}
 }
+
+__kernel void
+FillRefFrameKar(__global int *refFrameKar,
+				__global char *refFrameInterpolatedL,
+				int frameSize)
+{
+	int gid = get_global_id(0);
+	int i, j;
+	
+	for (i = 0; i < 6; i++)
+	{
+		for (j = 0; j < 16; j++)
+		{
+			refFrameKar[(i*16+j)*frameSize + gid] = gid;
+		}
+	}
+}//

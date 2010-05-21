@@ -1149,9 +1149,6 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	}
 	else
 	{
-		int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
-		int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
-
 		// Restore the original frame samples
 		for (int i = 0; i < 16; i++)
 		{
