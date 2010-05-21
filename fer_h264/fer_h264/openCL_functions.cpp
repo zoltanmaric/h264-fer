@@ -7,14 +7,21 @@
 
 #include "h264_globals.h"
 
+cl_mem frame_mem;
+cl_mem dpb_mem;
+cl_mem ans_mem;		// the result array
+cl_mem refFrameKar_mem;
+cl_mem refFrameInterpolatedL_mem;
+
 enum Kernel
 {
 	absDiff = 0,
-	getPred
+	getPred,
+	FillRefFrameKar
 };
 
 cl_program program[1];
-cl_kernel kernel[2];
+cl_kernel kernel[3];
 
 cl_command_queue cmd_queue;
 cl_context context;
@@ -22,6 +29,8 @@ cl_context context;
 cl_device_id cpu = NULL, device = NULL;
 
 cl_platform_id platform[1];
+
+bool OpenCLEnabled = true;
 
 char * load_program_source(const char *filename)
 { 
@@ -59,7 +68,11 @@ void InitCL()
 	// Find the GPU CL device, this is what we really want
 	// If there is no GPU device is CL capable, fall back to CPU
 	err = clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-	if (err != CL_SUCCESS) device = cpu;
+	if (err != CL_SUCCESS)
+	{
+		device = cpu;
+		OpenCLEnabled = false;
+	}
 	assert(device);
 
 	// Get some information about the returned device
@@ -70,7 +83,7 @@ void InitCL()
 	err |= clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(device_name), 
 						  device_name, &returned_size);
 	assert(err == CL_SUCCESS);
-	printf("Connecting to %s %s...\n", vendor_name, device_name);
+	printf("Found OpenCL compatible device: %s %s...\n", vendor_name, device_name);
 	
 
 	// CONTEXT AND COMMAND QUEUE
@@ -101,15 +114,106 @@ void InitCL()
 	// Now create the kernel "objects" that we want to use in the example file 
 	kernel[absDiff] = clCreateKernel(program[0], "absDiff", &err);
 	assert(err == CL_SUCCESS);
+	
 	kernel[getPred] = clCreateKernel(program[0], "fetchPredictionSamples16", &err);
+	assert(err == CL_SUCCESS);
+
+	kernel[FillRefFrameKar] = clCreateKernel(program[0], "FillRefFrameKar", &err);
 	assert(err == CL_SUCCESS);
 }
 
 void CloseCL()
 {
+	clReleaseMemObject(frame_mem);
+	clReleaseMemObject(dpb_mem);
+	clReleaseMemObject(ans_mem);
 	clReleaseCommandQueue(cmd_queue);
 	clReleaseContext(context);
 	delete [] predSamples;
+}
+
+void AllocateFrameBuffers()
+{
+	size_t frameBufferSize = frame.Lwidth*frame.Lheight;
+	size_t refFrameKarBufferSize = frameBufferSize*16*6*sizeof(int);
+	size_t refFrameInterpolatedBufferSize = frameBufferSize*16*sizeof(int);
+	frame_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, frameBufferSize, NULL, NULL);
+	dpb_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, frameBufferSize, NULL, NULL);
+	ans_mem	= clCreateBuffer(context, CL_MEM_READ_WRITE, frameBufferSize, NULL, NULL);
+
+	refFrameKar_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, refFrameKarBufferSize, NULL, NULL);
+	refFrameInterpolatedL_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, refFrameInterpolatedBufferSize, NULL, NULL);
+}
+
+void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
+{
+	//int **refFrameKar[6][16];
+	//int *refFrameInterpolatedL[16];
+	//
+	//for (int i = 0; i < 6; i++)
+	//{
+	//	for (int j = 0; j < 16; j++)
+	//	{
+	//		refFrameKar[i][j] = new int*[frame.Lheight];
+	//		for (int y = 0; y < frame.Lheight; y++)
+	//		{
+	//			refFrameKar[i][j][y] = new int[frame.Lwidth];
+	//		}
+	//	}
+	//}
+
+	//for (int i = 0; i < 16; i++)
+	//{
+	//	refFrameInterpolatedL[i] = new int[frame.Lwidth*frame.Lheight];
+	//}
+
+	size_t frameBufferSize = frame.Lwidth*frame.Lheight;
+	size_t refFrameBufferPartSize = frameBufferSize*sizeof(int);
+	
+	cl_int err = 0;
+
+	size_t offset = 0;
+	for (int i = 0; i < 16; i++)
+	{
+		err |= clEnqueueWriteBuffer(cmd_queue, refFrameInterpolatedL_mem, CL_FALSE, offset, frame.Lwidth*frame.Lheight*sizeof(int),
+			(void*)(refFrameInterpolated[i].L), 0, NULL, NULL);
+		offset += refFrameBufferPartSize;
+	}
+	assert(err == CL_SUCCESS);
+
+	
+	// KERNEL ARGUMENTS
+	err = clSetKernelArg(kernel[FillRefFrameKar],  0, sizeof(cl_mem), &refFrameKar_mem);
+	err |= clSetKernelArg(kernel[FillRefFrameKar], 1, sizeof(cl_mem), &refFrameInterpolatedL_mem);
+	int frameSize = frame.Lwidth*frame.Lheight;
+	err |= clSetKernelArg(kernel[FillRefFrameKar], 2, sizeof(int), &frameSize);
+	assert(err == CL_SUCCESS);
+
+	clFinish(cmd_queue);
+
+	size_t global_work_size = frame.Lwidth*frame.Lheight;
+	err = clEnqueueNDRangeKernel(cmd_queue, kernel[FillRefFrameKar], 1, NULL,
+		&global_work_size, NULL, 0, NULL, NULL);
+	assert(err == CL_SUCCESS);
+
+	clFinish(cmd_queue);
+
+	offset = 0;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 16; j++)
+		{
+			for (int y = 0; y < frame.Lheight; y++)
+			{
+				err |= clEnqueueReadBuffer(cmd_queue, refFrameKar_mem, CL_TRUE, offset, frame.Lwidth*sizeof(int),
+					refFrameKar[i][j][y], 0, NULL, NULL);
+				offset += frame.Lwidth*sizeof(int);
+			}
+		}
+	}
+
+	clFinish(cmd_queue);
+	int test = 0;
 }
 
 void getPredictionSamples()
@@ -136,12 +240,6 @@ void getPredictionSamples()
 	assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
-
-	// TEST:
-	for (int i = 0; i < predSamplesBufferSize/4; i++)
-	{
-		predSamples[i] = i;
-	}
 
 	err = clEnqueueReadBuffer(cmd_queue, predSamples_mem, CL_TRUE, 0, predSamplesBufferSize, predSamples, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
