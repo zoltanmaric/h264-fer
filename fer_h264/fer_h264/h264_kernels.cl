@@ -144,17 +144,41 @@ fetchPredictionSamples16(__global uchar16 *frameLuma,
 
 __kernel void
 FillRefFrameKar(__global int *refFrameKar,
-				__global char *refFrameInterpolatedL,
-				int frameSize)
+				__global int *refFrameInterpolatedL,
+				int frameHeight,
+				int frameWidth)
 {
 	int gid = get_global_id(0);
-	int i, j;
+	int i, j, suma;
+	int x, y, tx, ty;
+	int frameSize = (frameHeight+8) * (frameWidth+8);
 	
-	for (i = 0; i < 6; i++)
+	for (j = 0; j < 16; j++)
 	{
-		for (j = 0; j < 16; j++)
+		x = gid % (frameWidth+8);
+		y = gid / (frameWidth+8);
+		suma = 0x0f0f0f0f;
+		if (x < frameWidth && y < frameHeight)
 		{
-			refFrameKar[(i*16+j)*frameSize + gid] = gid;
-		}
+			suma = 0;
+			for (tx = x; tx < x+8; tx++)
+				for (ty = y; ty < y+8; ty++)
+				{
+					if (tx >= frameWidth && ty >= frameHeight)
+					{
+						suma += refFrameInterpolatedL[(j+1) * frameHeight * frameWidth - 1];
+					} else if (tx >= frameWidth)
+					{
+						suma += refFrameInterpolatedL[j * frameHeight * frameWidth + (ty+1)*frameWidth-1];
+					} else if (ty >= frameHeight)
+					{
+						suma += refFrameInterpolatedL[j * frameHeight * frameWidth + (frameHeight-1)*frameWidth+tx];
+					} else 
+					{
+						suma += refFrameInterpolatedL[j * frameHeight * frameWidth + ty*frameWidth+tx];
+					}
+				}
+		} 
+		refFrameKar[j*frameSize + gid] = suma;
 	}
 }//

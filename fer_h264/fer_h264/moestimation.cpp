@@ -71,8 +71,6 @@ int diffTransformedLuma(int a, int b)
 
 void FillInterpolatedRefFrame()
 {
-	TestKar(refFrameKar, refFrameInterpolated);
-	
 	frame_type * refPic = RefPicList0[0].frame;
 	int predL[16][16], predCr[8][8], predCb[8][8];
 	for (int frac = 0; frac < 16; frac++)
@@ -101,6 +99,8 @@ void FillInterpolatedRefFrame()
 				}
 		}
 	}
+
+	TestKar(refFrameKar, refFrameInterpolated);
 	for (int i = 0; i < 16; i++)
 	{
 		for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
