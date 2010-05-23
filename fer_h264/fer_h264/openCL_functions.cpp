@@ -39,7 +39,7 @@ char * load_program_source(const char *filename, size_t *length)
 	FILE *fh; 
 	char *source; 
 	
-	fh = fopen(filename, "r");
+	fh = fopen(filename, "rb");
 	if (fh == 0)
 		return 0; 
 	
@@ -110,14 +110,11 @@ void InitCL()
 	char buildLog[5000];
 	err = clBuildProgram(program[0], 0, NULL, NULL, NULL, NULL);
 	clGetProgramBuildInfo(program[0], device, CL_PROGRAM_BUILD_LOG, 5000, buildLog, NULL);
-	printf("%s", buildLog);
+	printf("%s\n", buildLog);
 	assert(err == CL_SUCCESS);
 	
 	// Now create the kernel "objects" that we want to use in the example file 
 	kernel[absDiff] = clCreateKernel(program[0], "absDiff", &err);
-	assert(err == CL_SUCCESS);
-	
-	kernel[getPred] = clCreateKernel(program[0], "fetchPredictionSamples16", &err);
 	assert(err == CL_SUCCESS);
 
 	kernel[FillRefFrameKar] = clCreateKernel(program[0], "FillRefFrameKar", &err);
