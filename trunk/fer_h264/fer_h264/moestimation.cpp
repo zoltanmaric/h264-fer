@@ -63,9 +63,7 @@ int diffTransformedLuma(int a, int b)
 }
 
 void FillInterpolatedRefFrame()
-{
-	//TestKar(refFrameKar, refFrameInterpolated);
-	
+{	
 	frame_type * refPic = RefPicList0[0].frame;
 	int predL[16][16][16], predCr[16][8][8], predCb[16][8][8];
 	for (int tmpMbAddr = 0; tmpMbAddr < shd.PicSizeInMbs; tmpMbAddr++)
@@ -90,7 +88,8 @@ void FillInterpolatedRefFrame()
 				}
 		}
 	}
-	for (int i = 0; i < 16; i++)
+	TestKar(refFrameKar, refFrameInterpolated);
+	/*for (int i = 0; i < 16; i++)
 	{
 		for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
 			for (int ty = frame.Lheight-1; ty >= 0; ty--)
@@ -124,7 +123,7 @@ void FillInterpolatedRefFrame()
 				refFrameKar[1][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+4][tx] - refFrameKar[0][i][ty][tx+8] + refFrameKar[0][i][ty+4][tx+8];
 				refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+8][tx] + refFrameKar[0][i][ty][tx+8] - refFrameKar[0][i][ty+8][tx+8];
 			}
-	}
+	}*/
 }
 //
 //void Pogorsaj(int mvx,  int mvy, int luma8x8BlkIdx)

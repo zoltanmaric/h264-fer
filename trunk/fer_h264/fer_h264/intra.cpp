@@ -130,7 +130,7 @@ void getNeighbourAddresses(int luma4x4BlkIdx, bool nA, int *mbAddrN, int *luma4x
 		*luma4x4BlkIdxN = -1;
 }
 
-void getNeighbouringMacroblocks(int *mbAddrA, int *mbAddrB)
+void inline getNeighbouringMacroblocks(int *mbAddrA, int *mbAddrB)
 {
 	if (CurrMbAddr < PicWidthInMbs)
 	{
@@ -635,7 +635,7 @@ void FetchPredictionSamplesIntra16x16(int p[33])
 	}
 }
 
-void performIntra16x16Prediction(int *p, int predL[16][16], int Intra16x16PredMode)
+void inline performIntra16x16Prediction(int *p, int predL[16][16], int Intra16x16PredMode)
 {
 	switch(Intra16x16PredMode)
 	{
