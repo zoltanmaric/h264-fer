@@ -65,26 +65,30 @@ int diffTransformedLuma(int a, int b)
 void FillInterpolatedRefFrame()
 {	
 	frame_type * refPic = RefPicList0[0].frame;
-	int predL[16][16][16], predCr[16][8][8], predCb[16][8][8];
-	for (int tmpMbAddr = 0; tmpMbAddr < shd.PicSizeInMbs; tmpMbAddr++)
+	int predL[16][16], predCr[8][8], predCb[8][8];
+	for (int frac = 0; frac < 16; frac++)
 	{
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
-			{
-				FillInterpolatedMB(predL, predCr, predCb, refPic, tmpMbAddr, i, j);
-			}
-		int x0 = ((tmpMbAddr%PicWidthInMbs)<<4);
-		int y0 = ((tmpMbAddr/PicWidthInMbs)<<4);
-		for (int frac = 0; frac < 16; frac++)
+		int mvx = frac&3, mvy = (frac&12)/4;
+		for (int tmpMbAddr = 0; tmpMbAddr < shd.PicSizeInMbs; tmpMbAddr++)
 		{
+			for (int i = 0; i < 4; i++)
+				for (int j = 0; j < 4; j++)
+				{
+					mvL0x[tmpMbAddr][i][j] = mvx;
+					mvL0y[tmpMbAddr][i][j] = mvy;
+					MotionCompensateSubMBPart(predL, predCr, predCb, refPic, tmpMbAddr, i, j);
+				}
+			int x0 = ((tmpMbAddr%PicWidthInMbs)<<4);
+			int y0 = ((tmpMbAddr/PicWidthInMbs)<<4);
 			for (int i = 0; i < 16; i++)
 				for (int j = 0; j < 16; j++)
-					refFrameInterpolated[frac].L[(y0+i)*frame.Lwidth+x0+j] = predL[frac][i][j];
+					refFrameInterpolated[frac].L[(y0+i)*frame.Lwidth+x0+j] = predL[i][j];
+			x0 /= 2; y0 /= 2;
 			for (int i = 0; i < 8; i++)
 				for (int j = 0; j < 8; j++)
 				{
-					refFrameInterpolated[frac].C[0][(y0/2+i)*frame.Cwidth+x0/2+j] = predCb[frac][i][j];
-					refFrameInterpolated[frac].C[1][(y0/2+i)*frame.Cwidth+x0/2+j] = predCr[frac][i][j];
+					refFrameInterpolated[frac].C[0][(y0+i)*frame.Cwidth+x0+j] = predCb[i][j];
+					refFrameInterpolated[frac].C[1][(y0+i)*frame.Cwidth+x0+j] = predCr[i][j];
 				}
 		}
 	}
@@ -179,21 +183,21 @@ int satdLuma8x8MVs(int mvx, int mvy, int luma8x8BlkIdx)
 			{
 				px = xPi+x0+j; if (px >= frame.Lwidth) px = frame.Lwidth-1;
 				py = yPi+y0+i; if (py >= frame.Lheight) py = frame.Lheight-1;
-				satd += ABS(frame.L[(yP+y0+i)*frame.Lwidth+xP+x0+j] - refFrameInterpolated[frac].L[py*frame.Lwidth+px]);
-				if (ABS(frame.L[(yP+y0+i)*frame.Lwidth+xP+x0+j] - refFrameInterpolated[frac].L[py*frame.Lwidth+px]) > MAXDIFF)
+				satd += ABS(frame.L[(yP+y0+i)*frame.Lwidth+xP+x0+j] - (int)(refFrameInterpolated[frac].L[py*frame.Lwidth+px]));
+				if (ABS(frame.L[(yP+y0+i)*frame.Lwidth+xP+x0+j] - (int)(refFrameInterpolated[frac].L[py*frame.Lwidth+px])) > MAXDIFF)
 					pretvori = 0;
 			}
 		//int fracC = (mvx&2)/2 +((xPi+x0)&1)*2 + (mvy&2)*2 + ((yPi+y0)&1)*8;
-		for (int boja = 0; boja < 2; boja++)
-			for (int i = 0; i < 2; i++)
-				for (int j = 0; j < 2; j++)
-				{
-					px = (xPi+x0)/2 + j; if (px >= frame.Cwidth) px = frame.Cwidth-1;
-					py = (yPi+y0)/2 + i; if (py >= frame.Cheight) py = frame.Cheight-1;
-					satd += ABS(frame.C[boja][((yP+y0)/2+i)*frame.Cwidth+(xP+x0)/2+j] - refFrameInterpolated[frac].C[boja][py*frame.Cwidth+px]);
-					if (ABS(frame.L[((yP+y0)/2+i)*frame.Lwidth+(xP+x0)/2+j] - refFrameInterpolated[frac].C[boja][py*frame.Cwidth+px]) > (MAXDIFF<<1))
-						pretvori = 0;
-				}
+		//for (int boja = 0; boja < 2; boja++)
+		//	for (int i = 0; i < 2; i++)
+		//		for (int j = 0; j < 2; j++)
+		//		{
+		//			px = (xPi+x0)/2 + j; if (px >= frame.Cwidth) px = frame.Cwidth-1;
+		//			py = (yPi+y0)/2 + i; if (py >= frame.Cheight) py = frame.Cheight-1;
+		//			satd += ABS(frame.C[boja][((yP+y0)/2+i)*frame.Cwidth+(xP+x0)/2+j] - refFrameInterpolated[fracC].C[boja][py*frame.Cwidth+px]);
+		//			if (ABS(frame.L[((yP+y0)/2+i)*frame.Lwidth+(xP+x0)/2+j] - refFrameInterpolated[fracC].C[boja][py*frame.Cwidth+px]) > (MAXDIFF<<1))
+		//				pretvori = 0;
+		//		}
 		//forwardResidual(QPy, diffL4x4, rLuma, true, false);
 		//for (int i = 0; i < 4; i++)
 		//	for (int j = 0; j < 4; j++)
@@ -214,7 +218,7 @@ int ExactPixels(int predL[16][16])
 	{
 		for (int j = 0; j < 16; j++)
 		{
-			exactLumaPixels += (ABS(frame.L[(yP+i)*frame.Lwidth+xP+j]-predL[i][j])<=2)?0:1;
+			exactLumaPixels += (ABS(frame.L[(yP+i)*frame.Lwidth+xP+j]-predL[i][j])<=2)?1:0;
 		}
 	}
 
@@ -241,7 +245,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 	mb_type_array[CurrMbAddr] = P_Skip;
 	DeriveMVs();
 	Decode(predL, predCr, predCb);
-	if (!ExactPixels(predL)) return;
+	if (ExactPixels(predL) == 256) return;
 	//printf("%d\n", CurrMbAddr);
 	//for (int curr_mbtype = 0; curr_mbtype < 3; curr_mbtype++)
 	//{
@@ -283,8 +287,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 					sumaAbsRazlika += ABS(frame.L[(ty+rely+yp)*frame.Lwidth+tx+relx+xp] - srednja);
 				}
 			}
-			MAXDIFF = sumaAbsRazlika/64;
-			if (MAXDIFF < 2) MAXDIFF = 2;
+			MAXDIFF = 2;
 			int bx = 0, by = 0, bmin = 1000000000, refx, refy, trenRazlika;
 			int bxs[85], bys[85], bmins[85], bsuma[85];
 			for (int j = 0; j < 85; j++)
@@ -452,7 +455,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			}
 			bmin = 2000000000;
 			for (int j = 0; j <= 80; j++)
-			if (bxs[j] < 100000000 && bys[j] < 100000000 && ABS(suma[0] - bsuma[j]) < bmin/3) {
+			if (bxs[j] < 100000000 && bys[j] < 100000000 && ABS(suma[0] - bsuma[j]) < bmin) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
 				if (bmins[j] < bmin)
 				{
@@ -500,13 +503,13 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				mvd_l0[i][0][1] = mvy[i] - mvL0y[CurrMbAddr][i][0];
 			}
 		}
-		if (mb_type == P_L0_16x16 && mvd_l0[0][0][0] == 0 && mvd_l0[0][0][1] == 0)
-		{
-			mb_type = mb_type_array[CurrMbAddr] = P_Skip;
-			DeriveMVs();
-			Decode(predL, predCr, predCb);
-			return;
-		}
+		//if (mb_type == P_L0_16x16 && mvd_l0[0][0][0] == 0 && mvd_l0[0][0][1] == 0 && prazanResidual[0] == 1)
+		//{
+		//	mb_type = mb_type_array[CurrMbAddr] = P_Skip;
+		//	DeriveMVs();
+		//	Decode(predL, predCr, predCb);
+		//	return;
+		//}
 		DeriveMVs();
 		for (int i = 0; i < 4; i++){
 			mvx[i] = mvL0x[CurrMbAddr][i][0];
@@ -514,8 +517,8 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 		}
 		Decode(predL, predCr, predCb);
 		for (int i = 0; i < 4; i++){
-				for (int tx = (i&1)*8; tx < 16-(i&1)*8; tx++)
-					for (int ty = (i&2)*4; ty < 16-(i&2)*4; ty++)
+				for (int tx = (i&1)*8; tx < 8+(i&1)*8; tx++)
+					for (int ty = (i&2)*4; ty < 8+(i&2)*4; ty++)
 						if (ABS(frame.L[(yp+ty)*frame.Lwidth+xp+tx] - predL[ty][tx]) < 2)
 							frame.L[(yp+ty)*frame.Lwidth+xp+tx] = predL[ty][tx];
 				//for (int tx = (i&1)*4; tx < 8-(i&1)*4; tx++)
@@ -526,17 +529,17 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				//		if (ABS(frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx]-predCr[ty][tx]) <= 2) 
 				//			frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCr[ty][tx];
 				//	}
-			if (prazanResidual[i])
-			{
-				for (int tx = (i&1)*8; tx < 16-(i&1)*8; tx++)
-					for (int ty = (i&2)*4; ty < 16-(i&2)*4; ty++)
-						frame.L[(yp+ty)*frame.Lwidth+xp+tx] = predL[ty][tx];
-				for (int tx = (i&1)*4; tx < 8-(i&1)*4; tx++)
-					for (int ty = (i&2)*2; ty < 8-(i&2)*2; ty++)
-					{
-						frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCb[ty][tx];
-						frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCr[ty][tx];
-					}
-			}
+			//if (prazanResidual[i])
+			//{
+			//	for (int tx = (i&1)*8; tx < 16-(i&1)*8; tx++)
+			//		for (int ty = (i&2)*4; ty < 16-(i&2)*4; ty++)
+			//			frame.L[(yp+ty)*frame.Lwidth+xp+tx] = predL[ty][tx];
+			//	for (int tx = (i&1)*4; tx < 8-(i&1)*4; tx++)
+			//		for (int ty = (i&2)*2; ty < 8-(i&2)*2; ty++)
+			//		{
+			//			frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCb[ty][tx];
+			//			frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCr[ty][tx];
+			//		}
+			//}
 		}
 }
