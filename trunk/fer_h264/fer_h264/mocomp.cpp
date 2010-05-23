@@ -77,6 +77,78 @@ inline int L_MC_frac_interpol(int *data, int frac) {
   return 128;  // some error
 }
 
+void FillInterpolSubMBPart(int predL[16][16][16], int sx, int sy, int *data) {
+  int b,cc,dd,ee,ff,h,j,m,s;
+  predL[0][sy][sx] = p(0,0);
+  b=Tap6Filter(p(-2,0),p(-1,0),p(0,0),p(1,0),p(2,0),p(3,0));
+  predL[1][sy][sx] = Middle(p(0,0),b);
+  predL[2][sy][sx] =  b;
+  predL[3][sy][sx] =  Middle(b,p(1,0));
+  h=Tap6Filter(p(0,-2),p(0,-1),p(0,0),p(0,1),p(0,2),p(0,3));
+  predL[4][sy][sx] =  Middle(p(0,0),h);
+  predL[8][sy][sx] =  h;
+  predL[12][sy][sx] =  Middle(h,p(0,1));
+  predL[5][sy][sx] =  Middle(b,h);
+  m=Tap6Filter(p(1,-2),p(1,-1),p(1,0),p(1,1),p(1,2),p(1,3));
+  predL[7][sy][sx] = Middle(b,m);
+  s=Tap6Filter(p(-2,1),p(-1,1),p(0,1),p(1,1),p(2,1),p(3,1));
+  predL[13][sy][sx] = Middle(h,s);
+  predL[15][sy][sx] = Middle(s,m);
+  cc=Tap6Filter(p(-2,-2),p(-2,-1),p(-2,0),p(-2,1),p(-2,2),p(-2,3));
+  dd=Tap6Filter(p(-1,-2),p(-1,-1),p(-1,0),p(-1,1),p(-1,2),p(-1,3));
+  ee=Tap6Filter(p(2,-2),p(2,-1),p(2,0),p(2,1),p(2,2),p(2,3));
+  ff=Tap6Filter(p(3,-2),p(3,-1),p(3,0),p(3,1),p(3,2),p(3,3));
+  j=Tap6Filter(cc,dd,h,m,ee,ff);
+  predL[10][sy][sx] = j;
+  predL[6][sy][sx] = Middle(b,j);
+  predL[9][sy][sx] = Middle(h,j);
+  predL[14][sy][sx] = Middle(j,s);
+  predL[11][sy][sx] = Middle(j,m);
+}
+
+void FillInterpolatedMB(int predL[16][16][16], int predCr[16][8][8], int predCb[16][8][8], frame_type *refPic,
+                        int mbPartIdx,
+                        int subMbIdx, 
+						int subMbPartIdx) {
+	int x,y, org_x,org_y; // org_x and org_y are origin point of 4x4 submbpart in current macroblock
+	org_y = ((subMbIdx & 2)<<2) + ((subMbPartIdx & 2)<<1);
+	org_x = ((subMbIdx & 1)<<3) + ((subMbPartIdx & 1)<<2);
+	int xAl = ((mbPartIdx%PicWidthInMbs)<<4) + org_x;
+	int yAl = ((mbPartIdx/PicWidthInMbs)<<4) + org_y;
+	// Fills temp tables used in fractional interpolation (luma) and linear interpolation (chroma).
+	FillTemp_4x4_refPart(refPic, xAl - 2, yAl - 2, xAl/2, yAl/2);
+
+	for(y=0; y<4; ++y)
+		for(x=0; x<4; ++x)
+		{
+			FillInterpolSubMBPart(predL, org_x+x, org_y+y, &(L_Temp_4x4_refPart[y+2][x+2]));
+		}
+
+	org_x/=2; org_y/=2; // Chroma resolution is halved luma resolution.
+    
+	for (int frac = 0; frac < 16; frac++)
+	{
+		int xLinear = frac&3;
+		int yLinear = (frac&0x0c) >> 2;
+		// CB component - iCbCr=0
+		for(y=0; y<2; ++y)
+			for(x=0; x<2; ++x)
+				predCb[frac][org_y+y][org_x+x] = //0;
+				  ((8-xLinear)*(8-yLinear) * C_Temp_4x4_refPart[0][y][x]  +
+					  xLinear *(8-yLinear) * C_Temp_4x4_refPart[0][y][x+1]+
+				   (8-xLinear)*   yLinear  * C_Temp_4x4_refPart[0][y+1][x]  +
+					  xLinear *   yLinear  * C_Temp_4x4_refPart[0][y+1][x+1] + 32) >> 6; // Linear interpolation and rounding.
+		// CR component - iCbCr=1
+		for(y=0; y<2; ++y)
+			for(x=0; x<2; ++x)
+				predCr[frac][org_y+y][org_x+x] = //0;
+				  ((8-xLinear)*(8-yLinear) * C_Temp_4x4_refPart[1][y][x]  +
+					  xLinear *(8-yLinear) * C_Temp_4x4_refPart[1][y][x+1]+
+				   (8-xLinear)*   yLinear  * C_Temp_4x4_refPart[1][y+1][x]  +
+					  xLinear *   yLinear  * C_Temp_4x4_refPart[1][y+1][x+1] + 32) >> 6; // Linear interpolation and rounding.
+	}
+}
+
 void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8][8], frame_type *refPic,
                         int mbPartIdx,
                         int subMbIdx, 
