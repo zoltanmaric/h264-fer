@@ -87,7 +87,7 @@ void encode()
 
 		writeNAL(nu);
 
-		if (frameCount == 203) break;
+		if (frameCount == 205) break;
 	}
 
 	CloseCL();
