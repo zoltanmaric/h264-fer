@@ -156,6 +156,7 @@ void RBSP_encode(NALunit &nal_unit)
 			}
 
 			shd.frame_num = 0;
+			IntraCL();
 		}
 		else
 		{

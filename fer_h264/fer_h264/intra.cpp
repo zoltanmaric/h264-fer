@@ -8,6 +8,7 @@
 #include "headers_and_parameter_sets.h"
 #include "rbsp_decoding.h"
 #include "rbsp_encoding.h"
+#include "openCL_functions.h"
 
 const int intraToChromaPredMode[4] = {2,1,0,3};
 
@@ -1036,33 +1037,49 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	FetchPredictionSamplesIntra16x16(p);
 
 	// 16x16 prediction:
-	for (int i = 0; i < 4; i++)
+	if (OpenCLEnabled == false)
 	{
-		// Skip prediction if required neighbouring macroblocks are not available
-		if (((i == 0) && (mbAddrB == -1)) ||
-			((i == 1) && (mbAddrA == -1)) ||
-			((i == 3) && ((mbAddrA == -1) || (mbAddrB == -1))))
-		{
-			continue;
-		}
-		performIntra16x16Prediction(p, predL, i);
+		Intra16x16PredMode = predModes[CurrMbAddr];
+		performIntra16x16Prediction(p, predL, Intra16x16PredMode);
 
 		// Choose the same prediction mode for chroma:
-		intra_chroma_pred_mode = intraToChromaPredMode[i];
+		intra_chroma_pred_mode = intraToChromaPredMode[Intra16x16PredMode];
 		IntraChromaSamplePrediction(predCr, predCb);
 
-		bitLoad = coded_mb_size(i, predL, predCb, predCr);
-		if (bitLoad < min)
+		min = coded_mb_size(Intra16x16PredMode, predL, predCb, predCr);
+		chosenChromaPrediction = intra_chroma_pred_mode;
+	}
+	else
+	{
+		for (int i = 0; i < 4; i++)
 		{
-			min = bitLoad;
-			Intra16x16PredMode = i;
-			chosenChromaPrediction = intra_chroma_pred_mode;
+			// Skip prediction if required neighbouring macroblocks are not available
+			if (((i == 0) && (mbAddrB == -1)) ||
+				((i == 1) && (mbAddrA == -1)) ||
+				((i == 3) && ((mbAddrA == -1) || (mbAddrB == -1))))
+			{
+				continue;
+			}
+			performIntra16x16Prediction(p, predL, i);
+
+			// Choose the same prediction mode for chroma:
+			intra_chroma_pred_mode = intraToChromaPredMode[i];
+			IntraChromaSamplePrediction(predCr, predCb);
+
+			bitLoad = coded_mb_size(i, predL, predCb, predCr);
+			if (bitLoad < min)
+			{
+				min = bitLoad;
+				Intra16x16PredMode = i;
+				chosenChromaPrediction = intra_chroma_pred_mode;
+			}
 		}
+		// Store the chosen chroma prediction:
+		intra_chroma_pred_mode = chosenChromaPrediction;
+		IntraChromaSamplePrediction(predCr, predCb);
 	}
 
-	// Store the chosen chroma prediction:
-	intra_chroma_pred_mode = chosenChromaPrediction;
-	IntraChromaSamplePrediction(predCr, predCb);
+	
 
 	// 4x4 prediction:
 	mb_type_array[CurrMbAddr] = 0;

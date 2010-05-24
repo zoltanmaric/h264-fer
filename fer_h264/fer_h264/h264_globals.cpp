@@ -202,9 +202,6 @@ int rem_intra4x4_pred_mode[16];
 bool prev_intra4x4_pred_mode_flag[16];
 int intra_chroma_pred_mode;
 
-// TEST:
-int *predSamples;
-
 int to_4x4_luma_block[16]=
 {
 
@@ -331,9 +328,6 @@ int init_h264_structures_encoder()
 
 	CodedBlockPatternLumaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];
 	CodedBlockPatternChromaArray = new int[sps.FrameHeightInMbs * sps.PicWidthInMbs];
-
-	// TEST:
-	predSamples = new int[PicWidthInMbs*PicHeightInMbs*33];
 
 	return 0;
 }
