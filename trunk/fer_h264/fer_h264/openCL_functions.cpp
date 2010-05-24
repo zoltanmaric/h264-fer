@@ -16,7 +16,7 @@ cl_mem refFrameInterpolatedL_mem;
 enum Kernel
 {
 	absDiff = 0,
-	getPred,
+	CharToInt,
 	FillRefFrameKar
 };
 
@@ -32,7 +32,7 @@ cl_platform_id platform[1];
 
 bool OpenCLEnabled = true;
 
-char * load_program_source(const char *filename, size_t *length)
+char * load_program_source(const char *filename)
 { 
 	
 	struct stat statbuf;
@@ -47,7 +47,6 @@ char * load_program_source(const char *filename, size_t *length)
 	source = (char *) malloc(statbuf.st_size + 1);
 	fread(source, statbuf.st_size, 1, fh);
 	source[statbuf.st_size] = '\0';
-	*length = statbuf.st_size;
 	
 	return source; 
 } 
@@ -84,7 +83,7 @@ void InitCL()
 	err |= clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(device_name), 
 						  device_name, &returned_size);
 	assert(err == CL_SUCCESS);
-	printf("Found OpenCL compatible device: %s %s...\n", vendor_name, device_name);
+	printf("Found OpenCL compatible device:\n%s %s...\n", vendor_name, device_name);
 	
 
 	// CONTEXT AND COMMAND QUEUE
@@ -101,10 +100,9 @@ void InitCL()
 	// Load the program source from disk
 	// The kernel/program is the project directory and in Xcode the executable
 	// is set to launch from that directory hence we use a relative path
-	size_t length;
-	char *program_source = load_program_source("h264_kernels.cl", &length);
+	char *program_source = load_program_source("h264_kernels.cl");
 	program[0] = clCreateProgramWithSource(context, 1, (const char**)&program_source,
-										   &length, &err);
+										   NULL, &err);
 	assert(err == CL_SUCCESS);
 	
 	char buildLog[5000];
@@ -115,6 +113,9 @@ void InitCL()
 	
 	// Now create the kernel "objects" that we want to use in the example file 
 	kernel[absDiff] = clCreateKernel(program[0], "absDiff", &err);
+	assert(err == CL_SUCCESS);
+
+	kernel[CharToInt] = clCreateKernel(program[0], "CharToInt", &err);
 	assert(err == CL_SUCCESS);
 
 	kernel[FillRefFrameKar] = clCreateKernel(program[0], "FillRefFrameKar", &err);
@@ -147,26 +148,6 @@ void AllocateFrameBuffers()
 
 void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
 {
-	//int **refFrameKar[6][16];
-	//int *refFrameInterpolatedL[16];
-	//
-	//for (int i = 0; i < 6; i++)
-	//{
-	//	for (int j = 0; j < 16; j++)
-	//	{
-	//		refFrameKar[i][j] = new int*[frame.Lheight];
-	//		for (int y = 0; y < frame.Lheight; y++)
-	//		{
-	//			refFrameKar[i][j][y] = new int[frame.Lwidth];
-	//		}
-	//	}
-	//}
-
-	//for (int i = 0; i < 16; i++)
-	//{
-	//	refFrameInterpolatedL[i] = new int[frame.Lwidth*frame.Lheight];
-	//}
-
 	int *tempInterpolated[16];
 
 	for (int k = 0; k < 16; k++)
@@ -225,40 +206,13 @@ void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
 				offset += karBufferPartSize;
 			}
 		}
+	}	
+
+	for (int k = 0; k < 16; k++)
+	{
+		delete [] tempInterpolated[k];
 	}
 
 	clFinish(cmd_queue);
 	int test = 0;
-}
-
-void getPredictionSamples()
-{
-	size_t frameBufferSize = frame.Lwidth*frame.Lheight;
-	size_t predSamplesBufferSize = PicWidthInMbs*PicHeightInMbs*33 * sizeof(int);
-
-	cl_mem frame_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, frameBufferSize, NULL, NULL);
-	cl_int err = clEnqueueWriteBuffer(cmd_queue, frame_mem, CL_FALSE, 0, frameBufferSize, (void*)frame.L, 0, NULL, NULL);
-	assert(err == CL_SUCCESS);
-
-	cl_mem predSamples_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, predSamplesBufferSize, NULL, NULL);
-	
-	// KERNEL ARGUMENTS
-	err = clSetKernelArg(kernel[getPred], 0, sizeof(cl_mem), &frame_mem);
-	err = clSetKernelArg(kernel[getPred], 1, sizeof(int), &frame.Lwidth);
-	err |= clSetKernelArg(kernel[getPred], 2, sizeof(cl_mem), &predSamples_mem);
-	assert(err == CL_SUCCESS);
-
-	clFinish(cmd_queue);
-
-	size_t global_work_size = PicWidthInMbs*PicHeightInMbs*33;	// one for each prediction sample
-	err = clEnqueueNDRangeKernel(cmd_queue, kernel[getPred], 1, NULL, &global_work_size, NULL, 0, NULL, NULL);
-	assert(err == CL_SUCCESS);
-
-	clFinish(cmd_queue);
-
-	err = clEnqueueReadBuffer(cmd_queue, predSamples_mem, CL_TRUE, 0, predSamplesBufferSize, predSamples, 0, NULL, NULL);
-	assert(err == CL_SUCCESS);
-
-	clReleaseMemObject(frame_mem);
-	clReleaseMemObject(predSamples_mem);
 }
