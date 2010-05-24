@@ -8,16 +8,16 @@ absDiff(__global uchar16 *a,
 	answer[gid] = abs_diff(a[gid],b[gid]);
 }
 
+// Global work size: size of input buffer / 4
 kernel void
 CharToInt(__global unsigned int *input,
-		  unsigned int size,
 		  __global int *output)
 {
 	int gid = get_global_id(0);
 	for (int i = 0; i < 4; i++)
 	{
 		int oid = (gid * 4) + i;
-		output[oid] = (input[i] >> (8 * i)) & 0xff;
+		output[oid] = (input[gid] >> (8 * i)) & 0xff;
 	}
 }
 
@@ -266,6 +266,137 @@ void performIntra16x16Prediction(int *p, int predL[16][16], int Intra16x16PredMo
 	}
 }
 
+__constant int Intra4x4ScanOrder[16][2]={
+  { 0, 0},  { 4, 0},  { 0, 4},  { 4, 4},
+  { 8, 0},  {12, 0},  { 8, 4},  {12, 4},
+  { 0, 8},  { 4, 8},  { 0,12},  { 4,12},
+  { 8, 8},  {12, 8},  { 8,12},  {12,12}
+};
+
+__constant int LevelQuantize[4][4] = {
+{205, 158, 205, 158},
+{158, 128, 158, 128},
+{205, 158, 205, 158},
+{158, 128, 158, 128}};
+
+void quantisationResidualBlock(int d[4][4], int c[4][4])
+{
+	int qbits = 2;
+	int adjust = 2;
+
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			int temp = ((d[i][j] << qbits) - adjust) * LevelQuantize[i][j];
+			c[i][j] = (temp >> 15) + ((temp >> 14) & 1);
+		}
+	}
+}
+
+void forwardTransform4x4(int r[4][4], int d[4][4])
+{
+	// Y = C'*D'*X*B'*A'
+
+	int i, j;
+	int f[4][4], h[4][4];
+	int temp[4];
+
+	for (i = 0; i < 4; i++)
+	{
+		for (j = 0; j < 4; j++)
+		{
+			h[i][j] = (r[i][j] == 0) ? 0 : ((r[i][j] << 6) - 32);
+		}
+	}
+
+	// (C'*D')*X
+	for (j = 0; j < 4; j++)
+	{
+		temp[0] = (h[0][j] << 8) + (h[1][j] << 8) + (h[2][j] << 8) + (h[3][j] << 8);
+		f[0][j] = (temp[0] >> 10) + ((temp[0] >> 9) & 1);
+
+		temp[1] = ((h[0][j] << 8) + (f[0][j] << 7) + (h[0][j] << 5))
+			+ ((h[1][j] << 7) + (h[1][j] << 6) + (h[1][j] << 4))
+			- ((h[2][j] << 7) + (h[2][j] << 6) + (h[2][j] << 4))
+			- ((h[3][j] << 8) + (h[3][j] << 7) + (h[3][j] << 5));
+		f[1][j] = (temp[1] >> 10) + ((temp[1] >> 9) & 1);
+
+		temp[2] = (h[0][j] << 8) - (h[1][j] << 8) - (h[2][j] << 8) + (h[3][j] << 8);
+		f[2][j] = (temp[2] >> 10) + ((temp[2] >> 9) & 1);
+
+		temp[3] = ((h[0][j] << 7) + (h[0][j] << 6) + (h[0][j] << 4))
+			- ((h[1][j] << 8) + (h[1][j] << 7) + (h[1][j] << 5))
+			+ ((h[2][j] << 8) + (h[2][j] << 7) + (h[2][j] << 5))
+			- ((h[3][j] << 7) + (h[3][j] << 6) + (h[3][j] << 4));
+		f[3][j] = (temp[3] >> 10) + ((temp[3] >> 9) & 1);
+	}
+
+	// (C'*D'*X)*(B'*A')
+	for (int i = 0; i < 4; i++)
+	{
+
+		temp[0] = (f[i][0] << 8) + (f[i][1] << 8) + (f[i][2] << 8) + (f[i][3] << 8);
+		d[i][0] = (temp[0] >> 10) + ((temp[0] >> 9) & 1);
+
+		temp[1] = ((f[i][0] << 8) + (f[i][0] << 7) + (f[i][0] << 5))
+			+ ((f[i][1] << 7) + (f[i][1] << 6) + (f[i][1] << 4))
+			- ((f[i][2] << 7) + (f[i][2] << 6) + (f[i][2] << 4))
+			- ((f[i][3] << 8) + (f[i][3] << 7) + (f[i][3] << 5));
+		d[i][1] = (temp[1] >> 10) + ((temp[1] >> 9) & 1);
+
+		temp[2] = (f[i][0] << 8) - (f[i][1] << 8) - (f[i][2] << 8) + (f[i][3] << 8);
+		d[i][2] = (temp[2] >> 10) + ((temp[2] >> 9) & 1);
+
+		temp[3] = ((f[i][0] << 7) + (f[i][0] << 6) + (f[i][0] << 4))
+			- ((f[i][1] << 8) + (f[i][1] << 7) + (f[i][1] << 5))
+			+ ((f[i][2] << 8) + (f[i][2] << 7) + (f[i][2] << 5))
+			- ((f[i][3] << 7) + (f[i][3] << 6) + (f[i][3] << 4));
+		d[i][3] = (temp[3] >> 10) + ((temp[3] >> 9) & 1);
+	}
+}
+
+int satd16(int predL[16][16],
+			  __global int *frame,
+			  int frameWidth,
+			  int CurrMbAddr)
+{
+	int satd = 0;
+	
+	int frameWidthInMbs = frameWidth >> 4;
+
+	int xP = ((CurrMbAddr%frameWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/frameWidthInMbs)<<4);
+	
+	for (int i = 0; i < 16; i++)
+	{
+		int diffL4x4[4][4];
+		int x0 = Intra4x4ScanOrder[i][0];
+		int y0 = Intra4x4ScanOrder[i][1];
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				diffL4x4[i][j] = frame[(yP+y0+i)*frameWidth+(xP+x0+j)] - predL[y0+i][x0+j];
+			}
+		}
+
+		int rLuma[4][4];
+		forwardTransform4x4(diffL4x4, rLuma);
+		quantisationResidualBlock(rLuma, rLuma);
+
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				satd += abs(rLuma[i][j]);
+			}
+		}
+	}
+
+	return satd;
+}
+
 int getSad(__global int *frame,
 		int CurrMbAddr,
 		int frameWidth,
@@ -317,12 +448,12 @@ IntraPrediction(__global int *frame,
 	
 	int predL[16][16];
 	int p[33];
-	FetchPredictionSamplesIntra16x16(p, frame, frameWidth, CurrMbAddr)	;
+	FetchPredictionSamplesIntra16x16(p, frame, frameWidth, CurrMbAddr);
 	
 	int mbAddrA, mbAddrB;
 	getNeighbouringMacroblocks(CurrMbAddr, frameWidthInMbs, &mbAddrA, &mbAddrB);
 	
-	int min = 65280;
+	int min = 1000000;
 	// 16x16 prediction:
 	for (int i = 0; i < 4; i++)
 	{
@@ -335,10 +466,10 @@ IntraPrediction(__global int *frame,
 		}
 		performIntra16x16Prediction(p, predL, i);
 
-		int sad = getSad(frame, CurrMbAddr, frameWidth, predL);
-		if (sad < min)
+		int satd = satd16(predL, frame, frameWidth, CurrMbAddr);
+		if (satd < min)
 		{
-			min = sad;
+			min = satd;
 			predModes[CurrMbAddr] = i;
 		}
 	}
