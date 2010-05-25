@@ -16,12 +16,13 @@ int zigZagIdx[16][2] = {{0, 0}, {1, 0}, {0, 1}, {0, 2},
 				  {1, 2}, {0, 3}, {1, 3}, {2, 2},
 				  {3, 1}, {3, 2}, {2, 3}, {3, 3}};
 int tmpVar[16];
-
+bool bio[128][128];
 frame_type refFrameInterpolated[16];
 //frame_type refFrameKar[16];
 
 int MAXDIFF = 2;
 int **refFrameKar[6][16];
+int bxs[85], bys[85], bmins[85], bsuma[85], suma[5];
 
 void InitializeInterpolatedRefFrame()
 {
@@ -93,118 +94,86 @@ void FillInterpolatedRefFrame()
 		}
 	}
 	TestKar(refFrameKar, refFrameInterpolated);
-	/*for (int i = 0; i < 16; i++)
-	{
-		for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
-			for (int ty = frame.Lheight-1; ty >= 0; ty--)
-				refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[ty*frame.Lwidth+frame.Lwidth-1];
-		for (int tx = 0; tx < frame.Lwidth; tx++)
-			for (int ty = frame.Lheight; ty < frame.Lheight+8; ty++)
-				refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[(frame.Lheight-1)*frame.Lwidth+tx];
-		for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
-			for (int ty = frame.Lheight; ty < frame.Lheight+8; ty++)
-				refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[(frame.Lheight-1)*frame.Lwidth+frame.Lwidth-1];
-		for (int tx = frame.Lwidth+7; tx >= 0; tx--)
-			for (int ty = frame.Lheight+7; ty >= 0; ty--)
-			{
-				if (ty < frame.Lheight && tx < frame.Lwidth)
-					refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[ty*frame.Lwidth+tx];
-				if (ty < frame.Lheight+7)
-					refFrameKar[0][i][ty][tx] += refFrameKar[0][i][ty+1][tx];
-				if (tx < frame.Lwidth+7)
-					refFrameKar[0][i][ty][tx] += refFrameKar[0][i][ty][tx+1];
-				if (ty < frame.Lheight+7 && tx < frame.Lwidth+7)
-					refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+1][tx+1];
-			}
-		for (int tx = 0; tx < frame.Lwidth; tx++)
-			for (int ty = 0; ty < frame.Lheight; ty++)
-			{
-				refFrameKar[4][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty][tx+2] - refFrameKar[0][i][ty+8][tx] + refFrameKar[0][i][ty+8][tx+2]
-										  + refFrameKar[0][i][ty][tx+4] - refFrameKar[0][i][ty][tx+6] - refFrameKar[0][i][ty+8][tx+4] + refFrameKar[0][i][ty+8][tx+6];
-				refFrameKar[3][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+2][tx] - refFrameKar[0][i][ty][tx+8] + refFrameKar[0][i][ty+2][tx+8]
-										  + refFrameKar[0][i][ty+4][tx] - refFrameKar[0][i][ty+6][tx] - refFrameKar[0][i][ty+4][tx+8] + refFrameKar[0][i][ty+6][tx+8];
-				refFrameKar[2][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+8][tx] - refFrameKar[0][i][ty][tx+4] + refFrameKar[0][i][ty+8][tx+4];
-				refFrameKar[1][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+4][tx] - refFrameKar[0][i][ty][tx+8] + refFrameKar[0][i][ty+4][tx+8];
-				refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+8][tx] + refFrameKar[0][i][ty][tx+8] - refFrameKar[0][i][ty+8][tx+8];
-			}
-	}*/
+	//for (int i = 0; i < 16; i++)
+	//{
+	//	for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
+	//		for (int ty = frame.Lheight-1; ty >= 0; ty--)
+	//			refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[ty*frame.Lwidth+frame.Lwidth-1];
+	//	for (int tx = 0; tx < frame.Lwidth; tx++)
+	//		for (int ty = frame.Lheight; ty < frame.Lheight+8; ty++)
+	//			refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[(frame.Lheight-1)*frame.Lwidth+tx];
+	//	for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
+	//		for (int ty = frame.Lheight; ty < frame.Lheight+8; ty++)
+	//			refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[(frame.Lheight-1)*frame.Lwidth+frame.Lwidth-1];
+	//	for (int tx = frame.Lwidth+7; tx >= 0; tx--)
+	//		for (int ty = frame.Lheight+7; ty >= 0; ty--)
+	//		{
+	//			if (ty < frame.Lheight && tx < frame.Lwidth)
+	//				refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[ty*frame.Lwidth+tx];
+	//			if (ty < frame.Lheight+7)
+	//				refFrameKar[0][i][ty][tx] += refFrameKar[0][i][ty+1][tx];
+	//			if (tx < frame.Lwidth+7)
+	//				refFrameKar[0][i][ty][tx] += refFrameKar[0][i][ty][tx+1];
+	//			if (ty < frame.Lheight+7 && tx < frame.Lwidth+7)
+	//				refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+1][tx+1];
+	//		}
+	//	for (int tx = 0; tx < frame.Lwidth; tx++)
+	//		for (int ty = 0; ty < frame.Lheight; ty++)
+	//		{
+	//			refFrameKar[4][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty][tx+2] - refFrameKar[0][i][ty+8][tx] + refFrameKar[0][i][ty+8][tx+2]
+	//									  + refFrameKar[0][i][ty][tx+4] - refFrameKar[0][i][ty][tx+6] - refFrameKar[0][i][ty+8][tx+4] + refFrameKar[0][i][ty+8][tx+6];
+	//			refFrameKar[3][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+2][tx] - refFrameKar[0][i][ty][tx+8] + refFrameKar[0][i][ty+2][tx+8]
+	//									  + refFrameKar[0][i][ty+4][tx] - refFrameKar[0][i][ty+6][tx] - refFrameKar[0][i][ty+4][tx+8] + refFrameKar[0][i][ty+6][tx+8];
+	//			refFrameKar[2][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+8][tx] - refFrameKar[0][i][ty][tx+4] + refFrameKar[0][i][ty+8][tx+4];
+	//			refFrameKar[1][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+4][tx] - refFrameKar[0][i][ty][tx+8] + refFrameKar[0][i][ty+4][tx+8];
+	//			refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+8][tx] + refFrameKar[0][i][ty][tx+8] - refFrameKar[0][i][ty+8][tx+8];
+	//		}
+	//}
 }
-//
-//void Pogorsaj(int mvx,  int mvy, int luma8x8BlkIdx)
-//{
-//	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
-//	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
-//	int xPi = xP + (mvx>>2); if (xPi < 0) xPi = 0; if (xPi >= frame.Lwidth) xPi = frame.Lwidth-1;
-//	int yPi = yP + (mvy>>2); if (yPi < 0) yPi = 0; if (yPi >= frame.Lheight) yPi = frame.Lheight-1;
-//	int frac = (mvx&3) + (mvy&3)*4;
-//	int x0, y0, px, py;
-//	
-//	for (int part4x4idx = 0; part4x4idx < 4; part4x4idx++)
-//	{
-//		x0 = ((luma8x8BlkIdx%2) << 3) + ((part4x4idx%2) << 2);
-//		y0 = ((luma8x8BlkIdx&2) << 2) + ((part4x4idx&2) << 1);
-//		for (int i = 0; i < 4; i++)
-//			for (int j = 0; j < 4; j++)
-//			{
-//				px = xPi+x0+j; if (px >= frame.Lwidth) px = frame.Lwidth-1;
-//				py = yPi+y0+i; if (py >= frame.Lheight) py = frame.Lheight-1;
-//				frame.L[(yP+y0+i)*frame.Lwidth+xP+x0+j] = refFrameInterpolated[frac].L[py*frame.Lwidth+px];
-//			}
-//		int fracC = (mvx&2)/2 +((xPi+x0)&1)*2 + (mvy&2)*2 + ((yPi+y0)&1)*8;
-//		for (int boja = 0; boja < 2; boja++)
-//			for (int i = 0; i < 2; i++)
-//				for (int j = 0; j < 2; j++)
-//				{
-//					px = (xPi+x0)/2 + j; if (px >= frame.Cwidth) px = frame.Cwidth-1;
-//					py = (yPi+y0)/2 + i; if (py >= frame.Cheight) py = frame.Cheight-1;
-//					frame.C[boja][((yP+y0)/2+i)*frame.Cwidth+(xP+x0)/2+j] = refFrameInterpolated[fracC].C[boja][py*frame.Cwidth+px];
-//				}
-//	}
-//}
 
 int satdLuma8x8MVs(int mvx, int mvy, int luma8x8BlkIdx)
 {
 	int satd = 0, pretvori = 1;
 
-	int xP = (CurrMbAddr%PicWidthInMbs)<<4;
-	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4) + (luma8x8BlkIdx%2) * 8;
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4) + (luma8x8BlkIdx/2) * 8;
 	int xPi = xP + (mvx>>2); if (xPi < 0) xPi = 0; if (xPi >= frame.Lwidth) xPi = frame.Lwidth-1;
 	int yPi = yP + (mvy>>2); if (yPi < 0) yPi = 0; if (yPi >= frame.Lheight) yPi = frame.Lheight-1;
 	int frac = (mvx&3) + (mvy&3)*4;
-	//int diffL4x4[4][4], rLuma[4][4];
+
 	int x0, y0, px, py;
-	
-	for (int part4x4idx = 0; part4x4idx < 4; part4x4idx++)
-	{
-		x0 = ((luma8x8BlkIdx%2) << 3) + ((part4x4idx%2) << 2);
-		y0 = ((luma8x8BlkIdx&2) << 2) + ((part4x4idx&2) << 1);
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
+	for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
+		{
+			px = xPi+j; if (px >= frame.Lwidth) px = frame.Lwidth-1;
+			py = yPi+i; if (py >= frame.Lheight) py = frame.Lheight-1;
+			satd += ABS(frame.L[(yP+i)*frame.Lwidth+xP+j] - (int)(refFrameInterpolated[frac].L[py*frame.Lwidth+px]));
+		}
+	int fracC = (mvx&2)/2 +((xPi+x0)&1)*2 + (mvy&2)*2 + ((yPi+y0)&1)*8;
+	for (int boja = 0; boja < 2; boja++)
+		for (int i = 0; i < 2; i++)
+			for (int j = 0; j < 2; j++)
 			{
-				px = xPi+x0+j; if (px >= frame.Lwidth) px = frame.Lwidth-1;
-				py = yPi+y0+i; if (py >= frame.Lheight) py = frame.Lheight-1;
-				satd += ABS(frame.L[(yP+y0+i)*frame.Lwidth+xP+x0+j] - (int)(refFrameInterpolated[frac].L[py*frame.Lwidth+px]));
-				if (ABS(frame.L[(yP+y0+i)*frame.Lwidth+xP+x0+j] - (int)(refFrameInterpolated[frac].L[py*frame.Lwidth+px])) > MAXDIFF)
-					pretvori = 0;
+				px = xPi/2 + j; if (px >= frame.Cwidth) px = frame.Cwidth-1;
+				py = yPi/2 + i; if (py >= frame.Cheight) py = frame.Cheight-1;
+				satd += ABS(frame.C[boja][(yP/2+i)*frame.Cwidth+xP/2+j] - refFrameInterpolated[fracC].C[boja][py*frame.Cwidth+px]);
 			}
-		//int fracC = (mvx&2)/2 +((xPi+x0)&1)*2 + (mvy&2)*2 + ((yPi+y0)&1)*8;
-		//for (int boja = 0; boja < 2; boja++)
-		//	for (int i = 0; i < 2; i++)
-		//		for (int j = 0; j < 2; j++)
-		//		{
-		//			px = (xPi+x0)/2 + j; if (px >= frame.Cwidth) px = frame.Cwidth-1;
-		//			py = (yPi+y0)/2 + i; if (py >= frame.Cheight) py = frame.Cheight-1;
-		//			satd += ABS(frame.C[boja][((yP+y0)/2+i)*frame.Cwidth+(xP+x0)/2+j] - refFrameInterpolated[fracC].C[boja][py*frame.Cwidth+px]);
-		//			if (ABS(frame.L[((yP+y0)/2+i)*frame.Lwidth+(xP+x0)/2+j] - refFrameInterpolated[fracC].C[boja][py*frame.Cwidth+px]) > (MAXDIFF<<1))
-		//				pretvori = 0;
-		//		}
-		//forwardResidual(QPy, diffL4x4, rLuma, true, false);
-		//for (int i = 0; i < 4; i++)
-		//	for (int j = 0; j < 4; j++)
-		//		satd += ABS(rLuma[i][j]);
+
+	return satd + ABS(mvx) + ABS(mvy);
+}
+
+void PopraviPSkip(int predL[16][16])
+{
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
+
+	for (int i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 16; j++)
+		{
+			frame.L[(yP+i)*frame.Lwidth+xP+j] = predL[i][j];
+		}
 	}
-	if (pretvori) return 0;
-	return satd;
 }
 
 int ExactPixels(int predL[16][16])
@@ -218,7 +187,7 @@ int ExactPixels(int predL[16][16])
 	{
 		for (int j = 0; j < 16; j++)
 		{
-			exactLumaPixels += (ABS(frame.L[(yP+i)*frame.Lwidth+xP+j]-predL[i][j])<=2)?1:0;
+			exactLumaPixels += (ABS(frame.L[(yP+i)*frame.Lwidth+xP+j]-predL[i][j])<=MAXDIFF)?1:0;
 		}
 	}
 
@@ -233,6 +202,50 @@ int sadLumaMVs(int mvx, int mvy, int partId)
 	return satdLuma8x8MVs(mvx, mvy, 0) + satdLuma8x8MVs(mvx, mvy, 1) + satdLuma8x8MVs(mvx, mvy, 2) + satdLuma8x8MVs(mvx, mvy, 3);
 }
 
+void MEstimation(int sx, int sy, int granica, int stepMV, int stepFrac, int genx, int geny, int dokle)
+{
+	int refx, refy, trenRazlika;
+	for (int tmpx = genx-granica; tmpx <= genx+granica; tmpx+=stepMV)
+	{
+		for (int tmpy = geny-granica; tmpy <= geny+granica; tmpy+=stepMV)
+		{
+			for (int frac = 0; frac < 16; frac+=stepFrac)
+			{
+				refx = sx+tmpx;
+				refy = sy+tmpy;
+				if (refy >= 0 && refy < frame.Lheight && refx>=0 && refx<frame.Lwidth) 
+				{
+					trenRazlika =   (ABS(tmpx-genx)+ABS(tmpy-geny)+4) * ( ABS(suma[0]-refFrameKar[0][frac][refy][refx])
+									+ ABS(suma[1]-refFrameKar[1][frac][refy][refx])
+									+ ABS(suma[0]-suma[1]-refFrameKar[0][frac][refy][refx]+refFrameKar[1][frac][refy][refx])
+									+ ABS(suma[2]-refFrameKar[2][frac][refy][refx])
+									+ ABS(suma[0]-suma[2]-refFrameKar[0][frac][refy][refx]+refFrameKar[2][frac][refy][refx])
+									+ ABS(suma[3]-refFrameKar[3][frac][refy][refx])
+									+ ABS(suma[0]-suma[3]-refFrameKar[0][frac][refy][refx]+refFrameKar[3][frac][refy][refx])
+									+ ABS(suma[4]-refFrameKar[4][frac][refy][refx])
+									+ ABS(suma[0]-suma[4]-refFrameKar[0][frac][refy][refx]+refFrameKar[4][frac][refy][refx])
+									);
+					if (bmins[64] > trenRazlika)
+					bmins[64] = trenRazlika;
+					bsuma[64] = refFrameKar[0][frac][refy][refx];
+					bxs[64] = (tmpx<<2) | (frac&3);
+					bys[64] = (tmpy<<2) | ((frac>>2)&3);
+					for (int j = 64; j > dokle; j--)
+					{
+						if (bmins[j] < bmins[j-1]) 
+						{
+							int t1 = bmins[j]; bmins[j] = bmins[j-1]; bmins[j-1] = t1;
+							t1 = bsuma[j]; bsuma[j] = bsuma[j-1]; bsuma[j-1] = t1;
+							t1 = bxs[j]; bxs[j] = bxs[j-1]; bxs[j-1] = t1;
+							t1 = bys[j]; bys[j] = bys[j-1]; bys[j-1] = t1;
+						} else break;
+					}
+				}
+			}
+		}
+	}
+}
+
 void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8]) 
 {
 	int xp = ((CurrMbAddr%PicWidthInMbs)<<4);
@@ -245,29 +258,34 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 	mb_type_array[CurrMbAddr] = P_Skip;
 	DeriveMVs();
 	Decode(predL, predCr, predCb);
-	if (ExactPixels(predL) == 256) return;
-	//printf("%d\n", CurrMbAddr);
-	//for (int curr_mbtype = 0; curr_mbtype < 3; curr_mbtype++)
-	//{
+	int bla = 0;
+	for (int tx = 0; tx < 16; tx++)
+		for (int ty = 0; ty < 16; ty++)
+			bla += (int)(frame.L[(ty+yp)*frame.Lwidth+tx+xp]);
+	MAXDIFF = bla/256;  bla = 0;
+	for (int tx = 0; tx < 16; tx++)
+		for (int ty = 0; ty < 16; ty++)
+			bla += ABS((int)(frame.L[(ty+yp)*frame.Lwidth+tx+xp]) - MAXDIFF);
+	MAXDIFF = bla/256;
+	if (MAXDIFF < 3) MAXDIFF = 3;
+	if (ExactPixels(predL) == 256) 
+	{
+		PopraviPSkip(predL);
+		return;
+	}
 		mb_type = P_8x8ref0;
 		mb_type_array[CurrMbAddr] = P_8x8ref0;
 		ClearMVD();
-		if (CurrMbAddr == 338)
-		{
-			int juu = 0;
-		}
-		//int currMin = 0;
 		int prazanResidual[4] = {0, 0, 0, 0};
 		for (int i = 0; i < NumMbPart(mb_type); i++)
 		{
-			//int currStepSize = 8, currMbSadMin = INT_MAX;
-			//int mvdx = 0, mvdy = 0;
 			mvd_l0[i][0][0] = mvd_l0[i][0][1] = 0;
 			DeriveMVs();
 			int genx = mvL0x[CurrMbAddr][i][0] >> 2;
 			int geny = mvL0y[CurrMbAddr][i][0] >> 2;
-			int suma[5] = {0, 0, 0, 0, 0}, relx = (i%2) * 8, rely = (i/2) * 8;
+			int relx = (i%2) * 8, rely = (i/2) * 8;
 			int u = 1;
+			for (int te = 0; te < 5; te++) suma[te] = 0;
 			for (int tx = 0; tx < 8; tx++)
 			{
 				for (int ty = 0; ty < 8; ty++)
@@ -289,173 +307,30 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			}
 			MAXDIFF = 2;
 			int bx = 0, by = 0, bmin = 1000000000, refx, refy, trenRazlika;
-			int bxs[85], bys[85], bmins[85], bsuma[85];
 			for (int j = 0; j < 85; j++)
 			{
 				bmins[j] = 1000000000;
 				bxs[j] = bys[j] = 100000000;
 			}
-			for (int tmpx = genx-1; tmpx <= genx+1; tmpx++)
-			{
-				for (int tmpy = geny-1; tmpy <= geny+1; tmpy++)
-				{
-					for (int frac = 0; frac < 16; frac++)
-					{
-						refx = relx+xp+tmpx;
-						refy = rely+yp+tmpy;
-						if (refy >= 0 && refy < frame.Lheight && refx>=0 && refx<frame.Lwidth) 
-						{
-							trenRazlika =   (128+ABS(tmpx-genx)*2+ABS(tmpy-geny)*2+((frac/4)+(frac&3))) * ( ABS(suma[0]-refFrameKar[0][frac][refy][refx])
-											+ (ABS(suma[1]-refFrameKar[1][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[1]-refFrameKar[0][frac][refy][refx]+refFrameKar[1][frac][refy][refx])<<1)
-											+ (ABS(suma[2]-refFrameKar[2][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[2]-refFrameKar[0][frac][refy][refx]+refFrameKar[2][frac][refy][refx])<<1)
-											+ (ABS(suma[3]-refFrameKar[3][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[3]-refFrameKar[0][frac][refy][refx]+refFrameKar[3][frac][refy][refx])<<1)
-											+ (ABS(suma[4]-refFrameKar[4][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[4]-refFrameKar[0][frac][refy][refx]+refFrameKar[4][frac][refy][refx])<<1)
-											);
-							if (bmins[54] > trenRazlika)
-							bmins[54] = trenRazlika;
-							bsuma[54] = refFrameKar[0][frac][refy][refx];
-							bxs[54] = (tmpx<<2) | (frac&3);
-							bys[54] = (tmpy<<2) | ((frac>>2)&3);
-							for (int j = 54; j > 0; j--)
-							{
-								if (bmins[j] < bmins[j-1]) 
-								{
-									int t1 = bmins[j]; bmins[j] = bmins[j-1]; bmins[j-1] = t1;
-									t1 = bsuma[j]; bsuma[j] = bsuma[j-1]; bsuma[j-1] = t1;
-									t1 = bxs[j]; bxs[j] = bxs[j-1]; bxs[j-1] = t1;
-									t1 = bys[j]; bys[j] = bys[j-1]; bys[j-1] = t1;
-								} else break;
-							}
-						}
-					}
-				}
-			}
-			for (int tmpx = -4; tmpx <= +4; tmpx++)
-			{
-				for (int tmpy = -4; tmpy <= +4; tmpy++)
-				{
-					for (int frac = 0; frac < 16; frac++)
-					{
-						refx = relx+xp+tmpx;
-						refy = rely+yp+tmpy;
-						if (refy >= 0 && refy < frame.Lheight && refx>=0 && refx<frame.Lwidth) 
-						{
-							trenRazlika =   (128+ABS(tmpx-genx)*2+ABS(tmpy-geny)*2+((frac/4)+(frac&3))) * ( ABS(suma[0]-refFrameKar[0][frac][refy][refx])
-											+ (ABS(suma[1]-refFrameKar[1][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[1]-refFrameKar[0][frac][refy][refx]+refFrameKar[1][frac][refy][refx])<<1)
-											+ (ABS(suma[2]-refFrameKar[2][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[2]-refFrameKar[0][frac][refy][refx]+refFrameKar[2][frac][refy][refx])<<1)
-											+ (ABS(suma[3]-refFrameKar[3][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[3]-refFrameKar[0][frac][refy][refx]+refFrameKar[3][frac][refy][refx])<<1)
-											+ (ABS(suma[4]-refFrameKar[4][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[4]-refFrameKar[0][frac][refy][refx]+refFrameKar[4][frac][refy][refx])<<1)
-											);
-							if (bmins[54] > trenRazlika)
-							bmins[54] = trenRazlika;
-							bsuma[54] = refFrameKar[0][frac][refy][refx];
-							bxs[54] = (tmpx<<2) | (frac&3);
-							bys[54] = (tmpy<<2) | ((frac>>2)&3);
-							for (int j = 54; j > 20; j--)
-							{
-								if (bmins[j] < bmins[j-1]) 
-								{
-									int t1 = bmins[j]; bmins[j] = bmins[j-1]; bmins[j-1] = t1;
-									t1 = bsuma[j]; bsuma[j] = bsuma[j-1]; bsuma[j-1] = t1;
-									t1 = bxs[j]; bxs[j] = bxs[j-1]; bxs[j-1] = t1;
-									t1 = bys[j]; bys[j] = bys[j-1]; bys[j-1] = t1;
-								} else break;
-							}
-						}
-					}
-				}
-			}
-			for (int tmpx = -256; tmpx <= 256; tmpx+=8)
-			{
-				for (int tmpy = -256; tmpy <= 256; tmpy+=8)
-				{
-					for (int frac = 0; frac < 1; frac++)
-					{
-						refx = relx+xp+tmpx;
-						refy = rely+yp+tmpy;
-						if (refy >= 0 && refy < frame.Lheight && refx>=0 && refx<frame.Lwidth) 
-						{
-							trenRazlika =   (128+ABS(tmpx-genx)*2+ABS(tmpy-geny)*2+((frac/4)+(frac&3))) * ( ABS(suma[0]-refFrameKar[0][frac][refy][refx])
-											+ (ABS(suma[1]-refFrameKar[1][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[1]-refFrameKar[0][frac][refy][refx]+refFrameKar[1][frac][refy][refx])<<1)
-											+ (ABS(suma[2]-refFrameKar[2][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[2]-refFrameKar[0][frac][refy][refx]+refFrameKar[2][frac][refy][refx])<<1)
-											+ (ABS(suma[3]-refFrameKar[3][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[3]-refFrameKar[0][frac][refy][refx]+refFrameKar[3][frac][refy][refx])<<1)
-											+ (ABS(suma[4]-refFrameKar[4][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[4]-refFrameKar[0][frac][refy][refx]+refFrameKar[4][frac][refy][refx])<<1)
-											);
-							if (bmins[80] > trenRazlika)
-							bmins[80] = trenRazlika;
-							bsuma[80] = refFrameKar[0][frac][refy][refx];
-							bxs[80] = (tmpx<<2) | (frac&3);
-							bys[80] = (tmpy<<2) | ((frac>>2)&3);
-							for (int j = 80; j > 65; j--)
-							{
-								if (bmins[j] < bmins[j-1]) 
-								{
-									int t1 = bmins[j]; bmins[j] = bmins[j-1]; bmins[j-1] = t1;
-									t1 = bsuma[j]; bsuma[j] = bsuma[j-1]; bsuma[j-1] = t1;
-									t1 = bxs[j]; bxs[j] = bxs[j-1]; bxs[j-1] = t1;
-									t1 = bys[j]; bys[j] = bys[j-1]; bys[j-1] = t1;
-								} else break;
-							}
-						}
-					}
-				}
-			}
-			for (int u1 = 65; u1 < 75; u1++) {
-			for (int tmpx = bxs[u1]-4; tmpx <= bxs[u1]+4; tmpx+=2)
-			{
-				for (int tmpy = bys[u1]-4; tmpy <= bys[u1]+4; tmpy+=2)
-				{
-					for (int frac = 0; frac < 16; frac+=4)
-					{
-						refx = relx+xp+tmpx;
-						refy = rely+yp+tmpy;
-						if (refy >= 0 && refy < frame.Lheight && refx>=0 && refx<frame.Lwidth) 
-						{
-							trenRazlika =   (128+ABS(tmpx-genx)*2+ABS(tmpy-geny)*2+((frac/4)+(frac&3))) * ( ABS(suma[0]-refFrameKar[0][frac][refy][refx])
-											+ (ABS(suma[1]-refFrameKar[1][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[1]-refFrameKar[0][frac][refy][refx]+refFrameKar[1][frac][refy][refx])<<1)
-											+ (ABS(suma[2]-refFrameKar[2][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[2]-refFrameKar[0][frac][refy][refx]+refFrameKar[2][frac][refy][refx])<<1)
-											+ (ABS(suma[3]-refFrameKar[3][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[3]-refFrameKar[0][frac][refy][refx]+refFrameKar[3][frac][refy][refx])<<1)
-											+ (ABS(suma[4]-refFrameKar[4][frac][refy][refx])<<1)
-											+ (ABS(suma[0]-suma[4]-refFrameKar[0][frac][refy][refx]+refFrameKar[4][frac][refy][refx])<<1)
-											);
-							if (bmins[u1-1] > trenRazlika)
-							bmins[u1-1] = trenRazlika;
-							bsuma[u1-1] = refFrameKar[0][frac][refy][refx];
-							bxs[u1-1] = (tmpx<<2) | (frac&3);
-							bys[u1-1] = (tmpy<<2) | ((frac>>2)&3);
-							for (int j = u1-1; j > 40; j--)
-							{
-								if (bmins[j] < bmins[j-1]) 
-								{
-									int t1 = bmins[j]; bmins[j] = bmins[j-1]; bmins[j-1] = t1;
-									t1 = bsuma[j]; bsuma[j] = bsuma[j-1]; bsuma[j-1] = t1;
-									t1 = bxs[j]; bxs[j] = bxs[j-1]; bxs[j-1] = t1;
-									t1 = bys[j]; bys[j] = bys[j-1]; bys[j-1] = t1;
-								} else break;
-							}
-						}
-					}
-				}
-			}
-			}
+			int tux[32], tuy[32];
+			MEstimation(relx+xp, rely+yp, 1, 1, 1, genx, geny, 0);
 			bmin = 2000000000;
-			for (int j = 0; j <= 80; j++)
-			if (bxs[j] < 100000000 && bys[j] < 100000000 && ABS(suma[0] - bsuma[j]) < bmin) {
+			for (int j = 0; j <= 64; j++)
+			if (bxs[j] < 100000000 && bys[j] < 100000000) {
+				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
+				if (bmins[j] < bmin)
+				{
+					bmin = bmins[j];
+					bx = bxs[j];
+					by = bys[j];
+				}
+			}
+			for (int j = 0; j < 85; j++) bmins[j] = 1000000000;
+			MEstimation(relx+xp, rely+yp, 4, 1, 1, 0, 0, 0);
+			MEstimation(relx+xp, rely+yp, 16, 2, 2, 0, 0, 32);
+			MEstimation(relx+xp, rely+yp, 256, 16, 16, 0, 0, 32);
+			for (int j = 0; j <= 64; j++)
+			if (bxs[j] < 100000000 && bys[j] < 100000000) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
 				if (bmins[j] < bmin)
 				{
@@ -503,13 +378,6 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				mvd_l0[i][0][1] = mvy[i] - mvL0y[CurrMbAddr][i][0];
 			}
 		}
-		//if (mb_type == P_L0_16x16 && mvd_l0[0][0][0] == 0 && mvd_l0[0][0][1] == 0 && prazanResidual[0] == 1)
-		//{
-		//	mb_type = mb_type_array[CurrMbAddr] = P_Skip;
-		//	DeriveMVs();
-		//	Decode(predL, predCr, predCb);
-		//	return;
-		//}
 		DeriveMVs();
 		for (int i = 0; i < 4; i++){
 			mvx[i] = mvL0x[CurrMbAddr][i][0];
@@ -519,27 +387,15 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 		for (int i = 0; i < 4; i++){
 				for (int tx = (i&1)*8; tx < 8+(i&1)*8; tx++)
 					for (int ty = (i&2)*4; ty < 8+(i&2)*4; ty++)
-						if (ABS(frame.L[(yp+ty)*frame.Lwidth+xp+tx] - predL[ty][tx]) < 2)
+						if (ABS(frame.L[(yp+ty)*frame.Lwidth+xp+tx] - predL[ty][tx]) < 3)
 							frame.L[(yp+ty)*frame.Lwidth+xp+tx] = predL[ty][tx];
-				//for (int tx = (i&1)*4; tx < 8-(i&1)*4; tx++)
-				//	for (int ty = (i&2)*2; ty < 8-(i&2)*2; ty++)
-				//	{
-				//		if (ABS(frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx]-predCb[ty][tx]) <= 2) 
-				//			frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCb[ty][tx];
-				//		if (ABS(frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx]-predCr[ty][tx]) <= 2) 
-				//			frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCr[ty][tx];
-				//	}
-			//if (prazanResidual[i])
-			//{
-			//	for (int tx = (i&1)*8; tx < 16-(i&1)*8; tx++)
-			//		for (int ty = (i&2)*4; ty < 16-(i&2)*4; ty++)
-			//			frame.L[(yp+ty)*frame.Lwidth+xp+tx] = predL[ty][tx];
-			//	for (int tx = (i&1)*4; tx < 8-(i&1)*4; tx++)
-			//		for (int ty = (i&2)*2; ty < 8-(i&2)*2; ty++)
-			//		{
-			//			frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCb[ty][tx];
-			//			frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCr[ty][tx];
-			//		}
-			//}
+				for (int tx = (i&1)*4; tx < 8-(i&1)*4; tx++)
+					for (int ty = (i&2)*2; ty < 8-(i&2)*2; ty++)
+					{
+						if (ABS(frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx]-predCb[ty][tx]) <= 3) 
+							frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCb[ty][tx];
+						if (ABS(frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx]-predCr[ty][tx]) <= 3) 
+							frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCr[ty][tx];
+					}
 		}
 }
