@@ -18,7 +18,6 @@ int zigZagIdx[16][2] = {{0, 0}, {1, 0}, {0, 1}, {0, 2},
 int tmpVar[16];
 bool bio[128][128];
 frame_type refFrameInterpolated[16];
-//frame_type refFrameKar[16];
 
 int MAXDIFF = 2;
 int **refFrameKar[6][16];
@@ -93,42 +92,42 @@ void FillInterpolatedRefFrame()
 				}
 		}
 	}
-	TestKar(refFrameKar, refFrameInterpolated);
-	//for (int i = 0; i < 16; i++)
-	//{
-	//	for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
-	//		for (int ty = frame.Lheight-1; ty >= 0; ty--)
-	//			refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[ty*frame.Lwidth+frame.Lwidth-1];
-	//	for (int tx = 0; tx < frame.Lwidth; tx++)
-	//		for (int ty = frame.Lheight; ty < frame.Lheight+8; ty++)
-	//			refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[(frame.Lheight-1)*frame.Lwidth+tx];
-	//	for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
-	//		for (int ty = frame.Lheight; ty < frame.Lheight+8; ty++)
-	//			refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[(frame.Lheight-1)*frame.Lwidth+frame.Lwidth-1];
-	//	for (int tx = frame.Lwidth+7; tx >= 0; tx--)
-	//		for (int ty = frame.Lheight+7; ty >= 0; ty--)
-	//		{
-	//			if (ty < frame.Lheight && tx < frame.Lwidth)
-	//				refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[ty*frame.Lwidth+tx];
-	//			if (ty < frame.Lheight+7)
-	//				refFrameKar[0][i][ty][tx] += refFrameKar[0][i][ty+1][tx];
-	//			if (tx < frame.Lwidth+7)
-	//				refFrameKar[0][i][ty][tx] += refFrameKar[0][i][ty][tx+1];
-	//			if (ty < frame.Lheight+7 && tx < frame.Lwidth+7)
-	//				refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+1][tx+1];
-	//		}
-	//	for (int tx = 0; tx < frame.Lwidth; tx++)
-	//		for (int ty = 0; ty < frame.Lheight; ty++)
-	//		{
-	//			refFrameKar[4][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty][tx+2] - refFrameKar[0][i][ty+8][tx] + refFrameKar[0][i][ty+8][tx+2]
-	//									  + refFrameKar[0][i][ty][tx+4] - refFrameKar[0][i][ty][tx+6] - refFrameKar[0][i][ty+8][tx+4] + refFrameKar[0][i][ty+8][tx+6];
-	//			refFrameKar[3][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+2][tx] - refFrameKar[0][i][ty][tx+8] + refFrameKar[0][i][ty+2][tx+8]
-	//									  + refFrameKar[0][i][ty+4][tx] - refFrameKar[0][i][ty+6][tx] - refFrameKar[0][i][ty+4][tx+8] + refFrameKar[0][i][ty+6][tx+8];
-	//			refFrameKar[2][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+8][tx] - refFrameKar[0][i][ty][tx+4] + refFrameKar[0][i][ty+8][tx+4];
-	//			refFrameKar[1][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+4][tx] - refFrameKar[0][i][ty][tx+8] + refFrameKar[0][i][ty+4][tx+8];
-	//			refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+8][tx] + refFrameKar[0][i][ty][tx+8] - refFrameKar[0][i][ty+8][tx+8];
-	//		}
-	//}
+	//TestKar(refFrameKar, refFrameInterpolated);
+	for (int i = 0; i < 16; i++)
+	{
+		for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
+			for (int ty = frame.Lheight-1; ty >= 0; ty--)
+				refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[ty*frame.Lwidth+frame.Lwidth-1];
+		for (int tx = 0; tx < frame.Lwidth; tx++)
+			for (int ty = frame.Lheight; ty < frame.Lheight+8; ty++)
+				refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[(frame.Lheight-1)*frame.Lwidth+tx];
+		for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)
+			for (int ty = frame.Lheight; ty < frame.Lheight+8; ty++)
+				refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[(frame.Lheight-1)*frame.Lwidth+frame.Lwidth-1];
+		for (int tx = frame.Lwidth+7; tx >= 0; tx--)
+			for (int ty = frame.Lheight+7; ty >= 0; ty--)
+			{
+				if (ty < frame.Lheight && tx < frame.Lwidth)
+					refFrameKar[0][i][ty][tx] = (int)refFrameInterpolated[i].L[ty*frame.Lwidth+tx];
+				if (ty < frame.Lheight+7)
+					refFrameKar[0][i][ty][tx] += refFrameKar[0][i][ty+1][tx];
+				if (tx < frame.Lwidth+7)
+					refFrameKar[0][i][ty][tx] += refFrameKar[0][i][ty][tx+1];
+				if (ty < frame.Lheight+7 && tx < frame.Lwidth+7)
+					refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+1][tx+1];
+			}
+		for (int tx = 0; tx < frame.Lwidth; tx++)
+			for (int ty = 0; ty < frame.Lheight; ty++)
+			{
+				refFrameKar[4][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty][tx+2] - refFrameKar[0][i][ty+8][tx] + refFrameKar[0][i][ty+8][tx+2]
+										  + refFrameKar[0][i][ty][tx+4] - refFrameKar[0][i][ty][tx+6] - refFrameKar[0][i][ty+8][tx+4] + refFrameKar[0][i][ty+8][tx+6];
+				refFrameKar[3][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+2][tx] - refFrameKar[0][i][ty][tx+8] + refFrameKar[0][i][ty+2][tx+8]
+										  + refFrameKar[0][i][ty+4][tx] - refFrameKar[0][i][ty+6][tx] - refFrameKar[0][i][ty+4][tx+8] + refFrameKar[0][i][ty+6][tx+8];
+				refFrameKar[2][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+8][tx] - refFrameKar[0][i][ty][tx+4] + refFrameKar[0][i][ty+8][tx+4];
+				refFrameKar[1][i][ty][tx] = refFrameKar[0][i][ty][tx] - refFrameKar[0][i][ty+4][tx] - refFrameKar[0][i][ty][tx+8] + refFrameKar[0][i][ty+4][tx+8];
+				refFrameKar[0][i][ty][tx] -= refFrameKar[0][i][ty+8][tx] + refFrameKar[0][i][ty][tx+8] - refFrameKar[0][i][ty+8][tx+8];
+			}
+	}
 }
 
 int satdLuma8x8MVs(int mvx, int mvy, int luma8x8BlkIdx)
@@ -346,6 +345,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			mvd_l0[i][0][0] = mvdL0[i][0] = bx;
 			mvd_l0[i][0][1] = mvdL0[i][1] = by;
 		}
+
 		if (mvx[0] == mvx[1] && mvx[0] == mvx[2] && mvx[0] == mvx[3] &&
 			mvy[0] == mvy[1] && mvy[0] == mvy[2] && mvy[0] == mvy[3] )
 		{

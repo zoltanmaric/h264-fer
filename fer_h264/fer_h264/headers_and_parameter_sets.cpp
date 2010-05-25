@@ -486,8 +486,8 @@ void pps_write()
 	pps.num_ref_idx_l1_active = 1;
 	pps.weighted_pred_flag = 0;
 	pps.weighted_bipred_idc = 0;
-	pps.pic_init_qp = 26;
-	pps.pic_init_qs = 26;
+	pps.pic_init_qp = 32;
+	pps.pic_init_qs = 32;
 	pps.chroma_qp_index_offset = 0;
 	pps.deblocking_filter_control_present_flag = 0;
 	pps.constrained_intra_pred_flag = 0;
