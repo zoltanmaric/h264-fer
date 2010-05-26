@@ -1037,9 +1037,10 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	FetchPredictionSamplesIntra16x16(p);
 
 	// 16x16 prediction:
-	if (OpenCLEnabled == false)
+	//if (OpenCLEnabled == false)
+	if (false)
 	{
-		Intra16x16PredMode = predModes[CurrMbAddr];
+		Intra16x16PredMode = predModes16x16[CurrMbAddr];
 		performIntra16x16Prediction(p, predL, Intra16x16PredMode);
 
 		// Choose the same prediction mode for chroma:
