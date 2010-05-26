@@ -15,18 +15,26 @@ cl_mem ans_mem;		// the result array
 cl_mem refFrameKar_mem;
 cl_mem refFrameInterpolatedL_mem;
 
-cl_mem predModes_mem;
+cl_mem predModes16x16_mem;
+cl_mem predModes4x4_mem;
 
-enum Kernel
+enum Kernels
 {
-	absDiff = 0,
-	CharToInt,
-	FillRefFrameKar,
-	Intra
+	KabsDiff = 0,
+	KcharToInt,
+	KfillRefFrameKar,
+	Kintra16,
+	Kintra4
 };
 
-cl_program program[1];
-cl_kernel kernel[4];
+enum Programs
+{
+	Pgeneral = 0,
+	Pintra
+};
+
+cl_program program[2];
+cl_kernel kernel[10];
 
 cl_command_queue cmd_queue;
 cl_context context;
@@ -37,7 +45,7 @@ cl_platform_id platform[1];
 
 bool OpenCLEnabled = true;
 
-int *predModes;
+int *predModes16x16, *predModes4x4;
 
 char * load_program_source(const char *filename)
 { 
@@ -111,24 +119,39 @@ void InitCL()
 	program[0] = clCreateProgramWithSource(context, 1, (const char**)&program_source,
 										   NULL, &err);
 	assert(err == CL_SUCCESS);
+
+	program_source = load_program_source("intra_kernels.cl");
+	program[1] = clCreateProgramWithSource(context, 1, (const char**)&program_source,
+										   NULL, &err);
+	assert(err == CL_SUCCESS);
 	
 	char buildLog[5000];
-	err = clBuildProgram(program[0], 0, NULL, NULL, NULL, NULL);
-	clGetProgramBuildInfo(program[0], device, CL_PROGRAM_BUILD_LOG, 5000, buildLog, NULL);
+	printf("Building program h264_kernels.cl ...\n");
+	err = clBuildProgram(program[Pgeneral], 0, NULL, NULL, NULL, NULL);
+	clGetProgramBuildInfo(program[Pgeneral], device, CL_PROGRAM_BUILD_LOG, 5000, buildLog, NULL);
+	printf("%s\n", buildLog);
+	assert(err == CL_SUCCESS);
+
+	printf("Building program intra_kernels.cl ...\n");
+	err = clBuildProgram(program[Pintra], 0, NULL, NULL, NULL, NULL);
+	clGetProgramBuildInfo(program[Pintra], device, CL_PROGRAM_BUILD_LOG, 5000, buildLog, NULL);
 	printf("%s\n", buildLog);
 	assert(err == CL_SUCCESS);
 	
 	// Now create the kernel "objects" that we want to use in the example file 
-	kernel[absDiff] = clCreateKernel(program[0], "absDiff", &err);
+	kernel[KabsDiff] = clCreateKernel(program[Pgeneral], "AbsDiff", &err);
 	assert(err == CL_SUCCESS);
 
-	kernel[CharToInt] = clCreateKernel(program[0], "CharToInt", &err);
+	kernel[KcharToInt] = clCreateKernel(program[Pgeneral], "CharToInt", &err);
 	assert(err == CL_SUCCESS);
 
-	kernel[FillRefFrameKar] = clCreateKernel(program[0], "FillRefFrameKar", &err);
+	kernel[KfillRefFrameKar] = clCreateKernel(program[Pgeneral], "FillRefFrameKar", &err);
 	assert(err == CL_SUCCESS);
 
-	kernel[Intra] = clCreateKernel(program[0], "IntraPrediction", &err);
+	kernel[Kintra16] = clCreateKernel(program[Pintra], "GetIntra16x16PredModes", &err);
+	assert(err == CL_SUCCESS);
+
+	kernel[Kintra4] = clCreateKernel(program[Pintra], "GetIntra4x4PredModes", &err);
 	assert(err == CL_SUCCESS);
 }
 
@@ -142,16 +165,18 @@ void AllocateFrameBuffers()
 	dpb_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, frameBufferSize, NULL, NULL);
 	ans_mem	= clCreateBuffer(context, CL_MEM_READ_WRITE, frameBufferSize, NULL, NULL);
 
-	size_t predModesBufferSize = (frame.Lwidth >> 4)*(frame.Lheight >> 4) * sizeof(int);
-	predModes_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, predModesBufferSize, NULL, NULL);
-	predModes = new int[predModesBufferSize / sizeof(int)];
+	size_t predModes16BufferSize = (frame.Lwidth >> 4)*(frame.Lheight >> 4) * sizeof(int);
+	predModes16x16_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, predModes16BufferSize, NULL, NULL);
+	predModes16x16 = new int[predModes16BufferSize / sizeof(int)];
+
+	size_t predModes4BufferSize = (frame.Lwidth >> 2)*(frame.Lheight >> 2) * sizeof(int);
+	predModes4x4_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, predModes4BufferSize, NULL, NULL);
+	predModes4x4 = new int[predModes4BufferSize / sizeof(int)];
 	
 	size_t refFrameKarBufferSize = (frame.Lwidth+8)*(frame.Lheight+8)*16*6*sizeof(int);
 	size_t refFrameInterpolatedBufferSize = frameBufferSize*16*sizeof(int);
 	refFrameKar_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, refFrameKarBufferSize, NULL, NULL);
 	refFrameInterpolatedL_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, refFrameInterpolatedBufferSize, NULL, NULL);
-
-
 }
 
 void CloseCL()
@@ -160,10 +185,14 @@ void CloseCL()
 	clReleaseMemObject(frameInt_mem);
 	clReleaseMemObject(dpb_mem);
 	clReleaseMemObject(ans_mem);
-	clReleaseMemObject(predModes_mem);
+	clReleaseMemObject(predModes16x16_mem);
+	clReleaseMemObject(predModes4x4_mem);
+
 	clReleaseCommandQueue(cmd_queue);
 	clReleaseContext(context);
-	delete [] predModes;
+
+	delete [] predModes16x16;
+	delete [] predModes4x4;
 }
 
 void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
@@ -199,16 +228,16 @@ void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
 
 	
 	// KERNEL ARGUMENTS
-	err = clSetKernelArg(kernel[FillRefFrameKar],  0, sizeof(cl_mem), &refFrameKar_mem);
-	err |= clSetKernelArg(kernel[FillRefFrameKar], 1, sizeof(cl_mem), &refFrameInterpolatedL_mem);
-	err |= clSetKernelArg(kernel[FillRefFrameKar], 2, sizeof(int), &frame.Lheight);
-	err |= clSetKernelArg(kernel[FillRefFrameKar], 3, sizeof(int), &frame.Lwidth);
+	err = clSetKernelArg(kernel[KfillRefFrameKar],  0, sizeof(cl_mem), &refFrameKar_mem);
+	err |= clSetKernelArg(kernel[KfillRefFrameKar], 1, sizeof(cl_mem), &refFrameInterpolatedL_mem);
+	err |= clSetKernelArg(kernel[KfillRefFrameKar], 2, sizeof(int), &frame.Lheight);
+	err |= clSetKernelArg(kernel[KfillRefFrameKar], 3, sizeof(int), &frame.Lwidth);
 	assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
 
 	size_t global_work_size = (frame.Lwidth+8)*(frame.Lheight+8);
-	err = clEnqueueNDRangeKernel(cmd_queue, kernel[FillRefFrameKar], 1, NULL,
+	err = clEnqueueNDRangeKernel(cmd_queue, kernel[KfillRefFrameKar], 1, NULL,
 		&global_work_size, NULL, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
 
@@ -250,36 +279,41 @@ void IntraCL()
 		(void*)(frame.L), 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
 
-	err = clSetKernelArg(kernel[CharToInt], 0, sizeof(cl_mem), &frame_mem);
-	err |= clSetKernelArg(kernel[CharToInt], 1, sizeof(cl_mem), &frameInt_mem);
+	err = clSetKernelArg(kernel[KcharToInt], 0, sizeof(cl_mem), &frame_mem);
+	err |= clSetKernelArg(kernel[KcharToInt], 1, sizeof(cl_mem), &frameInt_mem);
 	assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
 
 	size_t global_work_size = frame.Lwidth*frame.Lheight / sizeof(cl_int);
-	err = clEnqueueNDRangeKernel(cmd_queue, kernel[CharToInt], 1, NULL,
+	err = clEnqueueNDRangeKernel(cmd_queue, kernel[KcharToInt], 1, NULL,
 		&global_work_size, NULL, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
 
 	// The frameInt_mem buffer is the input to the intra prediction kernel
-	err = clSetKernelArg(kernel[Intra], 0, sizeof(cl_mem), &frameInt_mem);
-	err |= clSetKernelArg(kernel[Intra], 1, sizeof(int), &frame.Lwidth);
-	err |= clSetKernelArg(kernel[Intra], 2, sizeof(cl_mem), &predModes_mem);
+	err = clSetKernelArg(kernel[Kintra16], 0, sizeof(cl_mem), &frameInt_mem);
+	err |= clSetKernelArg(kernel[Kintra16], 1, sizeof(int), &frame.Lwidth);
+	err |= clSetKernelArg(kernel[Kintra16], 2, sizeof(cl_mem), &predModes16x16_mem);
 
 	clFinish(cmd_queue);
 
 	global_work_size = (frame.Lwidth >> 4)*(frame.Lheight >> 4);
-	err = clEnqueueNDRangeKernel(cmd_queue, kernel[Intra], 1, NULL,
+	err = clEnqueueNDRangeKernel(cmd_queue, kernel[Kintra16], 1, NULL,
 		&global_work_size, NULL, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
 
-	size_t predModeBufferSize = (frame.Lwidth >> 4)*(frame.Lheight >> 4) * sizeof(int);
-	err |= clEnqueueReadBuffer(cmd_queue, predModes_mem, CL_TRUE, 0, predModeBufferSize,
-							predModes, 0, NULL, NULL);
+	size_t predMode16BufferSize = (frame.Lwidth >> 4)*(frame.Lheight >> 4) * sizeof(int);
+	err |= clEnqueueReadBuffer(cmd_queue, predModes16x16_mem, CL_TRUE, 0, predMode16BufferSize,
+							predModes16x16, 0, NULL, NULL);
+
+	//size_t predMode4BufferSize = (frame.Lwidth >> 2)*(frame.Lheight >> 2) * sizeof(int);
+	//err |= clEnqueueReadBuffer(cmd_queue, predModes4x4_mem, CL_TRUE, 0, predMode4BufferSize,
+	//						predModes4x4, 0, NULL, NULL);
+	//assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
 	int test = 0;
