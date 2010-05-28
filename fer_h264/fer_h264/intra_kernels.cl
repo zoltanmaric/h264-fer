@@ -1,4 +1,4 @@
-#define NA 0xffff
+#define NA 511
 #define Clip1Y(x) ((x) < 0) ? 0 : (((x) > 255) ? 255 : (x))
 
 //////////////////////////////////////////////////////////
@@ -97,7 +97,7 @@ void forwardTransform4x4(int r[4][4], int d[4][4])
 //////////////////////////////////////////////////////////
 ///////////////// Intra 16x16 prediction /////////////////
 //////////////////////////////////////////////////////////
-#define p(x,y) (((x) == -1) ? p[(y) + 1] : p[(x) + 17])
+
 void fetchPredictionSamples16(int *predSamples,
 			__global int *frame,
 			int frameWidth,
@@ -174,7 +174,7 @@ void Intra_16x16_Vertical(int *p, int predL[16][16])
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			predL[y][x] = p(x,-1);
+			predL[y][x] = p[x+17];
 		}
 	}
 }
@@ -186,8 +186,7 @@ void Intra_16x16_Horizontal(int *p, int predL[16][16])
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			//predL[y][x] = p(-1,y);
-			predL[1][0] = p(-1,y);
+			predL[y][x] = p[y+1];
 		}
 	}
 }
@@ -199,8 +198,8 @@ void Intra_16x16_DC(int *p, int predL[16][16])
 	int sumYi = 0;		// = sum(p[-1,y']) | y € (0..15)
 	for (int i = 0; i < 16; i++)
 	{
-		sumXi += p(i,-1);
-		sumYi += p(-1,i);
+		sumXi += p[i+17];
+		sumYi += p[i+1];
 	}
 
 	// check availability of neighbouring samples:
@@ -249,19 +248,33 @@ void Intra_16x16_Plane(int *p, int predL[16][16])
 	int H = 0, V = 0;
 	for (int i = 0; i <= 7; i++)
 	{
-		H += (i+1)*(p(8+i,-1) - p(6-i,-1));
-		V += (i+1)*(p(-1,8+i) - p(-1,6-i));
+		H += (i+1)*(p[25+i]- p[(i < 7) ? (23-i) : 0]);
+		V += (i+1)*(p[9+i] - p[7-i]);
 	}
-
-	int a = ((p(-1,15) + p(15,-1)) << 4);
+	
+	int a = ((p[16] + p[32]) << 4);
 	int b = (5*H + 32) >> 6;
 	int c = (5*V + 32) >> 6;
 
-	for (int y = 0; y < 16; y++)
+	// Set unthinkable prediction modes if all pred samples aren't available.
+	if (p[0] == NA)
 	{
-		for (int x = 0; x < 16; x++)
+		for (int y = 0; y < 16; y++)
 		{
-			predL[y][x] = Clip1Y((a + b*(x-7) + c*(y-7) + 16) >> 5);
+			for (int x = 0; x < 16; x++)
+			{
+				predL[y][x] = NA;
+			}
+		}
+	}
+	else
+	{
+		for (int y = 0; y < 16; y++)
+		{
+			for (int x = 0; x < 16; x++)
+			{
+				predL[y][x] = Clip1Y((a + b*(x-7) + c*(y-7) + 16) >> 5);
+			}
 		}
 	}
 }
@@ -318,7 +331,7 @@ int satd16(int predL[16][16],
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				satd += abs(rLuma[i][j]);
+				satd += (predL[y0+i][x0+j] <= 255) ? abs(rLuma[i][j]) : (INT_MAX >> 8);
 			}
 		}
 	}
@@ -326,67 +339,31 @@ int satd16(int predL[16][16],
 	return satd;
 }
 
-void getNeighbouringMacroblocks(int CurrMbAddr, int frameWidthInMbs,
-								int mbAddrA[1], int mbAddrB[1])
-{
-	if ((CurrMbAddr % frameWidthInMbs) == 0)
-	{
-		mbAddrA[0] = -1;
-	}
-	else
-	{
-		mbAddrA[0] = CurrMbAddr - 1;
-	}
-	if (CurrMbAddr < frameWidthInMbs)
-	{
-		mbAddrB[0] = -1;
-	}
-	else
-	{
-		mbAddrB[0] = CurrMbAddr - frameWidthInMbs;
-	}
-}
-
 __kernel void
 GetIntra16x16PredModes(__global int *frame,
 						 int frameWidth,
 				__global int *predModes)
 {
-	uint frameWidthInMbs = frameWidth >> 4;
 	uint CurrMbAddr = get_global_id(0);
 	
 	int predL[16][16];
 	int p[33];
 	fetchPredictionSamples16(p, frame, frameWidth, CurrMbAddr);
 	
-	// int mbAddrA, mbAddrB;
-	// getNeighbouringMacroblocks(CurrMbAddr, frameWidthInMbs, &mbAddrA, &mbAddrB);
-	
-	int min = 1000000;
-	
-	// TEST:
-	//performIntra16x16Prediction(p, predL, 1);
-	predModes[CurrMbAddr] = CurrMbAddr;
+	int min = INT_MAX;
 	
 	// 16x16 prediction:
-	// for (int i = 0; i < 4; i++)
-	// {
-		// Skip prediction if required neighbouring macroblocks are not available
-		// if (((i == 0) && (mbAddrB == -1)) ||
-			// ((i == 1) && (mbAddrA == -1)) ||
-			// ((i == 3) && ((mbAddrA == -1) || (mbAddrB == -1))))
-		// {
-			// continue;
-		// }
-		// performIntra16x16Prediction(p, predL, i);
+	for (int i = 0; i < 4; i++)
+	{
+		performIntra16x16Prediction(p, predL, i);
 
-		// int satd = satd16(predL, frame, frameWidth, CurrMbAddr);
-		// if (satd < min)
-		// {
-			// min = satd;
-			// predModes[CurrMbAddr] = i;
-		// }
-	// }
+		int satd = satd16(predL, frame, frameWidth, CurrMbAddr);
+		if (satd < min)
+		{
+			min = satd;
+			predModes[CurrMbAddr] = i;
+		}
+	}
 }
 #undef p
 
@@ -433,7 +410,7 @@ void Intra_4x4_DC(int *p, int pred4x4L[4][4])
 
 	for (int i = 0; i < 13; i++)
 	{
-		if (p[i] == -1)
+		if (p[i] == NA)
 		{
 			allAvailable = false;
 			if ((i > 0) && (i < 5))
@@ -651,7 +628,7 @@ void fetchPredictionSamples4(int CurrMbAddr, __global int *frame,
 	
 	if ((xF < 0) || (yF < 0))
 	{
-		p[0] = -1;
+		p[0] = NA;
 	}
 	else
 	{
@@ -664,7 +641,7 @@ void fetchPredictionSamples4(int CurrMbAddr, __global int *frame,
 	{
 		for (int i = 1; i < 5; i++)
 		{
-			p[i] = -1;		// Unavailable for prediction
+			p[i] = NA;		// Unavailable for prediction
 		}
 	}
 	else
@@ -683,7 +660,7 @@ void fetchPredictionSamples4(int CurrMbAddr, __global int *frame,
 		for (int i = 5; i < 13; i++)
 		{
 			// Samples above and above-right marked as unavailable for prediction
-			p[i] = -1;
+			p[i] = NA;
 		}
 	}
 	else
@@ -717,34 +694,6 @@ void fetchPredictionSamples4(int CurrMbAddr, __global int *frame,
 	}
 }
 
-void getNeighbouringSubMBs(int *p, int luma4x4BlkIdx, int luma4x4BlkIdxA[0], int luma4x4BlkIdxB[0])
-{
-	if (p[0] == -1)
-	{
-		luma4x4BlkIdxA[0] = -1;
-		luma4x4BlkIdxB[0] = -1;
-		return;
-	}
-	
-	if (p[1] == -1)
-	{
-		luma4x4BlkIdxA[0] = -1;
-	}
-	else
-	{
-		luma4x4BlkIdxA[0] = subMBNeighbours[luma4x4BlkIdx][0];
-	}
-	
-	if (p[5] == -1)
-	{
-		luma4x4BlkIdxB[0] = -1;
-	}
-	else
-	{
-		luma4x4BlkIdxB[0] = subMBNeighbours[luma4x4BlkIdx][1];
-	}
-}
-
 int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx, int CurrMbAddr, int frameWidth, __global int *frame)
 {
 	int frameWidthInMbs = frameWidth >> 4;
@@ -773,7 +722,7 @@ int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx, int CurrMbAddr, int frame
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			satd += abs(rLuma[i][j]);
+			satd += (pred4x4L[i][j] <= 255) ? abs(rLuma[i][j]) : (INT_MAX >> 4);
 		}
 	}
 
@@ -791,7 +740,7 @@ GetIntra4x4PredModes(__global int *frame,
 	
 	predModes4x4[absIdx] = 0;
 
-	int min4x4 = 600000000;
+	int min4x4 = INT_MAX;
 
 	int p[13];
 	fetchPredictionSamples4(CurrMbAddr, frame, frameWidth, luma4x4BlkIdx, p);
@@ -805,11 +754,7 @@ GetIntra4x4PredModes(__global int *frame,
 		if (satd4x4 < min4x4)
 		{
 			predModes4x4[absIdx] = predMode;
-			min4x4 = satd4x4;
-			if (min4x4 == 0)
-			{
-				break;
-			}					
+			min4x4 = satd4x4;			
 		}
 	}
 }
