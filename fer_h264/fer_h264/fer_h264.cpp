@@ -77,7 +77,7 @@ void encode()
 	while (ReadFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 200) continue;
+		if (frameCount < 100) continue;
 
 		printf("Frame #%d\n", frameCount);
 		writeToYUV();
@@ -87,7 +87,7 @@ void encode()
 
 		writeNAL(nu);
 
-		if (frameCount == 200) break;
+		if (frameCount == 100) break;
 	}
 
 	CloseCL();
