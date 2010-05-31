@@ -21,14 +21,14 @@ frame_type refFrameInterpolated[16];
 
 int MAXDIFF = 2;
 int **refFrameKar[6][16];
-int *sortedSuma0[3];
-int *sortedSuma0Temp[3];
+int *sortedSuma0[5];
+int *sortedSuma0Temp[5];
 int koliko[16384];
 int bxs[85], bys[85], bmins[85], bsuma[85], suma[5];
 
 void InitializeInterpolatedRefFrame()
 {
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		sortedSuma0[i] = new int[frame.Lheight*frame.Lwidth];
 		sortedSuma0Temp[i] = new int[frame.Lheight*frame.Lwidth];
@@ -142,6 +142,8 @@ void FillInterpolatedRefFrame()
 		for (int ty = 0; ty < frame.Lheight; ty++)
 		{
 			sortedSuma0Temp[0][b] = refFrameKar[0][0][ty][tx];
+			sortedSuma0Temp[3][b] = refFrameKar[1][0][ty][tx];
+			sortedSuma0Temp[4][b] = refFrameKar[2][0][ty][tx];
 			koliko[sortedSuma0Temp[0][b]]++;
 			sortedSuma0Temp[1][b] = ty;
 			sortedSuma0Temp[2][b++] = tx;
@@ -161,6 +163,8 @@ void FillInterpolatedRefFrame()
 			koliko[ sortedSuma0Temp[0][b] ]++;
 			sortedSuma0[0][b1] = sortedSuma0Temp[0][b];
 			sortedSuma0[1][b1] = sortedSuma0Temp[1][b];
+			sortedSuma0[3][b1] = sortedSuma0Temp[3][b];
+			sortedSuma0[4][b1] = sortedSuma0Temp[4][b];
 			sortedSuma0[2][b1] = sortedSuma0Temp[2][b++];
 		}
 	for (int i = 16384; i > 0; i--)	koliko[i] = koliko[i-1];
@@ -185,15 +189,15 @@ int satdLuma8x8MVs(int mvx, int mvy, int luma8x8BlkIdx)
 			py = yPi+i; if (py >= frame.Lheight) py = frame.Lheight-1;
 			satd += ABS(frame.L[(yP+i)*frame.Lwidth+xP+j] - (int)(refFrameInterpolated[frac].L[py*frame.Lwidth+px]));
 		}
-	int fracC = (mvx&2)/2 +((xPi)&1)*2 + (mvy&2)*2 + ((yPi)&1)*8;
-	for (int boja = 0; boja < 2; boja++)
-		for (int i = 0; i < 2; i++)
-			for (int j = 0; j < 2; j++)
-			{
-				px = xPi/2 + j; if (px >= frame.Cwidth) px = frame.Cwidth-1;
-				py = yPi/2 + i; if (py >= frame.Cheight) py = frame.Cheight-1;
-				satd += ABS(frame.C[boja][(yP/2+i)*frame.Cwidth+xP/2+j] - refFrameInterpolated[fracC].C[boja][py*frame.Cwidth+px])/2;
-			}
+	//int fracC = (mvx&2)/2 +((xPi)&1)*2 + (mvy&2)*2 + ((yPi)&1)*8;
+	//for (int boja = 0; boja < 2; boja++)
+	//	for (int i = 0; i < 2; i++)
+	//		for (int j = 0; j < 2; j++)
+	//		{
+	//			px = xPi/2 + j; if (px >= frame.Cwidth) px = frame.Cwidth-1;
+	//			py = yPi/2 + i; if (py >= frame.Cheight) py = frame.Cheight-1;
+	//			satd += ABS(frame.C[boja][(yP/2+i)*frame.Cwidth+xP/2+j] - refFrameInterpolated[fracC].C[boja][py*frame.Cwidth+px])/2;
+	//		}
 
 	return satd;// + ABS(mvx) + ABS(mvy);
 }
@@ -317,8 +321,10 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 		{
 			mvd_l0[i][0][0] = mvd_l0[i][0][1] = 0;
 			DeriveMVs();
-			int genx = mvL0x[CurrMbAddr][i][0] >> 2;
-			int geny = mvL0y[CurrMbAddr][i][0] >> 2;
+			int mvpx = mvL0x[CurrMbAddr][i][0];
+			int mvpy = mvL0y[CurrMbAddr][i][0];
+			int genx = mvpx >> 2;
+			int geny = mvpy >> 2;
 			int relx = (i%2) * 8, rely = (i/2) * 8;
 			int u = 1;
 			for (int te = 0; te < 5; te++) suma[te] = 0;
@@ -333,15 +339,18 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 					suma[4] += ((tx%4)>1)?0:frame.L[(ty+rely+yp)*frame.Lwidth+tx+relx+xp];
 				}
 			}
-			int sumaAbsRazlika = 0, srednja = (suma[0]>>6);
-			for (int tx = 0; tx < 8; tx++)
-			{
-				for (int ty = 0; ty < 8; ty++)
-				{
-					sumaAbsRazlika += ABS(frame.L[(ty+rely+yp)*frame.Lwidth+tx+relx+xp] - srednja);
-				}
-			}
 			int bx = 0, by = 0, bmin = 1000000000;
+			/*for (int tx = -16; tx < 16; tx++)
+				for (int ty = -16; ty < 16; ty++)
+				{
+					int tren = sadLumaMVs(tx,ty, i);
+					if (tren < bmin)
+					{
+						bmin = tren;
+						bx = tx;
+						by = ty;
+					}
+				}*/
 			for (int j = 0; j < 85; j++)
 			{
 				bmins[j] = 1000000000;
@@ -349,26 +358,26 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			}
 			MEstimation(relx+xp, rely+yp, 1, 1, 1, genx, geny, genx, geny);
 			bmin = 2000000000;
-			for (int j = 0; j <= 32; j++)
+			for (int j = 0; j <= 16; j++)
 			if (bxs[j] < 100000000 && bys[j] < 100000000) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
-				if (bmins[j]+(ABS(bxs[j]-genx)+ABS(bys[j]-geny))/8 < bmin)
+				if (bmins[j]+(ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
 				{
-					bmin = bmins[j]+(ABS(bxs[j]-genx)+ABS(bys[j]-geny))/8;
+					bmin = bmins[j]+(ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy));
 					bx = bxs[j];
 					by = bys[j];
 				}
 			}
 			int tren = 0;
 			for (int j = 0; j < 85; j++) bmins[j] = 1000000000;
-			for (int j = 0; j <= 592; j++)
+			for (int j = 0; j <= 180; j++)
 			{
 				int a = suma[0] - j;
 				if (a >= 0 && a < 16384)
 				{
 					//tren += koliko[a+1] - koliko[a];
 					for (int k = koliko[a]; k < koliko[a+1]; k++)
-					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 80) {
+					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) <90 && ABS(sortedSuma0[4][k]-suma[2]) < 90) {
 						tren++;
 						MEstimation(relx+xp, rely+yp, 0, 1, 16, genx, geny, sortedSuma0[2][k]-relx-xp, sortedSuma0[1][k]-rely-yp);
 					}
@@ -378,19 +387,19 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				{
 					//tren += koliko[a+1] - koliko[a];
 					for (int k = koliko[a]; k < koliko[a+1]; k++)
-					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 80) {
+					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) < 90 && ABS(sortedSuma0[4][k]-suma[2]) < 90) {
 						tren++;
 						MEstimation(relx+xp, rely+yp, 0, 1, 16, genx, geny, sortedSuma0[2][k]-relx-xp, sortedSuma0[1][k]-rely-yp);
 					}
 				}
-				if (tren > 2000) break;
+				if (tren > 512) break;
 			}
 			for (int j = 0; j <= 32; j++)
 			if (bmins[j] < 100000000 && bxs[j] < 100000000 && bys[j] < 100000000) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
-				if (bmins[j] + (ABS(bxs[j]-genx)+ABS(bys[j]-geny))/8 < bmin)
+				if (bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
 				{
-					bmin = bmins[j] + (ABS(bxs[j]-genx)+ABS(bys[j]-geny))/8;
+					bmin = bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy));
 					bx = bxs[j];
 					by = bys[j];
 				}
@@ -398,12 +407,12 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			for (int j = 0; j < 85; j++) bmins[j] = 1000000000;
 			MEstimation(relx+xp, rely+yp, 16, 1, 16, 0, 0, 0, 0);
 			MEstimation(relx+xp, rely+yp, 2, 1, 1, 0, 0, 0, 0);
-			for (int j = 0; j <= 32; j++)
+			for (int j = 0; j <= 16; j++)
 			if (bmins[j] < 100000000 && bxs[j] < 100000000 && bys[j] < 100000000) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
-				if (bmins[j] + (ABS(bxs[j]-genx)+ABS(bys[j]-geny))/8 < bmin)
+				if (bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
 				{
-					bmin = bmins[j] + (ABS(bxs[j]-genx)+ABS(bys[j]-geny))/8;
+					bmin = bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy));
 					bx = bxs[j];
 					by = bys[j];
 				}

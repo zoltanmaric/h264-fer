@@ -14,6 +14,7 @@
 #include "quantizationTransform.h"
 #include "rbsp_decoding.h"
 #include "openCL_functions.h"
+#include <time.h>
 
 // ENCODING:
 
@@ -169,7 +170,7 @@ void RBSP_encode(NALunit &nal_unit)
 		int predL[16][16], predCb[8][8], predCr[8][8];
 		int mb_skip_run = 0;
 
-
+		printf("%d - CPS=%d....\n", clock(), CLOCKS_PER_SEC);
 		for (CurrMbAddr = 0; CurrMbAddr < shd.PicSizeInMbs; CurrMbAddr++)
 		{
 			// TODO: Try avoiding this.
@@ -303,6 +304,7 @@ void RBSP_encode(NALunit &nal_unit)
 				clear_residual_structures();
 			}
 		}	
+		printf("%d - CPS=%d....\n", clock(), CLOCKS_PER_SEC);
 
 		if (mb_skip_run > 0)
 		{
