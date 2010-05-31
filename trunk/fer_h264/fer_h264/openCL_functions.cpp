@@ -88,8 +88,14 @@ void InitCL()
 		device = cpu;
 		OpenCLEnabled = false;
 	}
-	//device = cpu;
 	assert(device);
+
+	// TEST:
+	device = cpu;
+	OpenCLEnabled = false;
+
+	// Do not initalize OpenCL if no compatible GPU is found.
+	if (OpenCLEnabled == false) return;
 
 	// Get some information about the returned device
 	cl_char vendor_name[1024] = {0};
@@ -156,8 +162,10 @@ void InitCL()
 	assert(err == CL_SUCCESS);
 }
 
-void AllocateFrameBuffers()
+void AllocateFrameBuffersCL()
 {
+	if (OpenCLEnabled == false) return;
+
 	size_t frameBufferSize = frame.Lwidth*frame.Lheight;
 	size_t frameIntBufferSize = frame.Lwidth*frame.Lheight * sizeof(int);
 
@@ -182,6 +190,8 @@ void AllocateFrameBuffers()
 
 void CloseCL()
 {
+	if (OpenCLEnabled == false) return;
+
 	clReleaseMemObject(frame_mem);
 	clReleaseMemObject(frameInt_mem);
 	clReleaseMemObject(dpb_mem);
@@ -198,6 +208,8 @@ void CloseCL()
 
 void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
 {
+	if (OpenCLEnabled == false) return;	
+
 	int *tempInterpolated[16];
 
 	for (int k = 0; k < 16; k++)
@@ -270,6 +282,8 @@ void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolated[16])
 
 void IntraCL()
 {
+	if (OpenCLEnabled == false) return;
+
 	size_t frameBufferSize = frame.Lwidth*frame.Lheight;
 	size_t frameIntBufferSize = frame.Lwidth*frame.Lheight*sizeof(int);
 	

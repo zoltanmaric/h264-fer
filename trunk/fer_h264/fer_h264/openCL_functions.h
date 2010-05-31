@@ -15,7 +15,7 @@ extern int *predModes16x16, *predModes4x4;
 
 void InitCL();
 void CloseCL();
-void AllocateFrameBuffers();
+void AllocateFrameBuffersCL();
 void getPredictionSamples();
 void TestKar(int **refFrameKar[6][16], frame_type refFrameInterpolatedL[16]);
 void IntraCL();
