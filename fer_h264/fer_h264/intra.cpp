@@ -1037,7 +1037,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	FetchPredictionSamplesIntra16x16(p);
 
 	// 16x16 prediction:
-	if (false)
+	if (OpenCLEnabled == true)
 	{
 		Intra16x16PredMode = predModes16x16[CurrMbAddr];
 		performIntra16x16Prediction(p, predL, Intra16x16PredMode);

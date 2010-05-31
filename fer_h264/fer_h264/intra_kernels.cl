@@ -4,30 +4,37 @@
 //////////////////////////////////////////////////////////
 //////// Lookup tables and transform functions ///////////
 //////////////////////////////////////////////////////////
-__constant int intra4x4ScanOrder[16][2]={
+constant int intra4x4ScanOrder[16][2]={
   { 0, 0},  { 4, 0},  { 0, 4},  { 4, 4},
   { 8, 0},  {12, 0},  { 8, 4},  {12, 4},
   { 0, 8},  { 4, 8},  { 0,12},  { 4,12},
   { 8, 8},  {12, 8},  { 8,12},  {12,12}
 };
 
-__constant int levelQuantize[4][4] = {
-{205, 158, 205, 158},
-{158, 128, 158, 128},
-{205, 158, 205, 158},
-{158, 128, 158, 128}};
-
-void quantisationResidualBlock(int d[4][4], int c[4][4])
+constant int levelQuantize[6][4][4] =
 {
-	int qbits = 2;
-	int adjust = 2;
+	{{205, 158, 205, 158}, {158, 128, 158, 128}, {205, 158, 205, 158}, {158, 128, 158, 128}},
+	{{186, 146, 186, 146}, {146, 114, 146, 114}, {186, 146, 186, 146}, {146, 114, 146, 114}},
+	{{158, 128, 158, 128}, {128, 102, 128, 102}, {158, 128, 158, 128}, {128, 102, 128, 102}},
+	{{146, 114, 146, 114}, {114, 89, 114, 89}, {146, 114, 146, 114}, {114, 89, 114, 89}},
+	{{128, 102, 128, 102}, {102, 82, 102, 82}, {128, 102, 128, 102}, {102, 82, 102, 82}},
+	{{114, 89, 114, 89}, {89, 71, 89, 71}, {114, 89, 114, 89}, {89, 71, 89, 71}}
+};
+
+void quantisationResidualBlock(int qP, int d[4][4], int c[4][4])
+{
+	int qPCalculated = qP / 6;
+	int qPMod = qP % 6;
+	
+	int qbits = 4 - qPCalculated;
+	int adjust = 1 << (3 - qP/6);
 
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			int temp = ((d[i][j] << qbits) - adjust) * levelQuantize[i][j];
-			c[i][j] = (temp >> 15) + ((temp >> 14) & 1);
+			int temp = ((d[i][j] << qbits) - adjust) * levelQuantize[qPMod][i][j];
+			c[i][j] = (temp + 16384) >> 15;
 		}
 	}
 }
@@ -301,7 +308,8 @@ void performIntra16x16Prediction(int *p, int predL[16][16], int Intra16x16PredMo
 int satd16(int predL[16][16],
 			  __global int *frame,
 			  int frameWidth,
-			  int CurrMbAddr)
+			  int CurrMbAddr,
+			  int qP)
 {
 	int satd = 0;
 	
@@ -331,7 +339,7 @@ int satd16(int predL[16][16],
 
 			int rLuma[4][4];
 			forwardTransform4x4(diffL4x4, rLuma);
-			quantisationResidualBlock(rLuma, rLuma);
+			quantisationResidualBlock(qP, rLuma, rLuma);
 
 			for (int i = 0; i < 4; i++)
 			{
@@ -349,6 +357,7 @@ int satd16(int predL[16][16],
 __kernel void
 GetIntra16x16PredModes(global int *frame,
 							  int frameWidth,
+							  int qP,
 					   global int *predModes)
 {
 	uint CurrMbAddr = get_global_id(0);
@@ -364,7 +373,7 @@ GetIntra16x16PredModes(global int *frame,
 	{
 		performIntra16x16Prediction(p, predL, i);
 
-		int satd = satd16(predL, frame, frameWidth, CurrMbAddr);
+		int satd = satd16(predL, frame, frameWidth, CurrMbAddr, qP);
 		if (satd < min)
 		{
 			min = satd;
@@ -700,7 +709,7 @@ void fetchPredictionSamples4(int CurrMbAddr, __global int *frame,
 	}
 }
 
-int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx, int CurrMbAddr, int frameWidth, __global int *frame)
+int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx, int CurrMbAddr, int frameWidth, global int *frame, int qP)
 {
 	int frameWidthInMbs = frameWidth >> 4;
 
@@ -721,7 +730,7 @@ int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx, int CurrMbAddr, int frame
 
 	int rLuma[4][4];
 	forwardTransform4x4(diffL4x4, rLuma);
-	quantisationResidualBlock(rLuma, rLuma);
+	quantisationResidualBlock(qP, rLuma, rLuma);
 
 	int satd = 0;
 	for (int i = 0; i < 4; i++)
@@ -738,6 +747,7 @@ int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx, int CurrMbAddr, int frame
 __kernel void
 GetIntra4x4PredModes(__global int *frame,
 						 int frameWidth,
+						 int qP,
 				__global int *predModes4x4)
 {
 	uint absIdx = get_global_id(0);
@@ -756,7 +766,7 @@ GetIntra4x4PredModes(__global int *frame,
 	{		
 		performIntra4x4Prediction(luma4x4BlkIdx, predMode, pred4x4L, p);
 
-		int satd4x4 = satdLuma4x4(pred4x4L, luma4x4BlkIdx, CurrMbAddr, frameWidth, frame);
+		int satd4x4 = satdLuma4x4(pred4x4L, luma4x4BlkIdx, CurrMbAddr, frameWidth, frame, qP);
 		if (satd4x4 < min4x4)
 		{
 			predModes4x4[absIdx] = predMode;
