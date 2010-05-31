@@ -168,7 +168,7 @@ void fetchPredictionSamples16(int *predSamples,
 }
 
 // (8.3.3.1)
-void Intra_16x16_Vertical(int *p, int predL[16][16])
+void Intra_16x16_Vertical(int p[33], int predL[16][16])
 {
 	for (int y = 0; y < 16; y++)
 	{
@@ -310,28 +310,35 @@ int satd16(int predL[16][16],
 	int xP = ((CurrMbAddr%frameWidthInMbs)<<4);
 	int yP = ((CurrMbAddr/frameWidthInMbs)<<4);
 	
-	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+	if (predL[0][0] == NA)
 	{
-		int diffL4x4[4][4];
-		int x0 = intra4x4ScanOrder[luma4x4BlkIdx][0];
-		int y0 = intra4x4ScanOrder[luma4x4BlkIdx][1];
-		for (int i = 0; i < 4; i++)
+		satd = INT_MAX;
+	}
+	else
+	{
+		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 		{
-			for (int j = 0; j < 4; j++)
+			int diffL4x4[4][4];
+			int x0 = intra4x4ScanOrder[luma4x4BlkIdx][0];
+			int y0 = intra4x4ScanOrder[luma4x4BlkIdx][1];
+			for (int i = 0; i < 4; i++)
 			{
-				diffL4x4[i][j] = frame[(yP+y0+i)*frameWidth+(xP+x0+j)] - predL[y0+i][x0+j];
+				for (int j = 0; j < 4; j++)
+				{
+					diffL4x4[i][j] = frame[(yP+y0+i)*frameWidth+(xP+x0+j)] - predL[y0+i][x0+j];
+				}
 			}
-		}
 
-		int rLuma[4][4];
-		forwardTransform4x4(diffL4x4, rLuma);
-		quantisationResidualBlock(rLuma, rLuma);
+			int rLuma[4][4];
+			forwardTransform4x4(diffL4x4, rLuma);
+			quantisationResidualBlock(rLuma, rLuma);
 
-		for (int i = 0; i < 4; i++)
-		{
-			for (int j = 0; j < 4; j++)
+			for (int i = 0; i < 4; i++)
 			{
-				satd += (predL[y0+i][x0+j] <= 255) ? abs(rLuma[i][j]) : (INT_MAX >> 8);
+				for (int j = 0; j < 4; j++)
+				{
+					satd += abs(rLuma[i][j]);
+				}
 			}
 		}
 	}
@@ -340,9 +347,9 @@ int satd16(int predL[16][16],
 }
 
 __kernel void
-GetIntra16x16PredModes(__global int *frame,
-						 int frameWidth,
-				__global int *predModes)
+GetIntra16x16PredModes(global int *frame,
+							  int frameWidth,
+					   global int *predModes)
 {
 	uint CurrMbAddr = get_global_id(0);
 	
@@ -365,7 +372,6 @@ GetIntra16x16PredModes(__global int *frame,
 		}
 	}
 }
-#undef p
 
 //////////////////////////////////////////////////////////
 ////////////////// Intra 4x4 prediction //////////////////
