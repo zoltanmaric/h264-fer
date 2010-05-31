@@ -88,6 +88,7 @@ void InitCL()
 		device = cpu;
 		OpenCLEnabled = false;
 	}
+	device = cpu;
 	assert(device);
 
 	// Get some information about the returned device
@@ -290,11 +291,15 @@ void IntraCL()
 		&global_work_size, NULL, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
 
+	clFinish(cmd_queue);
+
 	// The frameInt_mem buffer is the input to the intra prediction kernel
 	err = clSetKernelArg(kernel[Kintra16], 0, sizeof(cl_mem), &frameInt_mem);
 	err |= clSetKernelArg(kernel[Kintra16], 1, sizeof(int), &frame.Lwidth);
 	err |= clSetKernelArg(kernel[Kintra16], 2, sizeof(cl_mem), &predModes16x16_mem);
 	assert(err == CL_SUCCESS);
+
+	clFinish(cmd_queue);
 
 	err = clSetKernelArg(kernel[Kintra4], 0, sizeof(cl_mem), &frameInt_mem);
 	err |= clSetKernelArg(kernel[Kintra4], 1, sizeof(int), &frame.Lwidth);
@@ -308,6 +313,8 @@ void IntraCL()
 		&global_work_size, NULL, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
 
+	clFinish(cmd_queue);
+
 	global_work_size = (frame.Lwidth >> 2)*(frame.Lheight >> 2);
 	err = clEnqueueNDRangeKernel(cmd_queue, kernel[Kintra4], 1, NULL,
 		&global_work_size, NULL, 0, NULL, NULL);
@@ -318,6 +325,8 @@ void IntraCL()
 	size_t predMode16BufferSize = (frame.Lwidth >> 4)*(frame.Lheight >> 4) * sizeof(int);
 	err |= clEnqueueReadBuffer(cmd_queue, predModes16x16_mem, CL_TRUE, 0, predMode16BufferSize,
 							predModes16x16, 0, NULL, NULL);
+
+	clFinish(cmd_queue);
 
 	size_t predMode4BufferSize = (frame.Lwidth >> 2)*(frame.Lheight >> 2) * sizeof(int);
 	err |= clEnqueueReadBuffer(cmd_queue, predModes4x4_mem, CL_TRUE, 0, predMode4BufferSize,

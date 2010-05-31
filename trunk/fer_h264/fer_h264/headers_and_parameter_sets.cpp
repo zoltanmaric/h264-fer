@@ -186,7 +186,7 @@ void shd_write(NALunit &nal_unit)
 	shd.slice_qp_delta = -14;		// inferred quantization parameter
 	shd.PicSizeInMbs = frame.Lwidth * frame.Lheight >> 8;
 	shd.SliceQPy = pps.pic_init_qp + shd.slice_qp_delta;
-	QPy = shd.SliceQPy;
+	QPy = shd.SliceQPy;	
 
 	expGolomb_UC(shd.first_mb_in_slice);
 	expGolomb_UC(shd.slice_type);
@@ -486,8 +486,8 @@ void pps_write()
 	pps.num_ref_idx_l1_active = 1;
 	pps.weighted_pred_flag = 0;
 	pps.weighted_bipred_idc = 0;
-	pps.pic_init_qp = 34;
-	pps.pic_init_qs = 34;
+	pps.pic_init_qp = 26;
+	pps.pic_init_qs = 26;
 	pps.chroma_qp_index_offset = 0;
 	pps.deblocking_filter_control_present_flag = 0;
 	pps.constrained_intra_pred_flag = 0;
