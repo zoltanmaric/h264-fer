@@ -125,7 +125,7 @@ void RBSP_encode(NALunit &nal_unit)
 		init_h264_structures_encoder();
 		InitializeInterpolatedRefFrame();	
 		AllocateMemory();
-		AllocateFrameBuffers();
+		AllocateFrameBuffersCL();
 		RBSP_trailing_bits();
 		nal_unit.NumBytesInRBSP = RBSP_write_current_byte;
 	}
