@@ -88,7 +88,7 @@ void InitCL()
 		device = cpu;
 		OpenCLEnabled = false;
 	}
-	device = cpu;
+	//device = cpu;
 	assert(device);
 
 	// Get some information about the returned device
@@ -296,14 +296,16 @@ void IntraCL()
 	// The frameInt_mem buffer is the input to the intra prediction kernel
 	err = clSetKernelArg(kernel[Kintra16], 0, sizeof(cl_mem), &frameInt_mem);
 	err |= clSetKernelArg(kernel[Kintra16], 1, sizeof(int), &frame.Lwidth);
-	err |= clSetKernelArg(kernel[Kintra16], 2, sizeof(cl_mem), &predModes16x16_mem);
+	err |= clSetKernelArg(kernel[Kintra16], 2, sizeof(int), &QPy);
+	err |= clSetKernelArg(kernel[Kintra16], 3, sizeof(cl_mem), &predModes16x16_mem);
 	assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
 
 	err = clSetKernelArg(kernel[Kintra4], 0, sizeof(cl_mem), &frameInt_mem);
 	err |= clSetKernelArg(kernel[Kintra4], 1, sizeof(int), &frame.Lwidth);
-	err |= clSetKernelArg(kernel[Kintra4], 2, sizeof(cl_mem), &predModes4x4_mem);
+	err |= clSetKernelArg(kernel[Kintra4], 2, sizeof(int), &QPy);
+	err |= clSetKernelArg(kernel[Kintra4], 3, sizeof(cl_mem), &predModes4x4_mem);
 	assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
@@ -330,7 +332,7 @@ void IntraCL()
 
 	size_t predMode4BufferSize = (frame.Lwidth >> 2)*(frame.Lheight >> 2) * sizeof(int);
 	err |= clEnqueueReadBuffer(cmd_queue, predModes4x4_mem, CL_TRUE, 0, predMode4BufferSize,
-							predModes4x4, 0, NULL, NULL);
+							Intra4x4PredMode, 0, NULL, NULL);
 	assert(err == CL_SUCCESS);
 
 	clFinish(cmd_queue);
