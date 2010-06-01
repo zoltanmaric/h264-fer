@@ -240,7 +240,8 @@ int selectNALUnitType()
 		return NAL_UNIT_TYPE_IDR;
 	}
 
-	if (OpenCLEnabled == true)
+	//if (OpenCLEnabled == true)
+	if (false)
 	{
 		int frameSize = frame.Lwidth * frame.Lheight;
 
@@ -264,6 +265,9 @@ int selectNALUnitType()
 			}
 		}
 	}
+
+	// TEST:
+	return NAL_UNIT_TYPE_IDR;
 
 	// The chosen average threshold difference per macroblock
 	// is 4096, which corresponds to 16 per pixel. Therefore

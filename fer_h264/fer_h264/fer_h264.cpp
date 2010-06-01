@@ -80,14 +80,14 @@ void encode()
 		if (frameCount < 100) continue;
 
 		printf("Frame #%d\n", frameCount);
-		writeToYUV();
+		//writeToYUV();
 
 		nu.nal_unit_type = selectNALUnitType();
 		RBSP_encode(nu);
 
 		writeNAL(nu);
 
-		if (frameCount == 100) break;
+		if (frameCount == 300) break;
 	}
 
 	CloseCL();

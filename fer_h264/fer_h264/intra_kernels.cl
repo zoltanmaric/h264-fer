@@ -175,7 +175,7 @@ void fetchPredictionSamples16(int *predSamples,
 }
 
 // (8.3.3.1)
-void Intra_16x16_Vertical(int p[33], int predL[16][16])
+void Intra_16x16_Vertical(int *p, int predL[16][16])
 {
 	for (int y = 0; y < 16; y++)
 	{
@@ -364,22 +364,24 @@ GetIntra16x16PredModes(global int *frame,
 	
 	int predL[16][16];
 	int p[33];
+	
 	fetchPredictionSamples16(p, frame, frameWidth, CurrMbAddr);
 	
 	int min = INT_MAX;
-	
-	// 16x16 prediction:
+	int chosenPredMode;
 	for (int i = 0; i < 4; i++)
 	{
 		performIntra16x16Prediction(p, predL, i);
-
+		
 		int satd = satd16(predL, frame, frameWidth, CurrMbAddr, qP);
 		if (satd < min)
 		{
 			min = satd;
-			predModes[CurrMbAddr] = i;
+			chosenPredMode = 2;
 		}
 	}
+	
+	predModes[CurrMbAddr] = chosenPredMode;
 }
 
 //////////////////////////////////////////////////////////
@@ -762,6 +764,7 @@ GetIntra4x4PredModes(__global int *frame,
 	fetchPredictionSamples4(CurrMbAddr, frame, frameWidth, luma4x4BlkIdx, p);
 	
 	int pred4x4L[4][4];
+	int chosenPredMode;
 	for(int predMode = 0; predMode < 9; predMode++)
 	{		
 		performIntra4x4Prediction(luma4x4BlkIdx, predMode, pred4x4L, p);
@@ -769,8 +772,10 @@ GetIntra4x4PredModes(__global int *frame,
 		int satd4x4 = satdLuma4x4(pred4x4L, luma4x4BlkIdx, CurrMbAddr, frameWidth, frame, qP);
 		if (satd4x4 < min4x4)
 		{
-			predModes4x4[absIdx] = predMode;
+			chosenPredMode = predMode;
 			min4x4 = satd4x4;			
 		}
 	}
+	
+	predModes4x4[absIdx] = chosenPredMode;
 }
