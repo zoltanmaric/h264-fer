@@ -10,6 +10,9 @@
 #include "rbsp_encoding.h"
 #include "openCL_functions.h"
 
+// TEST:
+#include <time.h>
+
 const int intraToChromaPredMode[4] = {2,1,0,3};
 
 // Derivation process for neighbouring locations (6.4.11)
@@ -1039,6 +1042,13 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	// 16x16 prediction:
 	if (OpenCLEnabled == true)
 	{
+		if (CurrMbAddr == 0)
+		{
+			int clocksWaited = clock();
+			WaitIntraCL(true);
+			printf("Waiting for openCL to finish 16x16: %dms\n", clock() - clocksWaited);
+		}
+
 		Intra16x16PredMode = predModes16x16[CurrMbAddr];
 		performIntra16x16Prediction(p, predL, Intra16x16PredMode);
 
@@ -1130,6 +1140,13 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
 
 	int originalMB[16][16];
+	mb_type_array[CurrMbAddr] = 0;
+	if (OpenCLEnabled == true && CurrMbAddr == 0)
+	{
+		int clocksWaited = clock();
+		WaitIntraCL(false);
+		printf("Waiting for openCL to finish 4x4: %dms\n", clock() - clocksWaited);
+	}
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
 		setIntra4x4PredMode(luma4x4BlkIdx);

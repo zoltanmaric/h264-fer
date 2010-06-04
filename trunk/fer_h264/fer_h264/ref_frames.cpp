@@ -187,48 +187,6 @@ void modificationProcess()
 	RefPicList0[shd.num_ref_idx_l0_active_minus1+1].RefPicPresent = false;
 }
 
-void subtractFramesCL(unsigned char *result)
-{
-	cl_int err = 0;
-	size_t returned_size = 0;
-
-	size_t buffer_size = frame.Lwidth*frame.Lheight;
-	cl_event event_wait_list[3];
-	cl_uint num_events = 0;
-
-	err = clEnqueueWriteBuffer(cmd_queue, frame_mem, CL_FALSE, 0, buffer_size,		// TEST: currently non-blocking, may cause errors
-							   (void*)frame.L, 0, NULL, &event_wait_list[num_events++]);
-	
-	err |= clEnqueueWriteBuffer(cmd_queue, dpb_mem, CL_FALSE, 0, buffer_size,
-								(void*)dpb.L, 0, NULL, &event_wait_list[num_events++]);
-	assert(err == CL_SUCCESS);
-
-	
-	// KERNEL ARGUMENTS
-	// Now setup the arguments to our kernel
-	err  = clSetKernelArg(kernel[0],  0, sizeof(cl_mem), &frame_mem);
-	err |= clSetKernelArg(kernel[0],  1, sizeof(cl_mem), &dpb_mem);
-	err |= clSetKernelArg(kernel[0],  2, sizeof(cl_mem), &ans_mem);
-	assert(err == CL_SUCCESS);
-	
-	// EXECUTION AND READ
-	// Run the calculation by enqueuing it and forcing the 
-	// command queue to complete the task
-	size_t global_work_size = frame.Lwidth*frame.Lheight;
-	cl_event evnt;
-	err = clEnqueueNDRangeKernel(cmd_queue, kernel[0], 1, NULL, 
-								 &global_work_size, NULL, num_events, event_wait_list, &evnt);
-	assert(err == CL_SUCCESS);
-	event_wait_list[0] = evnt;
-	num_events = 1;
-	
-	// Once finished read back the result from the answer 
-	// array into the result array
-	err = clEnqueueReadBuffer(cmd_queue, ans_mem, CL_TRUE, 0, buffer_size, 
-							  result, num_events, event_wait_list, NULL);
-	assert(err == CL_SUCCESS);
-}
-
 int selectNALUnitType()
 {
 	unsigned long sad = 0;
@@ -246,7 +204,7 @@ int selectNALUnitType()
 		int frameSize = frame.Lwidth * frame.Lheight;
 
 		unsigned char *result = new unsigned char[frameSize];
-		subtractFramesCL(result);
+		subtractFramesCL(dpb.L, result);
 
 		for (int i = 0; i < frameSize; i++)
 		{
