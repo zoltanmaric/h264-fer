@@ -13,6 +13,11 @@
 #include "rbsp_encoding.h"
 #include "openCL_functions.h"
 
+#include "fer_h264.h"
+
+int startFrame;
+int endFrame;
+
 void decode()
 {
 	stream=fopen("big_buck_bunny.264","rb");
@@ -46,7 +51,7 @@ void encode()
 {
 	stream = fopen("big_buck_bunny.264", "wb");
 	yuvinput = fopen("big_buck_bunny.y4m", "rb");
-	yuvoutput = fopen("reference.yuv","wb");
+	yuvoutput = fopen("big_buck_bunny.yuv","wb");
 
 	generate_residual_level_tables();
 	init_expgolomb_UC_codes();
@@ -77,17 +82,17 @@ void encode()
 	while (ReadFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < 100) continue;
+		if (frameCount < startFrame) continue;
 
 		printf("Frame #%d\n", frameCount);
-		//writeToYUV();
+		writeToYUV();
 
 		nu.nal_unit_type = selectNALUnitType();
 		RBSP_encode(nu);
 
 		writeNAL(nu);
 
-		if (frameCount == 200) break;
+		if (frameCount == endFrame) break;
 	}
 
 	CloseCL();
@@ -105,3 +110,22 @@ int _tmain(int argc, _TCHAR* argv[])
 	return 0;
 }
 
+namespace fer_h264
+{
+
+	void Starter::PostaviInterval(int FrameStart, int FrameEnd)
+	{
+		startFrame = FrameStart;
+		endFrame = FrameEnd;
+	}
+
+	void Starter::PokreniKoder() 
+	{
+		encode();
+	}
+
+	void Starter::PokreniDekoder() 
+	{
+		decode();
+	}
+}
