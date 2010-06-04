@@ -72,8 +72,8 @@ void InitCL()
 	assert(device);
 
 	// TEST:
-	//device = cpu;
-	//OpenCLEnabled = false;
+	device = cpu;
+	OpenCLEnabled = false;
 
 	// Do not initalize OpenCL if no compatible GPU is found.
 	if (OpenCLEnabled == false) return;

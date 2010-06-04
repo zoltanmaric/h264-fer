@@ -245,61 +245,20 @@ void Intra_4x4_Horizontal(int *p, int pred4x4L[4][4])
 // (8.3.1.2.3)
 void Intra_4x4_DC(int *p, int pred4x4L[4][4])
 {
-	bool allAvailable = true;
-	bool leftAvailable = true;
-	bool topAvailable = true;
-
-	for (int i = 0; i < 13; i++)
+	int result = 128;
+	if (p(-1,-1) != -1)		// if all available
+		result = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) +
+				  p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 4) >> 3;
+	else if (p(-1,0) != -1)	// if left available
+		result = (p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 2) >> 2;
+	else if (p(0,-1) != -1) // if top available
+		result = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) + 2) >> 2;
+				  
+	for (int y = 0; y < 4; y++)
 	{
-		if (p[i] == -1)
+		for (int x = 0; x < 4; x++)
 		{
-			allAvailable = false;
-			if ((i > 0) && (i < 5))
-				leftAvailable = false;
-			else if ((i >= 5) && (i < 9))
-				topAvailable = false;
-		}
-	}
-	
-	if (allAvailable)
-	{
-		for (int y = 0; y < 4; y++)
-		{
-			for (int x = 0; x < 4; x++)
-			{
-				pred4x4L[y][x] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) +
-									   p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 4) >> 3;
-			}
-		}
-	}
-	else if (leftAvailable)
-	{
-		for (int y = 0; y < 4; y++)
-		{
-			for (int x = 0; x < 4; x++)
-			{
-				pred4x4L[y][x] = (p(-1,0) + p(-1,1) + p(-1,2) + p(-1,3) + 2) >> 2;
-			}
-		}
-	}
-	else if (topAvailable)
-	{
-		for (int y = 0; y < 4; y++)
-		{
-			for (int x = 0; x < 4; x++)
-			{
-				pred4x4L[y][x] = (p(0,-1) + p(1,-1) + p(2,-1) + p(3,-1) + 2) >> 2;
-			}
-		}
-	}
-	else
-	{
-		for (int y = 0; y < 4; y++)
-		{
-			for (int x = 0; x < 4; x++)
-			{
-				pred4x4L[y][x] = 128; // = (1 << (BitDepthY - 1); BitDepthY = 8 in baseline
-			}
+			pred4x4L[y][x] = result;
 		}
 	}
 }
@@ -311,12 +270,10 @@ void Intra_4x4_Diagonal_Down_Left(int *p, int pred4x4L[4][4])
 	{
 		for (int x = 0; x < 4; x++)
 		{
-			if ((x == 3) && (y == 3))
-				pred4x4L[y][x] = (p(6,-1) + 3*p(7,-1) + 2) >> 2;
-			else
-				pred4x4L[y][x] = (p(x+y,-1) + (p(x+y+1,-1) << 1) + p(x+y+2,-1) + 2) >> 2;
+			pred4x4L[y][x] = (p(x+y,-1) + (p(x+y+1,-1) << 1) + p(x+y+2,-1) + 2) >> 2;
 		}
-	}
+	}	
+	pred4x4L[3][3] = (p(6,-1) + 3*p(7,-1) + 2) >> 2;
 }
 
 // (8.3.1.2.5)
@@ -418,46 +375,86 @@ void Intra_4x4_Horizontal_Up(int *p, int pred4x4L[4][4])
 
 void FetchPredictionSamplesIntra4x4(int luma4x4BlkIdx, int p[13])
 {
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
+	
 	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
 	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
-
-	for (int i = 0; i < 13; i++)
+	
+	int x = xP + x0;
+	int y = yP + y0;
+	
+	int xF = x - 1;
+	int yF = y - 1;
+	int frameIdx = yF * frame.Lwidth + xF;
+	if ((xF < 0) || (yF < 0))
 	{
-		int x, y;
-		if (i < 5)
+		p[0] = -1;
+	}
+	else
+	{
+		p[0] = frame.L[frameIdx];
+	}
+	
+	xF = x - 1;
+	yF = y;	
+	if (xF < 0)
+	{
+		for (int i = 1; i < 5; i++)
 		{
-			x = -1;
-			y = i - 1;
+			p[i] = -1;		// Unavailable for prediction
+		}
+	}
+	else
+	{
+		for (int i = 1; i < 5; i++)
+		{
+			frameIdx = yF * frame.Lwidth + xF;
+			p[i] = frame.L[frameIdx];
+			yF++;
+		}
+	}
+	
+	xF = x;
+	yF = y - 1;
+	if (yF < 0)
+	{
+		for (int i = 5; i < 13; i++)
+		{
+			// Samples above and above-right marked as unavailable for prediction
+			p[i] = -1;
+		}
+	}
+	else
+	{
+		for (int i = 5; i < 9; i++)
+		{
+			frameIdx = yF * frame.Lwidth + xF;
+			p[i] = frame.L[frameIdx];
+			xF++;
+		}
+		
+		xF = x + 4;
+		bool edgeSubMB = (xF >= frame.Lwidth) || ((x0 == 12) && (y0 > 0));
+		if ((edgeSubMB == true) || (luma4x4BlkIdx == 3) || (luma4x4BlkIdx == 11))
+		{
+			xF = x + 3;
+			frameIdx = yF * frame.Lwidth + xF;
+			for (int i = 9; i < 13; i++)
+			{
+				// Copy the rightmost prediction sample to
+				// the samples above-right
+				p[i] = frame.L[frameIdx];
+			}
 		}
 		else
 		{
-			x = i - 5;
-			y = -1;
-		}
-
-		int xN = x0 + x;
-		int yN = y0 + y;
-
-		int mbAddrN, xW, yW;
-		getNeighbourLocations(xN, yN, &mbAddrN, &xW, &yW, true);
-
-		if ((mbAddrN == -1) ||
-			((x > 3) && ((luma4x4BlkIdx == 3) || (luma4x4BlkIdx == 11))))
-		{
-			// if this is an edge macroblock, replicate
-			// the edge sample p[3,-1] into the samples p[4..7,-1]
-			if ((i > 8) && (p[8] != -1))
-				p[i] = p[8];
-			else
-				p[i] = -1;	// not available for intra prediction
-		}
-		else
-		{
-			// the abosulte position of the upper-left sample in macroblock N (6.4.1)
-			int xM = ((mbAddrN%PicWidthInMbs)<<4);
-			int yM = ((mbAddrN/PicWidthInMbs)<<4);
-
-			p[i] = frame.L[(yM + yW)*frame.Lwidth+(xM + xW)];
+			for (int i = 9; i < 13; i++)
+			{
+				frameIdx = yF * frame.Lwidth + xF;
+				p[i] = frame.L[frameIdx];
+				xF++;
+			}
 		}
 	}
 }
@@ -542,42 +539,19 @@ void Intra_16x16_DC(int *p, int predL[16][16])
 		sumYi += p(-1,i);
 	}
 
-	// check availability of neighbouring samples:
-	bool allAvailable = true;
-	bool leftAvailable = true;
-	bool topAvailable = true;
-	for (int i = 0; i < 33; i++)
-	{
-		if (p[i] == -1)
-		{
-			allAvailable = false;
-			if ((i > 0) && (i < 17))
-				leftAvailable = false;
-			else if ((i >= 17) && (i < 33))
-				topAvailable = false;
-		}
-	}
-
+	int result = 128;
+	if (p[0] != -1)			// if all available
+		result = (sumXi + sumYi + 16) >> 5;
+	else if (p[1] != -1) 	// if left available
+		result = (sumYi + 8) >> 4;
+	else if (p[17] != -1)	// if top available
+		result = (sumXi + 8) >> 4;
+	
 	for (int y = 0; y < 16; y++)
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			if (allAvailable)
-			{
-				predL[y][x] = (sumXi + sumYi + 16) >> 5;
-			}
-			else if (leftAvailable)
-			{
-				predL[y][x] = (sumYi + 8) >> 4;
-			}
-			else if (topAvailable)
-			{
-				predL[y][x] = (sumXi + 8) >> 4;
-			}
-			else
-			{
-				predL[y][x] = 1 << 7;		// == 1 << (BitDepthY-1) (BitDepthY is always equal to 8 in the baseline profile)
-			}
+			predL[y][x] = result;
 		}
 	}
 }
@@ -607,35 +581,36 @@ void Intra_16x16_Plane(int *p, int predL[16][16])
 
 void FetchPredictionSamplesIntra16x16(int p[33])
 {
-	for (int i = 0; i < 33; i++)
+	
+	int xF, yF, frameIdx;
+	
+	int xP = ((CurrMbAddr%PicWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/PicWidthInMbs)<<4);
+
+	// p[-1,-1]:
+	xF = xP - 1;
+	yF = yP - 1;
+	frameIdx = yF*frame.Lwidth + xF;
+	p[0] = ((xF >= 0) && (yF >= 0)) ? frame.L[frameIdx] : -1;
+
+	// p[-1,0]..p[-1,15]:
+	xF = xP - 1;
+	yF = yP;
+	frameIdx = yF*frame.Lwidth + xF;
+	for (int i = 1; i < 17; i++)
 	{
-		int x, y;
-		if (i < 17)
-		{
-			x = -1;
-			y = i - 1;
-		}
-		else
-		{
-			x = i - 17;
-			y = -1;
-		}
+		p[i] = (xF >= 0) ? frame.L[frameIdx] : -1;
+		frameIdx += frame.Lwidth;
+	}
 
-		int xW, yW, mbAddrN;
-		getNeighbourLocations(x, y, &mbAddrN, &xW, &yW, true);
-
-		if (mbAddrN == -1)
-		{
-			p(x,y) = -1;	// not available for Intra_16x16 prediction
-		}
-		else
-		{
-			// inverse macroblock scanning process (6.4.1)
-			int xM = ((mbAddrN%PicWidthInMbs)<<4);
-			int yM = ((mbAddrN/PicWidthInMbs)<<4);
-
-			p(x,y) = frame.L[(yM+yW)*frame.Lwidth+(xM+xW)];
-		}
+	// p[0,-1]..p[15,-1]:
+	xF = xP;
+	yF = yP - 1;
+	frameIdx = yF*frame.Lwidth + xF;
+	for (int i = 17; i < 33; i++)
+	{
+		p[i] = (yF >= 0) ? frame.L[frameIdx] : -1;
+		frameIdx++;
 	}
 }
 
@@ -688,68 +663,55 @@ void Intra_Chroma_DC(int *p, int predC[8][8])
 		}
 
 		// check availability of neighbouring samples:
-		bool allAvailable = true;
-		bool leftAvailable = true;
-		bool topAvailable = true;
-		for (int i = 0; i < 4; i++)
-		{
-			if (p(i+x0,-1) == -1)
-			{
-				allAvailable = false;
-				topAvailable = false;
-			}
-			if (p(-1,i+y0) == -1)
-			{
-				allAvailable = false;
-				leftAvailable = false;
-			}
-		}
+		bool leftAvailable = p(-1, y0) != -1;
+		bool topAvailable = p(x0, -1) != -1;
+		bool allAvailable = topAvailable && leftAvailable;
 
+		int result = 128; // == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
 		if ((x0 == 0) && (y0 == 0) ||
 			(x0 > 0) && (y0 > 0))
 		{
+			if (allAvailable)
+				result = (sumXi + sumYi + 4) >> 3;
+			else if (leftAvailable)
+				result = (sumYi + 2) >> 2;
+			else if (topAvailable)
+				result = (sumXi + 2) >> 2;
+
 			for (int y = 0; y < 4; y++)
 			{
 				for (int x = 0; x < 4; x++)
 				{
-					if (allAvailable)
-						predC[x+x0][y+y0] = (sumXi + sumYi + 4) >> 3;
-					else if (leftAvailable)
-						predC[x+x0][y+y0] = (sumYi + 2) >> 2;
-					else if (topAvailable)
-						predC[x+x0][y+y0] = (sumXi + 2) >> 2;
-					else
-						predC[x+x0][y+y0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
+					predC[x+x0][y+y0] = result;
 				}
 			}
 		}
 		else if ((x0 > 0) && (y0 == 0))
 		{
+			if (topAvailable)
+				result = (sumXi + 2) >> 2;
+			else if (leftAvailable)
+				result = (sumYi + 2) >> 2;
+
 			for (int y = 0; y < 4; y++)
 			{
 				for (int x = 0; x < 4; x++)
 				{
-					if (topAvailable)
-						predC[y+y0][x+x0] = (sumXi + 2) >> 2;
-					else if (leftAvailable)
-						predC[y+y0][x+x0] = (sumYi + 2) >> 2;
-					else
-						predC[y+y0][x+x0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
+					predC[y+y0][x+x0] = result;
 				}
 			}
 		}
 		else
 		{
+			if (leftAvailable)
+				result = (sumYi + 2) >> 2;
+			else if (topAvailable)
+				result = (sumXi + 2) >> 2;
 			for (int y = 0; y < 4; y++)
 			{
 				for (int x = 0; x < 4; x++)
 				{
-					if (leftAvailable)
-						predC[y+y0][x+x0] = (sumYi + 2) >> 2;
-					else if (topAvailable)
-						predC[y+y0][x+x0] = (sumXi + 2) >> 2;
-					else
-						predC[y+y0][x+x0] = 1 << 7;	// == 1 << (BitDepthC-1) (BitDepthC is always equal to 8 in the baseline profile)
+					predC[y+y0][x+x0] = result;
 				}
 			}
 		}
@@ -783,14 +745,15 @@ void Intra_Chroma_Vertical(int *p, int predC[8][8])
 // (8.3.4.4)
 void Intra_Chroma_Plane(int *p, int predC[8][8])
 {
-	int xCF = 0;	// xCF = (ChromaArrayType == 3) ? 4 : 0; ChromaArrayType == 1 when baseline
-	int yCF = 0;	// yCF = (ChromaArrayType != 1) ? 4 : 0; ChromaArrayType == 1 when baseline
+	// xCF, yCF == 0, because
+	// xCF = (ChromaArrayType == 3) ? 4 : 0; ChromaArrayType == 1 when baseline
+	// yCF = (ChromaArrayType != 1) ? 4 : 0; ChromaArrayType == 1 when baseline
 
 	int H = 0, V = 0;
-	for (int i = 0; i <= 3 + xCF; i++)
-		H += (i+1)*(p((4+xCF+i),-1) - p((2+xCF-i),-1));
-	for (int i = 0; i <= 3 + yCF; i++)
-		V += (i+1)*(p(-1,(4+yCF+i)) - p(-1,(2+yCF-i)));
+	for (int i = 0; i <= 3; i++)
+		H += (i+1)*(p((4+i),-1) - p((2-i),-1));
+	for (int i = 0; i <= 3; i++)
+		V += (i+1)*(p(-1,(4+i)) - p(-1,(2-i)));
 
 	int a = ((p(-1, (MbHeightC - 1)) + p((MbWidthC - 1), -1)) << 4);
 	int b = (34 * H + 32) >> 6;	// Norm: ChromaArrayType == 0, so there's no 29*(ChromaArrayType == 3) coefficient
@@ -800,7 +763,7 @@ void Intra_Chroma_Plane(int *p, int predC[8][8])
 	{
 		for (int x = 0; x < MbWidthC; x++)
 		{
-			predC[y][x] = Clip1C((a + b*(x-3-xCF) + c*(y-3-yCF) + 16) >> 5);
+			predC[y][x] = Clip1C((a + b*(x-3) + c*(y-3) + 16) >> 5);
 		}
 	}
 }
@@ -809,41 +772,57 @@ void Intra_Chroma_Plane(int *p, int predC[8][8])
 void IntraChromaSamplePrediction(int predCr[8][8], int predCb[8][8])
 {
 	int pCr[17], pCb[17];
-	for (int i = 0; i < MbWidthC + MbHeightC + 1; i++)
+
+	int xM = ((CurrMbAddr%PicWidthInMbs)<<3);
+	int yM = ((CurrMbAddr/PicWidthInMbs)<<3);
+
+	// p[-1, -1]:
+	int xF = xM - 1;
+	int yF = yM - 1;
+	if ((xF < 0) || (yF < 0))
 	{
-		int x, y;
-		if (i < MbHeightC + 1)
+		pCb[0] = -1;
+		pCr[0] = -1;
+	}
+	else
+	{
+		pCb[0] = frame.C[0][yF*frame.Cwidth + xF];
+		pCr[0] = frame.C[1][yF*frame.Cwidth + xF];
+	}
+
+	// p[-1,0]..p[-1,7]:
+	xF = xM - 1;
+	yF = yM;
+	for (int i = 1; i < 9; i++)
+	{
+		if (xF < 0)
 		{
-			x = -1;
-			y = i - 1;
+			pCb[i] = -1;
+			pCr[i] = -1;
 		}
 		else
 		{
-			x = i - (MbHeightC + 1);
-			y = -1;
+			pCb[i] = frame.C[0][yF*frame.Cwidth + xF];
+			pCr[i] = frame.C[1][yF*frame.Cwidth + xF];
+			yF++;
 		}
+	}
 
-		int xW, yW, mbAddrN;
-		getNeighbourLocations(x, y, &mbAddrN, &xW, &yW, false);
-
-		if (mbAddrN == -1)
+	// p[0,-1]..p[7,-1]:
+	xF = xM;
+	yF = yM - 1;
+	for (int i = 9; i < 17; i++)
+	{
+		if (yF < 0)
 		{
-			pCr(x,y) = -1;	// not available for Intra prediction
-			pCb(x,y) = -1;
+			pCb[i] = -1;
+			pCr[i] = -1;
 		}
 		else
 		{
-			// inverse macroblock scanning process (6.4.1)
-			int xL = ((mbAddrN%PicWidthInMbs)<<4);
-			int yL = ((mbAddrN/PicWidthInMbs)<<4);
-
-			int xM = (xL >> 4)*MbWidthC;
-			int yM = (yL >> 4)*MbHeightC + (yL & 1);
-
-			// Chrominance blue:
-			pCb(x,y) = frame.C[0][(yM+yW)*frame.Cwidth+(xM+xW)];
-			// Chrominance red:
-			pCr(x,y) = frame.C[1][(yM+yW)*frame.Cwidth+(xM+xW)];
+			pCb[i] = frame.C[0][yF*frame.Cwidth + xF];
+			pCr[i] = frame.C[1][yF*frame.Cwidth + xF];
+			xF++;
 		}
 	}
 
