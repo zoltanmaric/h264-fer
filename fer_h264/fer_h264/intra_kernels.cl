@@ -104,54 +104,80 @@ void forwardTransform4x4(int r[4][4], int d[4][4])
 ///////////////// Intra 16x16 prediction /////////////////
 //////////////////////////////////////////////////////////
 
-void fetchPredictionSamples16(int *predSamples, global int *frame, int frameWidth, int CurrMbAddr)
+void fetchPredictionSamples16(int *predSamples, global uchar16 *frame, int frameWidth, int CurrMbAddr)
 {
 	int frameWidthInMbs = frameWidth >> 4;
-	int mbAddrA, mbAddrB, mbAddrC;
 	int xF, yF, frameIdx;
 	
-	mbAddrA = ((CurrMbAddr % frameWidthInMbs) != 0) ? CurrMbAddr - 1 : -1;
-	mbAddrB = (CurrMbAddr >= frameWidthInMbs) ? CurrMbAddr - frameWidthInMbs : -1;
-	mbAddrC = ((mbAddrA != -1) && (mbAddrB != -1)) ? mbAddrB - 1 : -1;
+	int xP = ((CurrMbAddr%frameWidthInMbs)<<4);
+	int yP = ((CurrMbAddr/frameWidthInMbs)<<4);
 	
 	// predSamples[0]:
-	xF = ((mbAddrC % frameWidthInMbs) << 4) + 15;
-	yF = ((mbAddrC / frameWidthInMbs) << 4) + 15;
-	frameIdx = yF*frameWidth + xF;
-	predSamples[0] = (mbAddrC != -1) ? frame[frameIdx] : NA;
+	xF = (xP - 1) >> 4;
+	yF = yP - 1;
+	frameIdx = yF*frameWidthInMbs + xF;
+	predSamples[0] = ((xF >= 0) && (yF >= 0)) ? frame[frameIdx].sf : NA;
 	
 	// predSamples[1..16]:
+	xF = (xP - 1) >> 4;
+	yF = yP;
 	for (int i = 1; i < 17; i++)
 	{
-		xF = ((mbAddrA % frameWidthInMbs) << 4) + 15;
-		yF = ((mbAddrA / frameWidthInMbs) << 4) + (i-1);
-		frameIdx = yF*frameWidth + xF;
-		predSamples[i] = (mbAddrA != -1) ? frame[frameIdx] : NA;
+		frameIdx = yF*frameWidthInMbs + xF;
+		predSamples[i] = (xF >= 0) ? frame[frameIdx].sf : NA;
+		yF++;
 	}
 	
 	// predSamples[17..32]:
-	for (int i = 17; i < 33; i++)
-	{
-		xF = ((mbAddrB % frameWidthInMbs) << 4) + (i - 17);
-		yF = ((mbAddrB / frameWidthInMbs) << 4) + 15;
-		frameIdx = yF*frameWidth + xF;
-		predSamples[i] = (mbAddrB != -1) ? frame[frameIdx] : NA;
-	}
+	xF = xP >> 4;
+	yF = yP - 1;
+	frameIdx = yF*frameWidthInMbs + xF;
+	
+	predSamples[17] = (yF >= 0) ? frame[frameIdx].s0 : NA;
+	predSamples[18] = (yF >= 0) ? frame[frameIdx].s1 : NA;
+	predSamples[19] = (yF >= 0) ? frame[frameIdx].s2 : NA;
+	predSamples[20] = (yF >= 0) ? frame[frameIdx].s3 : NA;
+	predSamples[21] = (yF >= 0) ? frame[frameIdx].s4 : NA;
+	predSamples[22] = (yF >= 0) ? frame[frameIdx].s5 : NA;
+	predSamples[23] = (yF >= 0) ? frame[frameIdx].s6 : NA;
+	predSamples[24] = (yF >= 0) ? frame[frameIdx].s7 : NA;
+	predSamples[25] = (yF >= 0) ? frame[frameIdx].s8 : NA;
+	predSamples[26] = (yF >= 0) ? frame[frameIdx].s9 : NA;
+	predSamples[27] = (yF >= 0) ? frame[frameIdx].sa : NA;
+	predSamples[28] = (yF >= 0) ? frame[frameIdx].sb : NA;
+	predSamples[29] = (yF >= 0) ? frame[frameIdx].sc : NA;
+	predSamples[30] = (yF >= 0) ? frame[frameIdx].sd : NA;
+	predSamples[31] = (yF >= 0) ? frame[frameIdx].se : NA;
+	predSamples[32] = (yF >= 0) ? frame[frameIdx].sf : NA;
 }
 
-void fetchOriginalMBSamples16(global int *frame, int frameWidth, int CurrMbAddr, int original[16][16])
+void fetchOriginalMBSamples16(global uchar16 *frame, int frameWidth, int CurrMbAddr, int original[16][16])
 {
 	int frameWidthInMbs = frameWidth >> 4;
 
 	int xP = ((CurrMbAddr%frameWidthInMbs)<<4);
 	int yP = ((CurrMbAddr/frameWidthInMbs)<<4);
 
-	for (int i = 0; i < 16; i++)
+	for (int y = 0; y < 16; y++)
 	{
-		for (int j = 0; j < 16; j++)
-		{
-			original[i][j] = frame[(yP+i)*frameWidth + (xP+j)];
-		}
+		int frameIdx = (yP + y) * frameWidthInMbs + (xP >> 4);
+		original[y][0] = frame[frameIdx].s0;
+		original[y][1] = frame[frameIdx].s1;
+		original[y][2] = frame[frameIdx].s2;
+		original[y][3] = frame[frameIdx].s3;
+		original[y][4] = frame[frameIdx].s4;
+		original[y][5] = frame[frameIdx].s5;
+		original[y][6] = frame[frameIdx].s6;
+		original[y][7] = frame[frameIdx].s7;
+		original[y][8] = frame[frameIdx].s8;
+		original[y][9] = frame[frameIdx].s9;
+		original[y][10] = frame[frameIdx].sa;
+		original[y][11] = frame[frameIdx].sb;
+		original[y][12] = frame[frameIdx].sc;
+		original[y][13] = frame[frameIdx].sd;
+		original[y][14] = frame[frameIdx].se;
+		original[y][15] = frame[frameIdx].sf;
+		
 	}
 }
 
@@ -293,7 +319,7 @@ int satd16(int predL[16][16], int original[16][16], int qP)
 }
 
 __kernel void
-GetIntra16x16PredModes(global int *frame, int frameWidth, int qP, global int *predModes)
+GetIntra16x16PredModes(global uchar16 *frame, int frameWidth, int qP, global int *predModes)
 {
 	uint CurrMbAddr = get_global_id(0);
 	
@@ -536,7 +562,7 @@ void performIntra4x4Prediction(int intra4x4PredMode, int pred4x4L[4][4], int p[1
 	}
 }
 
-void fetchPredictionSamples4(int CurrMbAddr, global int *frame,
+void fetchPredictionSamples4(int CurrMbAddr, global uchar4 *frame,
 				int frameWidth, int luma4x4BlkIdx, int *p)
 {
 	int frameWidthInMbs = frameWidth >> 4;
@@ -550,19 +576,19 @@ void fetchPredictionSamples4(int CurrMbAddr, global int *frame,
 	int x = xP + x0;
 	int y = yP + y0;
 	
-	int xF = x - 1;
+	int xF = (x - 1) >> 2;
 	int yF = y - 1;
-	
+	int frameIdx = yF * (frameWidth>>2) + xF;
 	if ((xF < 0) || (yF < 0))
 	{
 		p[0] = NA;
 	}
 	else
 	{
-		p[0] = frame[yF * frameWidth + xF];
+		p[0] = frame[frameIdx].s3;
 	}
 	
-	xF = x - 1;
+	xF = (x - 1) >> 2;
 	yF = y;	
 	if (xF < 0)
 	{
@@ -575,12 +601,13 @@ void fetchPredictionSamples4(int CurrMbAddr, global int *frame,
 	{
 		for (int i = 1; i < 5; i++)
 		{
-			p[i] = frame[yF * frameWidth + xF];
+			frameIdx = yF * (frameWidth>>2) + xF;
+			p[i] = frame[frameIdx].s3;
 			yF++;
 		}
 	}
 	
-	xF = x;
+	xF = x >> 2;
 	yF = y - 1;
 	if (yF < 0)
 	{
@@ -592,36 +619,36 @@ void fetchPredictionSamples4(int CurrMbAddr, global int *frame,
 	}
 	else
 	{
-		for (int i = 5; i < 9; i++)
-		{
-			p[i] = frame[yF * frameWidth + xF];
-			xF++;
-		}
+		frameIdx = yF * (frameWidth >> 2) + xF;
+		p[5] = frame[frameIdx].s0;
+		p[6] = frame[frameIdx].s1;
+		p[7] = frame[frameIdx].s2;
+		p[8] = frame[frameIdx].s3;
 		
-		xF = x + 4;
-		yF = y - 1;
-		if ((xF > frameWidth) || (luma4x4BlkIdx == 3) || (luma4x4BlkIdx == 11))
+		xF = (x + 4) >> 2;
+		if ((xF > (frameWidth >> 2)) || (luma4x4BlkIdx == 3) || (luma4x4BlkIdx == 11))
 		{
-			xF = x + 3;
+			xF = (x + 3) >> 2;
+			frameIdx = yF * (frameWidth >> 2) + xF;
 			for (int i = 9; i < 13; i++)
 			{
 				// Copy the rightmost prediction sample to
 				// the samples above-right
-				p[i] = frame[yF * frameWidth + xF];
+				p[i] = frame[frameIdx].s3;
 			}
 		}
 		else
 		{
-			for (int i = 9; i < 13; i++)
-			{
-				p[i] = frame[yF * frameWidth + xF];
-				xF++;
-			}
+			frameIdx = yF * (frameWidth >> 2) + xF;
+			p[9] = frame[frameIdx].s0;
+			p[10] = frame[frameIdx].s1;
+			p[11] = frame[frameIdx].s2;
+			p[12] = frame[frameIdx].s3;
 		}
 	}
 }
 
-void fetchOriginalSamples4x4(global int *frame, int frameWidth, int CurrMbAddr, int luma4x4BlkIdx, int original[4][4])
+void fetchOriginalSamples4x4(global uchar4 *frame, int frameWidth, int CurrMbAddr, int luma4x4BlkIdx, int original[4][4])
 {
 	int frameWidthInMbs = frameWidth >> 4;
 
@@ -630,14 +657,15 @@ void fetchOriginalSamples4x4(global int *frame, int frameWidth, int CurrMbAddr, 
 
 	for (int y = 0; y < 4; y++)
 	{
-		for (int x = 0; x < 4; x++)
-		{
-			original[y][x] = frame[(yP+y)*frameWidth + (xP+x)];
-		}
+		int frameIdx = (yP + y) * (frameWidth >> 2) + (xP >> 2);
+		original[y][0] = frame[frameIdx].s0;
+		original[y][1] = frame[frameIdx].s1;
+		original[y][2] = frame[frameIdx].s2;
+		original[y][3] = frame[frameIdx].s3;
 	}
 }
 
-int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx, int CurrMbAddr, int original[4][4], int qP)
+int satdLuma4x4(int pred4x4L[4][4], int CurrMbAddr, int original[4][4], int qP)
 {
 	int diffL4x4[4][4];
 	for (int i = 0; i < 4; i++)
@@ -666,7 +694,7 @@ int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx, int CurrMbAddr, int origi
 	return satd;
 }
 
-kernel void GetIntra4x4PredModes(global int *frame, int frameWidth, int qP, global int *predModes4x4)
+kernel void GetIntra4x4PredModes(global uchar4 *frame, int frameWidth, int qP, global int *predModes4x4)
 {
 	uint absIdx = get_global_id(0);
 	uint CurrMbAddr = absIdx >> 4;
@@ -685,7 +713,7 @@ kernel void GetIntra4x4PredModes(global int *frame, int frameWidth, int qP, glob
 	for(int predMode = 0; predMode < 9; predMode++)
 	{		
 		performIntra4x4Prediction(predMode, pred4x4L, p);
-		int satd4x4 = satdLuma4x4(pred4x4L, luma4x4BlkIdx, CurrMbAddr, original, qP);
+		int satd4x4 = satdLuma4x4(pred4x4L, CurrMbAddr, original, qP);
 		if (satd4x4 < min4x4)
 		{
 			chosenPredMode = predMode;
