@@ -13,7 +13,6 @@ cl_device_id cpu = NULL, device = NULL;
 cl_platform_id platform;
 
 cl_mem frame_mem;
-cl_mem frameInt_mem;
 cl_mem dpb_mem;
 cl_mem ans_mem;		// the result array
 
@@ -73,8 +72,8 @@ void InitCL()
 	assert(device);
 
 	// TEST:
-	device = cpu;
-	OpenCLEnabled = false;
+	//device = cpu;
+	//OpenCLEnabled = false;
 
 	// Do not initalize OpenCL if no compatible GPU is found.
 	if (OpenCLEnabled == false) return;
@@ -149,7 +148,6 @@ void AllocateFrameBuffersCL()
 	size_t frameIntBufferSize = frame.Lwidth*frame.Lheight * sizeof(int);
 
 	frame_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, frameBufferSize, NULL, NULL);
-	frameInt_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, frameIntBufferSize, NULL, NULL);
 	dpb_mem = clCreateBuffer(context, CL_MEM_READ_ONLY, frameBufferSize, NULL, NULL);
 	ans_mem	= clCreateBuffer(context, CL_MEM_WRITE_ONLY, frameBufferSize, NULL, NULL);
 
@@ -167,7 +165,6 @@ void CloseCL()
 	if (OpenCLEnabled == false) return;
 
 	clReleaseMemObject(frame_mem);
-	clReleaseMemObject(frameInt_mem);
 	clReleaseMemObject(dpb_mem);
 	clReleaseMemObject(ans_mem);
 	clReleaseMemObject(predModes16x16_mem);
@@ -224,6 +221,8 @@ void subtractFramesCL(unsigned char *dpb, unsigned char *result)
 
 void IntraCL()
 {
+	size_t global_work_size;
+
 	if (OpenCLEnabled == false) return;
 
 	size_t frameBufferSize = frame.Lwidth*frame.Lheight;
@@ -237,24 +236,14 @@ void IntraCL()
 		(void*)(frame.L), 0, NULL, &eventWriteBuffer);
 	assert(err == CL_SUCCESS);
 
-	err = clSetKernelArg(kernelCharToInt, 0, sizeof(cl_mem), &frame_mem);
-	err |= clSetKernelArg(kernelCharToInt, 1, sizeof(cl_mem), &frameInt_mem);
-	assert(err == CL_SUCCESS);
-
-	cl_event eventConvert;
-	size_t global_work_size = frame.Lwidth*frame.Lheight / sizeof(cl_int);
-	err = clEnqueueNDRangeKernel(cmd_queue, kernelCharToInt, 1, NULL,
-		&global_work_size, NULL, 1, &eventWriteBuffer, &eventConvert);
-	assert(err == CL_SUCCESS);
-
 	// The frameInt_mem buffer is the input to the intra prediction kernel
-	err = clSetKernelArg(kernelIntra16, 0, sizeof(cl_mem), &frameInt_mem);
+	err = clSetKernelArg(kernelIntra16, 0, sizeof(cl_mem), &frame_mem);
 	err |= clSetKernelArg(kernelIntra16, 1, sizeof(int), &frame.Lwidth);
 	err |= clSetKernelArg(kernelIntra16, 2, sizeof(int), &QPy);
 	err |= clSetKernelArg(kernelIntra16, 3, sizeof(cl_mem), &predModes16x16_mem);
 	assert(err == CL_SUCCESS);
 
-	err = clSetKernelArg(kernelIntra4, 0, sizeof(cl_mem), &frameInt_mem);
+	err = clSetKernelArg(kernelIntra4, 0, sizeof(cl_mem), &frame_mem);
 	err |= clSetKernelArg(kernelIntra4, 1, sizeof(int), &frame.Lwidth);
 	err |= clSetKernelArg(kernelIntra4, 2, sizeof(int), &QPy);
 	err |= clSetKernelArg(kernelIntra4, 3, sizeof(cl_mem), &predModes4x4_mem);
@@ -263,13 +252,13 @@ void IntraCL()
 	cl_event eventIntra4;
 	global_work_size = (frame.Lwidth >> 2)*(frame.Lheight >> 2);
 	err = clEnqueueNDRangeKernel(cmd_queue, kernelIntra4, 1, NULL,
-		&global_work_size, NULL, 1, &eventConvert, &eventIntra4);
+		&global_work_size, NULL, 1, &eventWriteBuffer, &eventIntra4);
 	assert(err == CL_SUCCESS);
 
 	cl_event eventIntra16;
 	global_work_size = (frame.Lwidth >> 4)*(frame.Lheight >> 4);
 	err = clEnqueueNDRangeKernel(cmd_queue, kernelIntra16, 1, NULL,
-		&global_work_size, NULL, 1, &eventConvert, &eventIntra16);
+		&global_work_size, NULL, 1, &eventWriteBuffer, &eventIntra16);
 	assert(err == CL_SUCCESS);
 
 	size_t predMode16BufferSize = (frame.Lwidth >> 4)*(frame.Lheight >> 4) * sizeof(int);
