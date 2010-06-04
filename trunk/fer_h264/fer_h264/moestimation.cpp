@@ -358,7 +358,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			}
 			MEstimation(relx+xp, rely+yp, 1, 1, 1, genx, geny, genx, geny);
 			bmin = 2000000000;
-			for (int j = 0; j <= 16; j++)
+			for (int j = 0; j <= 32; j++)
 			if (bxs[j] < 100000000 && bys[j] < 100000000) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
 				if (bmins[j]+(ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
@@ -377,7 +377,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				{
 					//tren += koliko[a+1] - koliko[a];
 					for (int k = koliko[a]; k < koliko[a+1]; k++)
-					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) <90 && ABS(sortedSuma0[4][k]-suma[2]) < 90) {
+					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) < 100 && ABS(sortedSuma0[4][k]-suma[2]) < 100) {
 						tren++;
 						MEstimation(relx+xp, rely+yp, 0, 1, 16, genx, geny, sortedSuma0[2][k]-relx-xp, sortedSuma0[1][k]-rely-yp);
 					}
@@ -387,14 +387,14 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				{
 					//tren += koliko[a+1] - koliko[a];
 					for (int k = koliko[a]; k < koliko[a+1]; k++)
-					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) < 90 && ABS(sortedSuma0[4][k]-suma[2]) < 90) {
+					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) < 100 && ABS(sortedSuma0[4][k]-suma[2]) < 100) {
 						tren++;
 						MEstimation(relx+xp, rely+yp, 0, 1, 16, genx, geny, sortedSuma0[2][k]-relx-xp, sortedSuma0[1][k]-rely-yp);
 					}
 				}
-				if (tren > 512) break;
+				if (tren > 1024) break;
 			}
-			for (int j = 0; j <= 32; j++)
+			for (int j = 0; j <= 64; j++)
 			if (bmins[j] < 100000000 && bxs[j] < 100000000 && bys[j] < 100000000) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
 				if (bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
@@ -406,8 +406,8 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			}
 			for (int j = 0; j < 85; j++) bmins[j] = 1000000000;
 			MEstimation(relx+xp, rely+yp, 16, 1, 16, 0, 0, 0, 0);
-			MEstimation(relx+xp, rely+yp, 2, 1, 1, 0, 0, 0, 0);
-			for (int j = 0; j <= 16; j++)
+			MEstimation(relx+xp, rely+yp, 1, 1, 1, 0, 0, 0, 0);
+			for (int j = 0; j <= 32; j++)
 			if (bmins[j] < 100000000 && bxs[j] < 100000000 && bys[j] < 100000000) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
 				if (bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
