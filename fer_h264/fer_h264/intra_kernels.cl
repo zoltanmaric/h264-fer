@@ -221,7 +221,7 @@ void Intra_16x16_DC(int *p, int predL[16][16])
 		result = (sumXi + sumYi + 16) >> 5;
 	else if (p[1] != NA) 	// if left available
 		result = (sumYi + 8) >> 4;
-	else if (p[17] != NA)
+	else if (p[17] != NA)	// if top available
 		result = (sumXi + 8) >> 4;
 	
 	for (int y = 0; y < 16; y++)
@@ -626,7 +626,8 @@ void fetchPredictionSamples4(int CurrMbAddr, global uchar4 *frame,
 		p[8] = frame[frameIdx].s3;
 		
 		xF = (x + 4) >> 2;
-		if ((xF > (frameWidth >> 2)) || (luma4x4BlkIdx == 3) || (luma4x4BlkIdx == 11))
+		int edgeSubMB = (xF >= frameWidth >> 2) || ((x0 == 12) && (y0 > 0));
+		if ((edgeSubMB == 1) || (luma4x4BlkIdx == 3) || (luma4x4BlkIdx == 11))
 		{
 			xF = (x + 3) >> 2;
 			frameIdx = yF * (frameWidth >> 2) + xF;
