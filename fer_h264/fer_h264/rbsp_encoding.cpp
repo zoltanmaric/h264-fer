@@ -138,8 +138,11 @@ void RBSP_encode(NALunit &nal_unit)
 	}
 	else if ((nal_unit.nal_unit_type == NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type == NAL_UNIT_TYPE_NOT_IDR))
 	{
+		printf("Clock count: %d - CPS=%d....\n", clock(), CLOCKS_PER_SEC);
 		if (nal_unit.nal_unit_type == NAL_UNIT_TYPE_IDR)
 		{
+			IntraCL();		// Start the intra mode selection on the GPU
+
 			static bool firstFrame = true;
 			shd.slice_type = I_SLICE;
 			if (firstFrame == true)
@@ -157,7 +160,6 @@ void RBSP_encode(NALunit &nal_unit)
 			}
 
 			shd.frame_num = 0;
-			IntraCL();
 		}
 		else
 		{
@@ -170,7 +172,6 @@ void RBSP_encode(NALunit &nal_unit)
 		int predL[16][16], predCb[8][8], predCr[8][8];
 		int mb_skip_run = 0;
 
-		printf("%d - CPS=%d....\n", clock(), CLOCKS_PER_SEC);
 		for (CurrMbAddr = 0; CurrMbAddr < shd.PicSizeInMbs; CurrMbAddr++)
 		{
 			// TODO: Try avoiding this.
@@ -304,7 +305,7 @@ void RBSP_encode(NALunit &nal_unit)
 				clear_residual_structures();
 			}
 		}	
-		printf("%d - CPS=%d....\n", clock(), CLOCKS_PER_SEC);
+		//printf("%d - CPS=%d....\n", clock(), CLOCKS_PER_SEC);
 
 		if (mb_skip_run > 0)
 		{
@@ -316,10 +317,10 @@ void RBSP_encode(NALunit &nal_unit)
 
 		if (shd.slice_type % 5 == I_SLICE)
 		{
-			initialisationProcess();
+			//initialisationProcess();
 		}
-		modificationProcess();		
-		FillInterpolatedRefFrame();
+		//modificationProcess();		
+		//FillInterpolatedRefFrame();
 	}
 
 	flushWriteBuffer();
