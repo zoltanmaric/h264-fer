@@ -931,6 +931,30 @@ int satdLuma4x4(int pred4x4L[4][4], int luma4x4BlkIdx)
 	return satd;
 }
 
+int satdLuma16x16(int predL[16][16])
+{
+	int satd = 0;
+
+	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
+	{
+		int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
+		int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
+
+		int pred4x4L[4][4];
+		for (int y = 0; y < 4; y++)
+		{
+			for (int x = 0; x < 4; x++)
+			{
+				pred4x4L[y][x] = predL[y0+y][x0+x];
+			}
+		}
+
+		satd += satdLuma4x4(pred4x4L, luma4x4BlkIdx);		
+	}
+
+	return satd;
+}
+
 // Sets the global variables prev_intra4x4_pred_mode_flag
 // and rem_intra4x4_pred_mode.
 void setIntra4x4PredMode(int luma4x4BlkIdx)
@@ -1018,14 +1042,11 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	int p[33];
 	FetchPredictionSamplesIntra16x16(p);
 
-	// 16x16 prediction:
 	if (OpenCLEnabled == true)
 	{
 		if (CurrMbAddr == 0)
 		{
-			int clocksWaited = clock();
 			WaitIntraCL(true);
-			printf("Waiting for openCL to finish 16x16: %dms\n", clock() - clocksWaited);
 		}
 
 		Intra16x16PredMode = predModes16x16[CurrMbAddr];
@@ -1040,6 +1061,8 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	}
 	else
 	{
+		// 16x16 prediction:
+		int min16x16 = INT_MAX;
 		for (int i = 0; i < 4; i++)
 		{
 			// Skip prediction if required neighbouring macroblocks are not available
@@ -1055,17 +1078,21 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			intra_chroma_pred_mode = intraToChromaPredMode[i];
 			IntraChromaSamplePrediction(predCr, predCb);
 
-			bitLoad = coded_mb_size(i, predL, predCb, predCr);
-			if (bitLoad < min)
+			int satd = satdLuma16x16(predL);
+			if (satd < min16x16)
 			{
-				min = bitLoad;
+				min16x16 = satd;
 				Intra16x16PredMode = i;
 				chosenChromaPrediction = intra_chroma_pred_mode;
 			}
-		}
+		}		
+		performIntra16x16Prediction(p, predL, Intra16x16PredMode);		
+
 		// Store the chosen chroma prediction:
 		intra_chroma_pred_mode = chosenChromaPrediction;
 		IntraChromaSamplePrediction(predCr, predCb);
+		
+		min = coded_mb_size(Intra16x16PredMode, predL, predCb, predCr);
 
 
 		// 4x4 prediction:
@@ -1122,9 +1149,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	mb_type_array[CurrMbAddr] = 0;
 	if (OpenCLEnabled == true && CurrMbAddr == 0)
 	{
-		int clocksWaited = clock();
 		WaitIntraCL(false);
-		printf("Waiting for openCL to finish 4x4: %dms\n", clock() - clocksWaited);
 	}
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
