@@ -121,34 +121,35 @@ void fetchPredictionSamples16(int *predSamples, global uchar16 *frame, int frame
 	// predSamples[1..16]:
 	xF = (xP - 1) >> 4;
 	yF = yP;
+	frameIdx = yF*frameWidthInMbs + xF;
 	for (int i = 1; i < 17; i++)
 	{
-		frameIdx = yF*frameWidthInMbs + xF;
 		predSamples[i] = (xF >= 0) ? frame[frameIdx].sf : NA;
-		yF++;
+		frameIdx += frameWidthInMbs;
 	}
 	
 	// predSamples[17..32]:
 	xF = xP >> 4;
 	yF = yP - 1;
 	frameIdx = yF*frameWidthInMbs + xF;
+	uchar16 temp = frame[frameIdx];
 	
-	predSamples[17] = (yF >= 0) ? frame[frameIdx].s0 : NA;
-	predSamples[18] = (yF >= 0) ? frame[frameIdx].s1 : NA;
-	predSamples[19] = (yF >= 0) ? frame[frameIdx].s2 : NA;
-	predSamples[20] = (yF >= 0) ? frame[frameIdx].s3 : NA;
-	predSamples[21] = (yF >= 0) ? frame[frameIdx].s4 : NA;
-	predSamples[22] = (yF >= 0) ? frame[frameIdx].s5 : NA;
-	predSamples[23] = (yF >= 0) ? frame[frameIdx].s6 : NA;
-	predSamples[24] = (yF >= 0) ? frame[frameIdx].s7 : NA;
-	predSamples[25] = (yF >= 0) ? frame[frameIdx].s8 : NA;
-	predSamples[26] = (yF >= 0) ? frame[frameIdx].s9 : NA;
-	predSamples[27] = (yF >= 0) ? frame[frameIdx].sa : NA;
-	predSamples[28] = (yF >= 0) ? frame[frameIdx].sb : NA;
-	predSamples[29] = (yF >= 0) ? frame[frameIdx].sc : NA;
-	predSamples[30] = (yF >= 0) ? frame[frameIdx].sd : NA;
-	predSamples[31] = (yF >= 0) ? frame[frameIdx].se : NA;
-	predSamples[32] = (yF >= 0) ? frame[frameIdx].sf : NA;
+	predSamples[17] = (yF >= 0) ? temp.s0 : NA;
+	predSamples[18] = (yF >= 0) ? temp.s1 : NA;
+	predSamples[19] = (yF >= 0) ? temp.s2 : NA;
+	predSamples[20] = (yF >= 0) ? temp.s3 : NA;
+	predSamples[21] = (yF >= 0) ? temp.s4 : NA;
+	predSamples[22] = (yF >= 0) ? temp.s5 : NA;
+	predSamples[23] = (yF >= 0) ? temp.s6 : NA;
+	predSamples[24] = (yF >= 0) ? temp.s7 : NA;
+	predSamples[25] = (yF >= 0) ? temp.s8 : NA;
+	predSamples[26] = (yF >= 0) ? temp.s9 : NA;
+	predSamples[27] = (yF >= 0) ? temp.sa : NA;
+	predSamples[28] = (yF >= 0) ? temp.sb : NA;
+	predSamples[29] = (yF >= 0) ? temp.sc : NA;
+	predSamples[30] = (yF >= 0) ? temp.sd : NA;
+	predSamples[31] = (yF >= 0) ? temp.se : NA;
+	predSamples[32] = (yF >= 0) ? temp.sf : NA;
 }
 
 void fetchOriginalMBSamples16(global uchar16 *frame, int frameWidth, int CurrMbAddr, int original[16][16])
@@ -157,27 +158,28 @@ void fetchOriginalMBSamples16(global uchar16 *frame, int frameWidth, int CurrMbA
 
 	int xP = ((CurrMbAddr%frameWidthInMbs)<<4);
 	int yP = ((CurrMbAddr/frameWidthInMbs)<<4);
+	int frameIdx = yP * frameWidthInMbs + (xP >> 4);
 
 	for (int y = 0; y < 16; y++)
 	{
-		int frameIdx = (yP + y) * frameWidthInMbs + (xP >> 4);
-		original[y][0] = frame[frameIdx].s0;
-		original[y][1] = frame[frameIdx].s1;
-		original[y][2] = frame[frameIdx].s2;
-		original[y][3] = frame[frameIdx].s3;
-		original[y][4] = frame[frameIdx].s4;
-		original[y][5] = frame[frameIdx].s5;
-		original[y][6] = frame[frameIdx].s6;
-		original[y][7] = frame[frameIdx].s7;
-		original[y][8] = frame[frameIdx].s8;
-		original[y][9] = frame[frameIdx].s9;
-		original[y][10] = frame[frameIdx].sa;
-		original[y][11] = frame[frameIdx].sb;
-		original[y][12] = frame[frameIdx].sc;
-		original[y][13] = frame[frameIdx].sd;
-		original[y][14] = frame[frameIdx].se;
-		original[y][15] = frame[frameIdx].sf;
-		
+		uchar16 temp = frame[frameIdx];
+		original[y][0] = temp.s0;
+		original[y][1] = temp.s1;
+		original[y][2] = temp.s2;
+		original[y][3] = temp.s3;
+		original[y][4] = temp.s4;
+		original[y][5] = temp.s5;
+		original[y][6] = temp.s6;
+		original[y][7] = temp.s7;
+		original[y][8] = temp.s8;
+		original[y][9] = temp.s9;
+		original[y][10] = temp.sa;
+		original[y][11] = temp.sb;
+		original[y][12] = temp.sc;
+		original[y][13] = temp.sd;
+		original[y][14] = temp.se;
+		original[y][15] = temp.sf;
+		frameIdx += frameWidthInMbs;
 	}
 }
 
