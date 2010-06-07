@@ -73,7 +73,7 @@ void writeToPPM(char *namePrefix)
 	toRGB();
 
 	char *pic;
-	pic = new  char[frame.Lwidth * frame.Lheight * 3 + 17];
+	pic = new char[frame.Lwidth * frame.Lheight * 3 + 17];
 	int pic_size = frame.Lheight * frame.Lwidth;
 	int pos = sprintf(pic, "P6\n%d %d\n255\n", frame.Lwidth, frame.Lheight);
 	for (int i = 0; i < pic_size; i++)
@@ -187,8 +187,6 @@ void initStreamBuffer()
 		streamBufferSize >>= 1;
 		streamBuffer = new char[streamBufferSize];
 	}
-
-	int test = fread(streamBuffer, 1, streamBufferSize, yuvinput);
 }
 
 // Returns the offset of the start of the

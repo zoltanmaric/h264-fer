@@ -11,17 +11,20 @@ constant int intra4x4ScanOrder[16][2]={
   { 8, 8},  {12, 8},  { 8,12},  {12,12}
 };
 
-constant int levelQuantize[6][4][4] =
+constant int4 levelQuantize[6][4] =
 {
-	{{205, 158, 205, 158}, {158, 128, 158, 128}, {205, 158, 205, 158}, {158, 128, 158, 128}},
-	{{186, 146, 186, 146}, {146, 114, 146, 114}, {186, 146, 186, 146}, {146, 114, 146, 114}},
-	{{158, 128, 158, 128}, {128, 102, 128, 102}, {158, 128, 158, 128}, {128, 102, 128, 102}},
-	{{146, 114, 146, 114}, {114, 89, 114, 89}, {146, 114, 146, 114}, {114, 89, 114, 89}},
-	{{128, 102, 128, 102}, {102, 82, 102, 82}, {128, 102, 128, 102}, {102, 82, 102, 82}},
-	{{114, 89, 114, 89}, {89, 71, 89, 71}, {114, 89, 114, 89}, {89, 71, 89, 71}}
+	{(int4)(205, 158, 205, 158), (int4)(158, 128, 158, 128), (int4)(205, 158, 205, 158), (int4)(158, 128, 158, 128)},
+	{(int4)(186, 146, 186, 146), (int4)(146, 114, 146, 114), (int4)(186, 146, 186, 146), (int4)(146, 114, 146, 114)},
+	{(int4)(158, 128, 158, 128), (int4)(128, 102, 128, 102), (int4)(158, 128, 158, 128), (int4)(128, 102, 128, 102)},
+	{(int4)(146, 114, 146, 114), (int4)(114, 89, 114, 89), (int4)(146, 114, 146, 114), (int4)(114, 89, 114, 89)},
+	{(int4)(128, 102, 128, 102), (int4)(102, 82, 102, 82), (int4)(128, 102, 128, 102), (int4)(102, 82, 102, 82)},
+	{(int4)(114, 89, 114, 89), (int4)(89, 71, 89, 71), (int4)(114, 89, 114, 89), (int4)(89, 71, 89, 71)}
 };
 
-void quantisationResidualBlock(int qP, int d[4][4], int c[4][4])
+// Because the quantization matrices are symmetrical, it makes
+// no difference whether the elements of dv and cv represent
+// rows or columns of a matrix.
+void quantisationResidualBlock(int qP, int4 dv[4], int4 cv[4])
 {
 	int qPCalculated = qP / 6;
 	int qPMod = qP % 6;
@@ -31,73 +34,57 @@ void quantisationResidualBlock(int qP, int d[4][4], int c[4][4])
 
 	for (int i = 0; i < 4; i++)
 	{
-		for (int j = 0; j < 4; j++)
-		{
-			int temp = ((d[i][j] << qbits) - adjust) * levelQuantize[qPMod][i][j];
-			c[i][j] = (temp + 16384) >> 15;
-		}
+		cv[i] = (((dv[i] << qbits) - adjust) * levelQuantize[qPMod][i] + 16384) >> 15;
 	}
 }
 
-void forwardTransform4x4(int r[4][4], int d[4][4])
+// Each element of rv contains one ROW of a matrix.
+// Each element of dv contains one COLUMN of a matrix.
+void forwardTransform4x4(int4 rv[4], int4 dv[4])
 {
 	// Y = C'*D'*X*B'*A'
-
-	int i, j;
-	int f[4][4], h[4][4];
-	int temp;
-
-	for (i = 0; i < 4; i++)
-	{
-		for (j = 0; j < 4; j++)
-		{
-			h[i][j] = (r[i][j] == 0) ? 0 : ((r[i][j] << 6) - 32);
-		}
-	}
-
-	// (C'*D')*X
-	for (j = 0; j < 4; j++)
-	{
-		temp = (h[0][j] << 8) + (h[1][j] << 8) + (h[2][j] << 8) + (h[3][j] << 8);
-		f[0][j] = (temp + 512) >> 10;
-
-		temp = ((h[0][j] << 8) + (f[0][j] << 7) + (h[0][j] << 5))
-			+ ((h[1][j] << 7) + (h[1][j] << 6) + (h[1][j] << 4))
-			- ((h[2][j] << 7) + (h[2][j] << 6) + (h[2][j] << 4))
-			- ((h[3][j] << 8) + (h[3][j] << 7) + (h[3][j] << 5));
-		f[1][j] = (temp + 512) >> 10;
-
-		temp = (h[0][j] << 8) - (h[1][j] << 8) - (h[2][j] << 8) + (h[3][j] << 8);
-		f[2][j] = (temp + 512) >> 10;
-
-		temp = ((h[0][j] << 7) + (h[0][j] << 6) + (h[0][j] << 4))
-			- ((h[1][j] << 8) + (h[1][j] << 7) + (h[1][j] << 5))
-			+ ((h[2][j] << 8) + (h[2][j] << 7) + (h[2][j] << 5))
-			- ((h[3][j] << 7) + (h[3][j] << 6) + (h[3][j] << 4));
-		f[3][j] = (temp + 512) >> 10;
-	}
-
-	// (C'*D'*X)*(B'*A')
+	int4 fv[4], ftv[4], hv[4];
+	
+	// each element of the vector array hv contains
+	// one ROW of the scalar matrix h
 	for (int i = 0; i < 4; i++)
 	{
-		temp = (f[i][0] << 8) + (f[i][1] << 8) + (f[i][2] << 8) + (f[i][3] << 8);
-		d[i][0] = (temp + 512) >> 10;
-
-		temp = ((f[i][0] << 8) + (f[i][0] << 7) + (f[i][0] << 5))
-			+ ((f[i][1] << 7) + (f[i][1] << 6) + (f[i][1] << 4))
-			- ((f[i][2] << 7) + (f[i][2] << 6) + (f[i][2] << 4))
-			- ((f[i][3] << 8) + (f[i][3] << 7) + (f[i][3] << 5));
-		d[i][1] = (temp + 512) >> 10;
-
-		temp = (f[i][0] << 8) - (f[i][1] << 8) - (f[i][2] << 8) + (f[i][3] << 8);
-		d[i][2] = (temp + 512) >> 10;
-
-		temp = ((f[i][0] << 7) + (f[i][0] << 6) + (f[i][0] << 4))
-			- ((f[i][1] << 8) + (f[i][1] << 7) + (f[i][1] << 5))
-			+ ((f[i][2] << 8) + (f[i][2] << 7) + (f[i][2] << 5))
-			- ((f[i][3] << 7) + (f[i][3] << 6) + (f[i][3] << 4));
-		d[i][3] = (temp + 512) >> 10;
+		// For vector data types, true returns -1 (all bits set)
+		hv[i] = (rv[i] != (int4)0) & ((rv[i] << 6) - 32);
 	}
+	
+	// each element of the vector array fv contains
+	// one ROW of the scalar matrix f
+	fv[0] = ((hv[0] << 8) + (hv[1] << 8) + (hv[2] << 8) + (hv[3] << 8) + 512) >> 10;
+	fv[1] = (((hv[0] << 8) + (hv[0] << 7) + (hv[0] << 5))
+			+ ((hv[1] << 7) + (hv[1] << 6) + (hv[1] << 4))
+			- ((hv[2] << 7) + (hv[2] << 6) + (hv[2] << 4))
+			- ((hv[3] << 8) + (hv[3] << 7) + (hv[3] << 5)) + 512) >> 10;
+	fv[2] = ((hv[0] << 8) - (hv[1] << 8) - (hv[2] << 8) + (hv[3] << 8) + 512) >> 10;
+	fv[3] = (((hv[0] << 7) + (hv[0] << 6) + (hv[0] << 4))
+			- ((hv[1] << 8) + (hv[1] << 7) + (hv[1] << 5))
+			+ ((hv[2] << 8) + (hv[2] << 7) + (hv[2] << 5))
+			- ((hv[3] << 7) + (hv[3] << 6) + (hv[3] << 4)) + 512) >> 10;
+			
+	// TRANSPOSITION: each element of the vector array
+	// ftv contains one COLUMN of the scalar matrix f
+	ftv[0] = (int4)(fv[0].s0, fv[1].s0, fv[2].s0, fv[3].s0);
+	ftv[1] = (int4)(fv[0].s1, fv[1].s1, fv[2].s1, fv[3].s1);
+	ftv[2] = (int4)(fv[0].s2, fv[1].s2, fv[2].s2, fv[3].s2);
+	ftv[3] = (int4)(fv[0].s3, fv[1].s3, fv[2].s3, fv[3].s3);
+	
+	// each element of the vector array dv contains
+	// one COLUMN of the scalar matrix d
+	dv[0] = ((ftv[0] << 8) + (ftv[1] << 8) + (ftv[2] << 8) + (ftv[3] << 8) + 512) >> 10;
+	dv[1] = (((ftv[0] << 8) + (ftv[0] << 7) + (ftv[0] << 5))
+		+ ((ftv[1] << 7) + (ftv[1] << 6) + (ftv[1] << 4))
+		- ((ftv[2] << 7) + (ftv[2] << 6) + (ftv[2] << 4))
+		- ((ftv[3] << 8) + (ftv[3] << 7) + (ftv[3] << 5)) + 512) >> 10;
+	dv[2] = ((ftv[0] << 8) - (ftv[1] << 8) - (ftv[2] << 8) + (ftv[3] << 8) + 512) >> 10;
+	dv[3] = (((ftv[0] << 7) + (ftv[0] << 6) + (ftv[0] << 4))
+		- ((ftv[1] << 8) + (ftv[1] << 7) + (ftv[1] << 5))
+		+ ((ftv[2] << 8) + (ftv[2] << 7) + (ftv[2] << 5))
+		- ((ftv[3] << 7) + (ftv[3] << 6) + (ftv[3] << 4)) + 512) >> 10;
 }
 
 //////////////////////////////////////////////////////////
@@ -282,33 +269,31 @@ void performIntra16x16Prediction(int *p, int predL[16][16], int Intra16x16PredMo
 	}
 }
 
-int satd16(int predL[16][16], int original[16][16], int qP)
+uint satd16(int predL[16][16], int original[16][16], int qP)
 {
-	int satd = 0;
+	uint satd = 0;
 	
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
-		int diffL4x4[4][4];
+		int4 diffL4x4[4];
 		int x0 = intra4x4ScanOrder[luma4x4BlkIdx][0];
 		int y0 = intra4x4ScanOrder[luma4x4BlkIdx][1];
 		for (int i = 0; i < 4; i++)
 		{
-			for (int j = 0; j < 4; j++)
-			{
-				diffL4x4[i][j] = original[y0+i][x0+j] - predL[y0+i][x0+j];
-			}
+			diffL4x4[i].s0 = original[y0+i][x0+0] - predL[y0+i][x0+0];
+			diffL4x4[i].s1 = original[y0+i][x0+1] - predL[y0+i][x0+1];
+			diffL4x4[i].s2 = original[y0+i][x0+2] - predL[y0+i][x0+2];
+			diffL4x4[i].s3 = original[y0+i][x0+3] - predL[y0+i][x0+3];
 		}
 
-		int rLuma[4][4];
-		forwardTransform4x4(diffL4x4, rLuma);
-		quantisationResidualBlock(qP, rLuma, rLuma);
+		int4 rLuma[4], dv[4];
+		forwardTransform4x4(diffL4x4, dv);
+		quantisationResidualBlock(qP, dv, rLuma);
 
 		for (int i = 0; i < 4; i++)
 		{
-			for (int j = 0; j < 4; j++)
-			{
-				satd += abs(rLuma[i][j]);
-			}
+			uint4 temp = abs(rLuma[i]);
+			satd += temp.s0 + temp.s1 + temp.s2 + temp.s3;
 		}
 	}
 	
@@ -320,8 +305,7 @@ int satd16(int predL[16][16], int original[16][16], int qP)
 	return satd;
 }
 
-__kernel void
-GetIntra16x16PredModes(global uchar16 *frame, int frameWidth, int qP, global int *predModes)
+kernel void GetIntra16x16PredModes(global uchar16 *frame, int frameWidth, int qP, global int *predModes)
 {
 	uint CurrMbAddr = get_global_id(0);
 	
@@ -332,7 +316,7 @@ GetIntra16x16PredModes(global uchar16 *frame, int frameWidth, int qP, global int
 	fetchPredictionSamples16(p, frame, frameWidth, CurrMbAddr);
 	fetchOriginalMBSamples16(frame, frameWidth, CurrMbAddr, original);
 	
-	int min = INT_MAX;
+	uint min = INT_MAX;
 	int chosenPredMode;
 	for (int i = 0; i < 4; i++)
 	{
@@ -340,8 +324,11 @@ GetIntra16x16PredModes(global uchar16 *frame, int frameWidth, int qP, global int
 		
 		int satd = satd16(predL, original, qP);
 		
-		chosenPredMode = (satd < min) ? i : chosenPredMode;
-		min = (satd < min) ? satd : min;
+		if (satd < min)
+		{
+			min = satd;
+			chosenPredMode = i;
+		}
 	}
 	
 	predModes[CurrMbAddr] = chosenPredMode;
@@ -663,28 +650,26 @@ void fetchOriginalSamples4x4(global uchar4 *frame, int frameWidth, int CurrMbAdd
 	}
 }
 
-int satdLuma4x4(int pred4x4L[4][4], int CurrMbAddr, int original[4][4], int qP)
+uint satdLuma4x4(int pred4x4L[4][4], int CurrMbAddr, int original[4][4], int qP)
 {
-	int diffL4x4[4][4];
+	int4 diffL4x4[4];
 	for (int i = 0; i < 4; i++)
 	{
-		for (int j = 0; j < 4; j++)
-		{
-			diffL4x4[i][j] = original[i][j] - pred4x4L[i][j];
-		}
+		diffL4x4[i].s0 = original[i][0] - pred4x4L[i][0];
+		diffL4x4[i].s1 = original[i][1] - pred4x4L[i][1];
+		diffL4x4[i].s2 = original[i][2] - pred4x4L[i][2];
+		diffL4x4[i].s3 = original[i][3] - pred4x4L[i][3];
 	}
 
-	int rLuma[4][4];
-	forwardTransform4x4(diffL4x4, rLuma);
-	quantisationResidualBlock(qP, rLuma, rLuma);
+	int4 rLuma[4], dv[4];
+	forwardTransform4x4(diffL4x4, dv);
+	quantisationResidualBlock(qP, dv, rLuma);
 
-	int satd = 0;
+	uint satd = 0;
 	for (int i = 0; i < 4; i++)
 	{
-		for (int j = 0; j < 4; j++)
-		{
-			satd += abs(rLuma[i][j]);
-		}
+		uint4 temp = abs(rLuma[i]);
+		satd += temp.s0 + temp.s1 + temp.s2 + temp.s3;
 	}
 	
 	if (pred4x4L[0][0] == NA) satd = INT_MAX;
@@ -698,7 +683,7 @@ kernel void GetIntra4x4PredModes(global uchar4 *frame, int frameWidth, int qP, g
 	uint CurrMbAddr = absIdx >> 4;
 	uint luma4x4BlkIdx = absIdx & 15;
 	
-	int min4x4 = INT_MAX;
+	uint min4x4 = INT_MAX;
 
 	int p[13];
 	fetchPredictionSamples4(CurrMbAddr, frame, frameWidth, luma4x4BlkIdx, p);

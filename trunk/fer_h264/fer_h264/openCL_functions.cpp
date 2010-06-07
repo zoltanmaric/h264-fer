@@ -238,16 +238,18 @@ void IntraCL()
 		(void*)(frame.L), 0, NULL, &eventWriteBuffer);
 	assert(err == CL_SUCCESS);
 
+	int qp = 12;
+
 	// The frameInt_mem buffer is the input to the intra prediction kernel
 	err = clSetKernelArg(kernelIntra16, 0, sizeof(cl_mem), &frame_mem);
 	err |= clSetKernelArg(kernelIntra16, 1, sizeof(int), &frame.Lwidth);
-	err |= clSetKernelArg(kernelIntra16, 2, sizeof(int), &QPy);
+	err |= clSetKernelArg(kernelIntra16, 2, sizeof(int), &qp);
 	err |= clSetKernelArg(kernelIntra16, 3, sizeof(cl_mem), &predModes16x16_mem);
 	assert(err == CL_SUCCESS);
 
 	err = clSetKernelArg(kernelIntra4, 0, sizeof(cl_mem), &frame_mem);
 	err |= clSetKernelArg(kernelIntra4, 1, sizeof(int), &frame.Lwidth);
-	err |= clSetKernelArg(kernelIntra4, 2, sizeof(int), &QPy);
+	err |= clSetKernelArg(kernelIntra4, 2, sizeof(int), &qp);
 	err |= clSetKernelArg(kernelIntra4, 3, sizeof(cl_mem), &predModes4x4_mem);
 	assert(err == CL_SUCCESS);
 
