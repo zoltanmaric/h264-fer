@@ -43,8 +43,8 @@ void forwardTransform4x4(int r[4][4], int d[4][4])
 	// Y = C'*D'*X*B'*A'
 
 	int i, j;
-	int e[4][4], f[4][4], g[4][4], h[4][4];
-	int temp[4];
+	int f[4][4], h[4][4];
+	int temp;
 
 	for (i = 0; i < 4; i++)
 	{
@@ -57,159 +57,46 @@ void forwardTransform4x4(int r[4][4], int d[4][4])
 	// (C'*D')*X
 	for (j = 0; j < 4; j++)
 	{
-		//f[0][j] = (h[0][j]>>2) + (h[1][j]>>2) + (h[2][j]>>2) + (h[3][j]>>2);
-		//f[1][j] =(h[0][j]<<1)/5 + h[1][j] / 5 - h[2][j] / 5 - (h[3][j]<<1)/5;
-		//f[2][j] = (h[0][j]>>2) - (h[1][j]>>2) - (h[2][j]>>2) + (h[3][j]>>2);
-		//f[3][j] = h[0][j] / 5 - (h[1][j]<<1)/5 + (h[2][j]<<1)/5 - h[3][j] / 5;
+		temp = (h[0][j] << 8) + (h[1][j] << 8) + (h[2][j] << 8) + (h[3][j] << 8);
+		f[0][j] = (temp + 512) >> 10;
 
-		temp[0] = (h[0][j] << 8) + (h[1][j] << 8) + (h[2][j] << 8) + (h[3][j] << 8);
-		f[0][j] = (temp[0] >> 10) + ((temp[0] >> 9) & 1);
-
-		temp[1] = ((h[0][j] << 8) + (f[0][j] << 7) + (h[0][j] << 5))
+		temp = ((h[0][j] << 8) + (f[0][j] << 7) + (h[0][j] << 5))
 			+ ((h[1][j] << 7) + (h[1][j] << 6) + (h[1][j] << 4))
 			- ((h[2][j] << 7) + (h[2][j] << 6) + (h[2][j] << 4))
 			- ((h[3][j] << 8) + (h[3][j] << 7) + (h[3][j] << 5));
-		f[1][j] = (temp[1] >> 10) + ((temp[1] >> 9) & 1);
+		f[1][j] = (temp + 512) >> 10;
 
-		temp[2] = (h[0][j] << 8) - (h[1][j] << 8) - (h[2][j] << 8) + (h[3][j] << 8);
-		f[2][j] = (temp[2] >> 10) + ((temp[2] >> 9) & 1);
+		temp = (h[0][j] << 8) - (h[1][j] << 8) - (h[2][j] << 8) + (h[3][j] << 8);
+		f[2][j] = (temp + 512) >> 10;
 
-		temp[3] = ((h[0][j] << 7) + (h[0][j] << 6) + (h[0][j] << 4))
+		temp = ((h[0][j] << 7) + (h[0][j] << 6) + (h[0][j] << 4))
 			- ((h[1][j] << 8) + (h[1][j] << 7) + (h[1][j] << 5))
 			+ ((h[2][j] << 8) + (h[2][j] << 7) + (h[2][j] << 5))
 			- ((h[3][j] << 7) + (h[3][j] << 6) + (h[3][j] << 4));
-		f[3][j] = (temp[3] >> 10) + ((temp[3] >> 9) & 1);
-
-		/*f[0][j] = roundRightShift((h[0][j] << 8) + (h[1][j] << 8) + (h[2][j] << 8) + (h[3][j] << 8), 10);
-		f[1][j] = roundRightShift(((h[0][j] << 8) + (f[0][j] << 7) + (h[0][j] << 5))
-			+ ((h[1][j] << 7) + (h[1][j] << 6) + (h[1][j] << 4))
-			- ((h[2][j] << 7) + (h[2][j] << 6) + (h[2][j] << 4))
-			- ((h[3][j] << 8) + (h[3][j] << 7) + (h[3][j] << 5)), 10);
-		f[2][j] = roundRightShift((h[0][j] << 8) - (h[1][j] << 8) - (h[2][j] << 8) + (h[3][j] << 8), 10);
-		f[3][j] = roundRightShift(((h[0][j] << 7) + (h[0][j] << 6) + (h[0][j] << 4))
-			- ((h[1][j] << 8) + (h[1][j] << 7) + (h[1][j] << 5))
-			+ ((h[2][j] << 8) + (h[2][j] << 7) + (h[2][j] << 5))
-			- ((h[3][j] << 7) + (h[3][j] << 6) + (h[3][j] << 4)), 10);*/
-
-		/*f[0][j] = ((h[0][j] << 4) + (h[1][j] << 4) + (h[2][j] << 4) + (h[3][j] << 4)) >> 6;
-		f[1][j] = (((h[0][j] << 4) + (f[0][j] << 3) + (h[0][j] << 1))
-			+ ((h[1][j] << 3) + (h[1][j] << 2) + (h[1][j] << 0))
-			- ((h[2][j] << 3) + (h[2][j] << 2) + (h[2][j] << 0))
-			- ((h[3][j] << 4) + (h[3][j] << 3) + (h[3][j] << 1))) >> 6;
-		f[2][j] = ((h[0][j] << 4) - (h[1][j] << 4) - (h[2][j] << 4) + (h[3][j] << 4)) >> 6;
-		f[3][j] = (((h[0][j] << 3) + (h[0][j] << 2) + (h[0][j] << 0))
-			- ((h[1][j] << 4) + (h[1][j] << 3) + (h[1][j] << 1))
-			+ ((h[2][j] << 4) + (h[2][j] << 3) + (h[2][j] << 1))
-			- ((h[3][j] << 3) + (h[3][j] << 2) + (h[3][j] << 0))) >> 6;*/
+		f[3][j] = (temp + 512) >> 10;
 	}
 
 	// (C'*D'*X)*(B'*A')
 	for (int i = 0; i < 4; i++)
 	{
-		//d[i][0] = ((f[i][0]>>2) + (f[i][1]>>2) + (f[i][2]>>2) + (f[i][3]>>2)) >> 5;
-		//d[i][1] = ((f[i][0]<<1)/5 + f[i][1] / 5 - f[i][2] / 5 - (f[i][3]<<1)/5) >> 5;
-		//d[i][2] = ((f[i][0]>>2) - (f[i][1]>>2) - (f[i][2]>>2) + (f[i][3]>>2)) >> 5;
-		//d[i][3] = (f[i][0] / 5 - (f[i][1]<<1)/5 + (f[i][2]<<1)/5 - f[i][3] / 5) >> 5;
+		temp = (f[i][0] << 8) + (f[i][1] << 8) + (f[i][2] << 8) + (f[i][3] << 8);
+		d[i][0] = (temp + 512) >> 10;
 
-		temp[0] = (f[i][0] << 8) + (f[i][1] << 8) + (f[i][2] << 8) + (f[i][3] << 8);
-		d[i][0] = (temp[0] >> 10) + ((temp[0] >> 9) & 1);
-
-		temp[1] = ((f[i][0] << 8) + (f[i][0] << 7) + (f[i][0] << 5))
+		temp = ((f[i][0] << 8) + (f[i][0] << 7) + (f[i][0] << 5))
 			+ ((f[i][1] << 7) + (f[i][1] << 6) + (f[i][1] << 4))
 			- ((f[i][2] << 7) + (f[i][2] << 6) + (f[i][2] << 4))
 			- ((f[i][3] << 8) + (f[i][3] << 7) + (f[i][3] << 5));
-		d[i][1] = (temp[1] >> 10) + ((temp[1] >> 9) & 1);
+		d[i][1] = (temp + 512) >> 10;
 
-		temp[2] = (f[i][0] << 8) - (f[i][1] << 8) - (f[i][2] << 8) + (f[i][3] << 8);
-		d[i][2] = (temp[2] >> 10) + ((temp[2] >> 9) & 1);
+		temp = (f[i][0] << 8) - (f[i][1] << 8) - (f[i][2] << 8) + (f[i][3] << 8);
+		d[i][2] = (temp + 512) >> 10;
 
-		temp[3] = ((f[i][0] << 7) + (f[i][0] << 6) + (f[i][0] << 4))
+		temp = ((f[i][0] << 7) + (f[i][0] << 6) + (f[i][0] << 4))
 			- ((f[i][1] << 8) + (f[i][1] << 7) + (f[i][1] << 5))
 			+ ((f[i][2] << 8) + (f[i][2] << 7) + (f[i][2] << 5))
 			- ((f[i][3] << 7) + (f[i][3] << 6) + (f[i][3] << 4));
-		d[i][3] = (temp[3] >> 10) + ((temp[3] >> 9) & 1);
-
-
-		/*d[i][0] = roundRightShift((f[i][0] << 8) + (f[i][1] << 8) + (f[i][2] << 8) + (f[i][3] << 8), 10);
-		d[i][1] = roundRightShift(((f[i][0] << 8) + (f[i][0] << 7) + (f[i][0] << 5))
-			+ ((f[i][1] << 7) + (f[i][1] << 6) + (f[i][1] << 4))
-			- ((f[i][2] << 7) + (f[i][2] << 6) + (f[i][2] << 4))
-			- ((f[i][3] << 8) + (f[i][3] << 7) + (f[i][3] << 5)), 10);
-		d[i][2] = roundRightShift((f[i][0] << 8) - (f[i][1] << 8) - (f[i][2] << 8) + (f[i][3] << 8), 10);
-		d[i][3] = roundRightShift(((f[i][0] << 7) + (f[i][0] << 6) + (f[i][0] << 4))
-			- ((f[i][1] << 8) + (f[i][1] << 7) + (f[i][1] << 5))
-			+ ((f[i][2] << 8) + (f[i][2] << 7) + (f[i][2] << 5))
-			- ((f[i][3] << 7) + (f[i][3] << 6) + (f[i][3] << 4)), 10);*/
-
-		/*d[i][0] = ((f[i][0] << 4) + (f[i][1] << 4) + (f[i][2] << 4) + (f[i][3] << 4)) >> 6;
-		d[i][1] = (((f[i][0] << 4) + (f[i][0] << 3) + (f[i][0] << 1))
-			+ ((f[i][1] << 3) + (f[i][1] << 2) + (f[i][1] << 0))
-			- ((f[i][2] << 3) + (f[i][2] << 2) + (f[i][2] << 0))
-			- ((f[i][3] << 4) + (f[i][3] << 3) + (f[i][3] << 1))) >> 6;
-		d[i][2] = ((f[i][0] << 4) - (f[i][1] << 4) - (f[i][2] << 4) + (f[i][3] << 4)) >> 6;
-		d[i][3] = (((f[i][0] << 3) + (f[i][0] << 2) + (f[i][0] << 0))
-			- ((f[i][1] << 4) + (f[i][1] << 3) + (f[i][1] << 5))
-			+ ((f[i][2] << 4) + (f[i][2] << 3) + (f[i][2] << 5))
-			- ((f[i][3] << 3) + (f[i][3] << 2) + (f[i][3] << 0))) >> 6;*/
+		d[i][3] = (temp + 512) >> 10;
 	}
-
-	//int pom_0, pom_1, pom_2, pom_3;
-	//int output_temp[4][4];	
-	//
-	////multiply A*X
-	//for (i = 0; i < 4; i++)
-	//{
-	//	for (j = 0; j < 4; j++)
-	//	{
-	//		switch (i)
-	//		{
-	//			case 0: 
-	//				output_temp[i][j] = input[0][j] + input[1][j] + input[2][j] + input[3][j];					
-	//				break;
-	//			case 1: 
-	//				pom_0 = input[0][j] << 1;
-	//				pom_3 = input[3][j] << 1;
-	//				output_temp[i][j] = pom_0 + input[1][j] - input[2][j] - pom_3;
-	//				break;
-	//			case 2:
-	//				output_temp[i][j] = input[0][j] - input[1][j] - input[2][j] + input[3][j];
-	//				break;
-	//			case 3:
-	//				pom_1 = input[1][j] << 1;
-	//				pom_2 = input[2][j] << 1;
-	//				output_temp[i][j] = input[0][j] - pom_1 + pom_2 - input[3][j];
-	//				break;
-	//		}
-	//	}
-	//}
-	//
-	////multiply (A*X)*At
-	//for (i = 0; i < 4; i++)
-	//{
-	//	for (j = 0; j < 4; j++)
-	//	{
-	//		switch (j)
-	//		{
-	//			case 0: 
-	//				output[i][j] = output_temp[i][0] + output_temp[i][1] + output_temp[i][2] + output_temp[i][3];
-	//				break;
-	//			case 1: 
-	//				pom_0 = output_temp[i][0] << 1;
-	//				pom_3 = output_temp[i][3] << 1;
-	//				output[i][j] = pom_0 + output_temp[i][1] - output_temp[i][2] - pom_3;
-	//				break;
-	//			case 2:
-	//				output[i][j] = output_temp[i][0] - output_temp[i][1] - output_temp[i][2] + output_temp[i][3];
-	//				break;
-	//			case 3:
-	//				pom_1 = output_temp[i][1] << 1;
-	//				pom_2 = output_temp[i][2] << 1;
-	//				output[i][j] = output_temp[i][0] - pom_1 + pom_2 - output_temp[i][3];
-	//				break;
-	//		}
-	//	}
-	//}
-
 }
 
 
@@ -219,62 +106,6 @@ void forwardTransformDCLumaIntra(int f[4][4], int c[4][4]) //(int input[4][4], i
 {
 	int i, j;
 	int temp[4];
-	//int output_temp[4][4];
-
-	////multiply A*W
-	//for (i = 0; i < 4; i++)
-	//{
-	//	for (j = 0; j < 4; j++)
-	//	{
-	//		switch (i)
-	//		{
-	//			case 0: 
-	//				output_temp[i][j] = input[0][j] + input[1][j] + input[2][j] + input[3][j];					
-	//				break;
-	//			case 1: 					
-	//				output_temp[i][j] = input[0][j] + input[1][j] - input[2][j] - input[3][j];
-	//				break;
-	//			case 2:
-	//				output_temp[i][j] = input[0][j] - input[1][j] - input[2][j] + input[3][j];
-	//				break;
-	//			case 3:					
-	//				output_temp[i][j] = input[0][j] - input[1][j] + input[2][j] - input[3][j];
-	//				break;
-	//		}
-	//	}
-	//}
-	//
-	////multiply (A*W)*At
-	//for (i = 0; i < 4; i++)
-	//{
-	//	for (j = 0; j < 4; j++)
-	//	{
-	//		switch (j)
-	//		{
-	//			case 0: 
-	//				output[i][j] = output_temp[i][0] + output_temp[i][1] + output_temp[i][2] + output_temp[i][3];
-	//				break;
-	//			case 1: 					
-	//				output[i][j] = output_temp[i][0] + output_temp[i][1] - output_temp[i][2] - output_temp[i][3];
-	//				break;
-	//			case 2:
-	//				output[i][j] = output_temp[i][0] - output_temp[i][1] - output_temp[i][2] + output_temp[i][3];
-	//				break;
-	//			case 3:					
-	//				output[i][j] = output_temp[i][0] - output_temp[i][1] + output_temp[i][2] - output_temp[i][3];
-	//				break;
-	//		}
-	//	}
-	//}
-
-	//shifting one bit to the right, equaly to dividing with 2
-	/*for (i = 0; i < 4; i++)
-	{
-		for (j = 0; j < 4; j++)
-		{
-			output[i][j] = output[i][j] >> 1;
-		}
-	}*/
 
 	int d[4][4], e[4][4], g[4][4];
 
@@ -313,17 +144,11 @@ void forwardTransformDCLumaIntra(int f[4][4], int c[4][4]) //(int input[4][4], i
 		temp[2] = d[i][0] - d[i][1];
 		temp[3] = d[i][3] - d[i][2];
 
-		c[i][0] = (temp[0] >> 4) + ((temp[0] >> 3) & 1);
-		c[i][1] = (temp[1] >> 4) + ((temp[1] >> 3) & 1);
-		c[i][2] = (temp[2] >> 4) + ((temp[2] >> 3) & 1);
-		c[i][3] = (temp[3] >> 4) + ((temp[3] >> 3) & 1);
-
-		/*c[i][0] = roundRightShift(d[i][0] + d[i][1], 4);
-		c[i][1] = roundRightShift(d[i][3] + d[i][2], 4);
-		c[i][2] = roundRightShift(d[i][0] - d[i][1], 4);
-		c[i][3] = roundRightShift(d[i][3] - d[i][2], 4);*/
+		c[i][0] = (temp[0] + 8) >> 4;
+		c[i][1] = (temp[1] + 8) >> 4;
+		c[i][2] = (temp[2] + 8) >> 4;
+		c[i][3] = (temp[3] + 8) >> 4;
 	}
-
 }
 
 
@@ -334,41 +159,22 @@ void forwardTransformDCChroma (int f[2][2], int c[2][2])
 	int d[2][2];
 	int temp;
 
-	/*d[0][0] = c[0][0] + c[1][0];
-	d[0][1] = c[0][1] + c[1][1];
-	d[1][0] = c[0][0] - c[1][0];
-	d[1][1] = c[0][1] - c[1][1];*/
-
 	d[0][0] = f[0][0] + f[0][1];
 	d[0][1] = f[0][0] - f[0][1];
 	d[1][0] = f[1][0] + f[1][1];
 	d[1][1] = f[1][0] - f[1][1];
 
 	temp = d[0][0] + d[1][0];
-	c[0][0] = (temp >> 2) + ((temp >> 1) & 1);
+	c[0][0] = (temp + 2) >> 2;
 
 	temp = d[0][1] + d[1][1];
-	c[0][1] = (temp >> 2) + ((temp >> 1) & 1);
+	c[0][1] = (temp + 2) >> 2;
 
 	temp = d[0][0] - d[1][0];
-	c[1][0] = (temp >> 2) + ((temp >> 1) & 1);
+	c[1][0] = (temp + 2) >> 2;
 
 	temp = d[0][1] - d[1][1];
-	c[1][1] = (temp >> 2) + ((temp >> 1) & 1);
-
-	/*c[0][0] = roundRightShift(d[0][0] + d[1][0], 2);
-	c[0][1] = roundRightShift(d[0][1] + d[1][1], 2);
-	c[1][0] = roundRightShift(d[0][0] - d[1][0], 2);
-	c[1][1] = roundRightShift(d[0][1] - d[1][1], 2);*/
-
-	/*f[0][0] = (d[0][0] + d[0][1]) >> 2;
-	f[0][1] = (d[0][0] - d[0][1]) >> 2;
-	f[1][0] = (d[1][0] + d[1][1]) >> 2;
-	f[1][1] = (d[1][0] - d[1][1]) >> 2;*/
-	
-	/*for (int i = 0; i < 2; i++)
-		for (int j = 0; j < 2; j++)
-			f[i][j] = f[i][j] >> 2;*/
+	c[1][1] = (temp + 2) >> 2;
 }
 
 
@@ -379,17 +185,7 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra, boo
 	int qPCalculated = qP / 6;	
 	int qbits;
 	int qPMod = qP % 6;
-	//int f;
 	int temp;
-
-	/*if (Intra)
-	{
-		f = (1 << qbits) / 3;
-	}
-	else
-	{
-		f = (1 << qbits) / 6;
-	}*/
 
 	if (qP < 24)
 	{
@@ -402,9 +198,7 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra, boo
 			for (int j = 0; j < 4; j++)
 			{
 				temp = ((d[i][j] << qbits) - adjust) * LevelQuantize[qPMod][i][j];
-				c[i][j] = (temp >> 15) + ((temp >> 14) & 1);
-
-				//c[i][j] = roundRightShift(((d[i][j] << qbits) - adjust) * LevelQuantize[qPMod][i][j], 15);
+				c[i][j] = (temp + 16384) >> 15;
 			}
 		}
 	}
@@ -416,23 +210,10 @@ void quantisationResidualBlock(int d[4][4], int c[4][4], int qP, bool Intra, boo
 			for (int j = 0; j < 4; j++)
 			{
 				temp = (d[i][j] >> qbits) * LevelQuantize[qPMod][i][j];
-				c[i][j] = (temp >> 15) + ((temp >> 14) & 1);
-
-				//c[i][j] = roundRightShift(((d[i][j] << qbits) - adjust) * LevelQuantize[qPMod][i][j], 15);
+				c[i][j] = (temp + 16384) >> 15;
 			}
 		}
 	}
-	
-	/*for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			int sign = ExtractSign(d[i][j]);
-			if (sign) d[i][j] =  sign * d[i][j];			
-			c[i][j] = (d[i][j] * MF[qPMod][i][j] + f) >> qbits;
-			if (sign) c[i][j] = sign * c[i][j];
-		}
-	}*/
 
 	if (Intra16x16OrChroma == true)
 	{
@@ -458,9 +239,7 @@ void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 			for (int j = 0; j < 4; j++)
 			{
 				temp = (f[i][j] >> qbits) * quantizeL;
-				c[i][j] = (temp >> 15) + ((temp >> 14) & 1);
-
-				//c[i][j] = roundRightShift((f[i][j] >> qbits) * quantizeL, 15);
+				c[i][j] = (temp + 16384) >> 15;
 			}
 		}
 	}
@@ -474,30 +253,10 @@ void quantisationLumaDCIntra (int f[4][4], int qP, int c[4][4])
 			for (int j = 0; j < 4; j++)
 			{
 				temp = ((f[i][j] << qbits) - adjust) * quantizeL;
-				c[i][j] = (temp >> 15) + ((temp >> 14) & 1);
-
-				//c[i][j] = roundRightShift(((f[i][j] << qbits) - adjust) * quantizeL, 15);
+				c[i][j] = (temp + 16384) >> 15;
 			}
 		}
 	}
-
-	
-	/*qbits = 15 + qP/6;
-	int qPMod = qP % 6;
-	int f_adjust;	
-
-	f_adjust = (1 << qbits) / 3;	
-
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			int sign = ExtractSign(f[i][j]);
-			if (sign) f[i][j] =  sign * f[i][j];	
-			c[i][j] = (f[i][j] * MF[qPMod][0][0] + 2 * f_adjust) >> (qbits + 3);
-			if (sign) c[i][j] =  sign * c[i][j];
-		}
-	}*/
 }
 
 // --------------------------------------------------
@@ -517,31 +276,9 @@ void quantisationChromaDC(int f[2][2], int qP, int c[2][2], bool Intra)
 		for (int j = 0; j < 2; j++)
 		{
 			temp = ((f[i][j] << 5) >> qP_calculate) * quantizeL;
-			c[i][j] = (temp >> 15) + ((temp >> 14) & 1);
-
-			//c[i][j] = roundRightShift(((f[i][j] << 5) >> qP_calculate) * quantizeL, 15);
+			c[i][j] = (temp + 16384) >> 15;
 		}
 	}
-
-	/*if (Intra)
-	{
-		f_adjust = (1 << qbits) / 3;
-	}
-	else
-	{
-		f_adjust = (1 << qbits) / 6;
-	}
-
-	for (int i = 0; i < 2; i++)
-	{
-		for (int j = 0; j < 2; j++)
-		{
-			int sign = ExtractSign(f[i][j]);
-			if (sign) f[i][j] =  sign * f[i][j];	
-			c[i][j] = (f[i][j] * MF[qPMod][0][0] + 2 * f_adjust) >> (qbits + 3);
-			if (sign) c[i][j] =  sign * c[i][j];
-		}
-	}*/
 }
 
 void forwardResidual(int qP, int c[4][4], int r[4][4], bool Intra, bool Intra16x16OrChroma)
@@ -680,41 +417,10 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			{
 				transformDecodingIntra_16x16Luma(Intra16x16DCLevel, Intra16x16ACLevel, predL, QPy);
 			}
-			
-			//InverseDCLumaIntra(8, qP, rDCLuma, reconstructedDCY);
-
-			//for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
-			//{
-			//	int x0 = Intra4x4ScanOrder[luma4x4BlkIdx][0];
-			//	int y0 = Intra4x4ScanOrder[luma4x4BlkIdx][1];
-
-			//	inverseResidual(8, qP, rLuma, reconstructedBlock, true);
-			//	for (int i = 0; i < 4; i++)
-			//	{
-			//		for (int j = 0; j < 4; j++)
-			//		{
-			//			reconstructedLuma[y0 + i][x0 + j] = reconstructedBlock[i][j];
-			//		}
-			//	}
-
-			//	reconstructedLuma[y0][x0] = reconstructedDCY[y0/4][x0/4];
-
-			//	for (int i = 0; i < 4; i++)
-			//	{
-			//		for (int j = 0; j < 4; j++)
-			//		{
-			//			frame.L[yP + y0 + i][xP + x0 + j] = reconstructedLuma[y0 + i][x0 + j] + predL[y0 + i][x0 + j];
-			//		}
-			//	}
-			//}
 		}
 	}
 
 	//Chroma quantization and transform process
-
-	int reconstructedChroma[2][8][8];
-	int reconstructedChromaBlock[2][4][4];
-	int reconstructedDCChroma[2][2][2];
 
 	int xPC = xP/2;
 	int yPC = yP/2;
@@ -754,8 +460,8 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 			forwardResidual(qP, diffCr4x4, rCr, false, true);
 		}
 
-		DCCb[y0C/4][x0C/4] = rCb[0][0];
-		DCCr[y0C/4][x0C/4] = rCr[0][0];
+		DCCb[y0C>>2][x0C>>2] = rCb[0][0];
+		DCCr[y0C>>2][x0C>>2] = rCr[0][0];
 
 		scanChroma(rCb, ChromaACLevel[0][chroma4x4BlkIdx]);
 		scanChroma(rCr, ChromaACLevel[1][chroma4x4BlkIdx]);
@@ -781,37 +487,4 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 		transformDecodingChroma(ChromaDCLevel[0], ChromaACLevel[0], predCb, QPy, true);
 		transformDecodingChroma(ChromaDCLevel[1], ChromaACLevel[1], predCr, QPy, false);
 	}
-
-	/*InverseDCChroma(8, qP, rDCCb, reconstructedDCChroma[0]);
-	InverseDCChroma(8, qP, rDCCb, reconstructedDCChroma[1]);
-
-	for (int chroma4x4BlkIdx = 0; chroma4x4BlkIdx < 4; chroma4x4BlkIdx++)
-	{
-		x0C = (chroma4x4BlkIdx % 2) * 4;
-		y0C = (chroma4x4BlkIdx / 2) * 4;
-
-		inverseResidual(8, qP, rCb,reconstructedChromaBlock[0], true);
-		inverseResidual(8, qP, rCr,reconstructedChromaBlock[1], true);
-
-		for (int i = 0; i < 4; i++)
-		{
-			for (int j = 0; j < 4; j++)
-			{				
-				reconstructedChroma[0][y0C + i][x0C + j] = reconstructedChromaBlock[0][i][j];
-				reconstructedChroma[1][y0C + i][x0C + j] = reconstructedChromaBlock[1][i][j];
-			}
-		}
-
-		reconstructedChroma[0][y0C][x0C] = reconstructedDCChroma[0][y0C/4][x0C/4];
-		reconstructedChroma[1][y0C][x0C] = reconstructedDCChroma[1][y0C/4][x0C/4];
-		
-		for (int i = 0; i < 4; i++)
-		{
-			for (int j = 0; j < 4; j++)
-			{				
-				frame.C[0][yPC + y0C + i][xPC + x0C + j] = reconstructedChroma[0][y0C + i][x0C + j] + predCb[y0C + i][x0C + j];
-				frame.C[1][yPC + y0C + i][xPC + x0C + j] = reconstructedChroma[1][y0C + i][x0C + j] + predCr[y0C + i][x0C + j];				
-			}
-		}
-	}*/
 }
