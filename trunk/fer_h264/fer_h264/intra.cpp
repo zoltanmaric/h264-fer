@@ -15,145 +15,63 @@
 
 const int intraToChromaPredMode[4] = {2,1,0,3};
 
-// Derivation process for neighbouring locations (6.4.11)
-// luma: true if invoked for luma locations, false if invoked for chroma
-void getNeighbourLocations(int xN, int yN, int *mbAddrN, int *xW, int *yW, bool luma)
-{
-	// width and height of the macroblock
-	int maxW, maxH;
-	if (luma)
-	{
-		maxW = 16;
-		maxH = 16;
-	}
-	else
-	{
-		maxW = 8;		// Norm: maxW = MbWidthC;
-		maxH = 8;		// Norm: maxH = MbHeightC;
-	}
-	
-	// if xN and yN are within this macroblock
-	if ((xN >= 0) && (xN < maxW) &&
-		(yN >= 0) && (yN < maxH))
-		// this is the current macroblock
-		*mbAddrN = CurrMbAddr;
-	
-	// if (xN,yN) is left from the current macroblock
-	else if ((xN < 0) && (yN >= 0) &&
-			 (yN < maxH))
-	{
-		 if ((CurrMbAddr % PicWidthInMbs) != 0)
-			 // this is macroblock A
-			 *mbAddrN = CurrMbAddr - 1;
-		 else
-			 //this macroblock is not available (out of frame)
-			 *mbAddrN = -1;
-	}
-	
-	// if (xN,yN) is above the current macroblock
-	else if ((xN >= 0) && (xN < maxW) &&
-			 (yN < 0))
-	{
-		if (CurrMbAddr >= PicWidthInMbs)
-			// this is macroblock B
-			*mbAddrN = CurrMbAddr - PicWidthInMbs;
-		else
-			// this macroblock is not available (out of frame)
-			*mbAddrN = -1;
-	}
+const int subMBNeighbours[16][2] = {
+{ 5, 10}, { 0, 11}, { 7,  0}, { 2,  1},
+{ 1, 14}, { 4, 15}, { 3,  4}, { 6,  5},
+{13,  2}, { 8,  3}, {15,  8}, {10,  9},
+{ 9,  6}, {12,  7}, {11, 12}, {14, 13}};
 
-	// if (xN,yN) is above and to the right from the current macroblock
-	else if ((xN >= maxW) && (yN < 0))
-	{
-		if (((CurrMbAddr % PicWidthInMbs) != (PicWidthInMbs - 1)) &&
-			(CurrMbAddr >= PicWidthInMbs))
-			// this is macroblock C
-			*mbAddrN = CurrMbAddr - (PicWidthInMbs - 1);
-		else
-			// this macroblock is not available (out of frame)
-			*mbAddrN = -1;
-	}
-
-	// if (xN,yN) is above and to the left from the current macroblock
-	else if ((xN < 0) && (yN < 0))
-	{
-		if (((CurrMbAddr % PicWidthInMbs) != 0) &&
-			(CurrMbAddr >= PicWidthInMbs))
-			// this is macroblock D
-			*mbAddrN = CurrMbAddr - (PicWidthInMbs + 1);
-		else
-			// this macroblock is not available (out of frame)
-			*mbAddrN = -1;
-	}
-	else
-		*mbAddrN = -1;
-
-	// position of the edge sample in the adjacent 4x4 block
-	// relative to the top left sample in macroblock N
-	*xW = (xN + maxW) % maxW;
-	*yW = (yN + maxH) % maxH;
-}
-
-// Derivation process for neighbouring 4x4 luma blocks (6.4.10.4)
+// Derivation process for neighbouring 4x4 luma blocks,
+// equivalent to (6.4.10.4)
 // nA - neighbour (A if true, B if false, see figure 6-12)
 void getNeighbourAddresses(int luma4x4BlkIdx, bool nA, int *mbAddrN, int *luma4x4BlkIdxN)
 {
-	int xD, yD;			// table 6-2
-	// Neighbour A
 	if (nA == true)
 	{
-		xD = -1;
-		yD = 0;
+		if ((luma4x4BlkIdx == 0) || (luma4x4BlkIdx == 2) ||
+			(luma4x4BlkIdx == 8) || (luma4x4BlkIdx == 10))
+		{
+			if (CurrMbAddr % PicWidthInMbs == 0)
+			{
+				*mbAddrN = -1;
+				*luma4x4BlkIdxN = -1;
+			}
+			else
+			{
+				*mbAddrN = CurrMbAddr - 1;
+				*luma4x4BlkIdxN = subMBNeighbours[luma4x4BlkIdx][0];
+			}
+		}		
+		else
+		{
+			*mbAddrN = CurrMbAddr;
+			*luma4x4BlkIdxN = subMBNeighbours[luma4x4BlkIdx][0];
+		}
 	}
-	// Neighbour B
 	else
 	{
-		xD = 0;
-		yD = -1;
+		if ((luma4x4BlkIdx == 0) || (luma4x4BlkIdx == 1) ||
+			(luma4x4BlkIdx == 4) || (luma4x4BlkIdx == 5))
+		{
+			if (CurrMbAddr < PicWidthInMbs)
+			{
+				*mbAddrN = -1;
+				*luma4x4BlkIdxN = -1;
+			}
+			else
+			{
+				*mbAddrN = CurrMbAddr - PicWidthInMbs;
+				*luma4x4BlkIdxN = subMBNeighbours[luma4x4BlkIdx][1];
+			}
+		}		
+		else
+		{
+			*mbAddrN = CurrMbAddr;
+			*luma4x4BlkIdxN = subMBNeighbours[luma4x4BlkIdx][1];
+		}
 	}
-
-	// Luma block scanning process (6.4.3)
-	// position of the top left sample in the 4x4 block
-	// relative to the top left sample in the current macroblock
-	int x = InverseRasterScan(luma4x4BlkIdx >> 2, 8, 8, 16, 0) +
-			InverseRasterScan(luma4x4BlkIdx & 3, 4, 4, 8, 0);
-	int y = InverseRasterScan(luma4x4BlkIdx >> 2, 8, 8, 16, 1) +
-			InverseRasterScan(luma4x4BlkIdx & 3, 4, 4, 8, 1);
-
-	// position of the edge sample in the adjacent 4x4 block
-	// relative to the top left sample in the current macroblock
-	int xN = x + xD;
-	int yN = y + yD;
-
-	int xW, yW;
-	getNeighbourLocations(xN, yN, mbAddrN, &xW, &yW, true);
-
-	if (*mbAddrN != -1)
-		*luma4x4BlkIdxN = ((yW >> 3) << 3) + ((xW >> 3) << 2) + (((yW & 7) >> 2) << 1) + ((xW & 7) >> 2);
-	else
-		*luma4x4BlkIdxN = -1;
 }
 
-void inline getNeighbouringMacroblocks(int *mbAddrA, int *mbAddrB)
-{
-	if (CurrMbAddr < PicWidthInMbs)
-	{
-		*mbAddrB = -1;
-	}
-	else
-	{
-		*mbAddrB = CurrMbAddr - PicWidthInMbs;
-	}
-
-	if (CurrMbAddr % PicWidthInMbs == 0)
-	{
-		*mbAddrA = -1;
-	}
-	else
-	{
-		*mbAddrA = CurrMbAddr - 1;
-	}
-}
 
 // Derivation process for Intra4x4PredMode (8.3.1.1)
 void getIntra4x4PredMode(int luma4x4BlkIdx)
@@ -652,8 +570,8 @@ void Intra_Chroma_DC(int *p, int predC[8][8])
 	// chroma4x4BlkIdx € [0..(1<<ChromaArrayType+1)) - 1]; ChromaArrayType == 1 in baseline
 	for (int chroma4x4BlkIdx = 0; chroma4x4BlkIdx < 4; chroma4x4BlkIdx++)
 	{
-		int x0 = InverseRasterScan(chroma4x4BlkIdx, 4, 4, 8, 0);
-		int y0 = InverseRasterScan(chroma4x4BlkIdx, 4, 4, 8, 1);
+		int x0 = (chroma4x4BlkIdx & 1) << 2;
+		int y0 = (chroma4x4BlkIdx >> 1) << 2;
 
 		int sumXi = 0, sumYi = 0;
 		for (int i = 0; i < 4; i++)
@@ -1032,11 +950,9 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 {
 	int Intra16x16PredMode;
 	int pred4x4L[4][4];
-	int mbAddrA, mbAddrB;
 	int bitLoad;
 	int chosenChromaPrediction;
 
-	getNeighbouringMacroblocks(&mbAddrA, &mbAddrB);
 	int min = INT_MAX;
 
 	int p[33];
@@ -1066,9 +982,9 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		for (int i = 0; i < 4; i++)
 		{
 			// Skip prediction if required neighbouring macroblocks are not available
-			if (((i == 0) && (mbAddrB == -1)) ||
-				((i == 1) && (mbAddrA == -1)) ||
-				((i == 3) && ((mbAddrA == -1) || (mbAddrB == -1))))
+			if (((i == 0) && (p[17] == -1)) ||
+				((i == 1) && (p[1] == -1)) ||
+				((i == 3) && (p[0] == -1)))
 			{
 				continue;
 			}
@@ -1100,26 +1016,20 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 		for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 		{
 			int min4x4 = INT_MAX;
-			// getNeighbourAddresses also calculates the address of the neighbouring
-			// macroblock which is not used in this function, so it's stored in the
-			// variable temp.
-			int luma4x4BlkIdxA, luma4x4BlkIdxB, temp;
-			getNeighbourAddresses(luma4x4BlkIdx, true, &temp, &luma4x4BlkIdxA);
-			getNeighbourAddresses(luma4x4BlkIdx, false, &temp, &luma4x4BlkIdxB);
 
 			int p[13];
 			FetchPredictionSamplesIntra4x4(luma4x4BlkIdx, p);
 			for(int predMode = 0; predMode < 9; predMode++)
 			{
 				// Skip prediction if required neighbouring submacroblocks are not available
-				if (((predMode == 0) && (luma4x4BlkIdxB == -1)) ||
-					((predMode == 1) && (luma4x4BlkIdxA == -1)) ||
-					((predMode == 3) && (luma4x4BlkIdxB == -1)) ||
-					((predMode == 4) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
-					((predMode == 5) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
-					((predMode == 6) && ((luma4x4BlkIdxA == -1) || (luma4x4BlkIdxB == -1))) ||
-					((predMode == 7) && (luma4x4BlkIdxB == -1)) ||
-					((predMode == 8) && (luma4x4BlkIdxA == -1)))
+				if (((predMode == 0) && (p[5] == -1)) ||
+					((predMode == 1) && (p[1] == -1)) ||
+					((predMode == 3) && (p[5] == -1)) ||
+					((predMode == 4) && (p[0] == -1)) ||
+					((predMode == 5) && (p[0] == -1)) ||
+					((predMode == 6) && (p[0] == -1)) ||
+					((predMode == 7) && (p[5] == -1)) ||
+					((predMode == 8) && (p[1] == -1)))
 				{
 					continue;
 				}
