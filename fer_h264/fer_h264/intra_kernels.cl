@@ -351,11 +351,6 @@ GetIntra16x16PredModes(global uchar16 *frame, int frameWidth, int qP, global int
 ////////////////// Intra 4x4 prediction //////////////////
 //////////////////////////////////////////////////////////
 #define p(x,y) (((x) == -1) ? p[(y) + 1] : p[(x) + 5])
-__constant int subMBNeighbours[16][2] = {
-{ 5, 10}, { 0, 11}, { 7,  0}, { 2,  1},
-{ 1, 14}, { 4, 15}, { 3,  4}, { 6,  5},
-{13,  2}, { 8,  3}, {15,  8}, {10,  9},
-{ 9,  6}, {12,  7}, {11, 12}, {14, 13}};
 
 // (8.3.1.2.1)
 void Intra_4x4_Vertical(int *p, int pred4x4L[4][4])
