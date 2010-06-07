@@ -962,7 +962,9 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	{
 		if (CurrMbAddr == 0)
 		{
+			int start = clock();
 			WaitIntraCL(true);
+			printf("Waiting for OpenCL to finish: %dms\n", (clock()-start)*1000/CLOCKS_PER_SEC);
 		}
 
 		Intra16x16PredMode = predModes16x16[CurrMbAddr];
