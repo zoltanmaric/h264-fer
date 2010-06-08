@@ -174,12 +174,6 @@ int CodedBlockPatternChroma;
 int *CodedBlockPatternLumaArray;
 int *CodedBlockPatternChromaArray;
 
-/* TODO: These variables are currently unmanaged
-*/
-
-int transform_block_width;
-int colour_block_width;
-
 int mb_type;
 
 //mb_type values for all the macroblocks in the current frame/slice/NAL unit
@@ -230,8 +224,6 @@ int mvd_l0[4][4][2];
 int init_h264_structures()
 {
 	init_cavlc_tables();
-
-	//TODO: init frame
 
 	frame.Lheight=sps.FrameHeightInMbs*16;
 	frame.Lwidth=sps.PicWidthInMbs*16;

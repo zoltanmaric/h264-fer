@@ -102,12 +102,6 @@ extern int CodedBlockPatternChroma;
 extern int *CodedBlockPatternLumaArray;
 extern int *CodedBlockPatternChromaArray;
 
-/* TODO: These variables are currently unmanaged
-*/
-
-extern int transform_block_width;
-extern int colour_block_width;
-
 //mb_type for current macroblock
 extern int mb_type;
 

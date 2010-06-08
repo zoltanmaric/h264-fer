@@ -990,18 +990,15 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 			{
 				continue;
 			}
+
 			performIntra16x16Prediction(p, predL, i);
-
-			// Choose the same prediction mode for chroma:
-			intra_chroma_pred_mode = intraToChromaPredMode[i];
-			IntraChromaSamplePrediction(predCr, predCb);
-
 			int satd = satdLuma16x16(predL);
 			if (satd < min16x16)
 			{
 				min16x16 = satd;
 				Intra16x16PredMode = i;
-				chosenChromaPrediction = intra_chroma_pred_mode;
+				// Choose the equivalent prediction mode for chroma:
+				chosenChromaPrediction = intraToChromaPredMode[i];
 			}
 		}		
 		performIntra16x16Prediction(p, predL, Intra16x16PredMode);		

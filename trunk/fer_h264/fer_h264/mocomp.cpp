@@ -169,7 +169,6 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 		for(x=0; x<4; ++x)
 		{
 			predL[org_y+y][org_x+x] = L_MC_frac_interpol(&(L_Temp_4x4_refPart[y+2][x+2]), frac);
-			//int test = 0;
 		}
 
 	org_x/=2; org_y/=2; // Chroma resolution is halved luma resolution.

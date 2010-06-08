@@ -10,7 +10,6 @@ extern int Intra16x16ACLevel[16][16];
 extern int level[16][16], LumaLevel[16][16];
 
 void clear_residual_structures();
-void inverse_4x4_luma_block_scanning_process(int luma4x4BlkIdx, int *x, int *y);
 
 extern int ChromaDCLevel[2][4];
 extern int ChromaACLevel[2][4][16];
