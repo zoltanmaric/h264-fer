@@ -25,7 +25,7 @@ extern int NumC8x8;
 //TODO: Niz tipa mb_width*mb_height*16 integera NETOCNO, izrazeni u transform/colour blokovima
 //Number of non-zero coefficients in luma and chroma blocks (integer from 0 to 16)
 extern int **TotalCoeff_luma_array;
-extern int ***TotalCoeff_chroma_array;
+extern int **TotalCoeff_chroma_array[2];
 
 int get_nC(int x, int y, int luma_or_select_chroma);
 
