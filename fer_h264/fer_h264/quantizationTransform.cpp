@@ -357,10 +357,6 @@ void quantizationTransform(int predL[16][16], int predCb[8][8], int predCr[8][8]
 	int DCCb[2][2], DCCr[2][2];				// DC chroma coefficients
 	int rDCCb[2][2], rDCCr[2][2];			// processed DC chroma coefficients
 
-	int reconstructedBlock[4][4];
-	int reconstructedLuma[16][16];
-	int reconstructedDCY[4][4];
-
 	int qP;									// quantizer
 
 	// Luma transform and quantization process

@@ -122,7 +122,10 @@ void DeriveNeighbourPartitions(int mbPartIdx, int subMbPartIdx,
 
 	InverseMacroblockPartitionScan(mbPartIdx, &x, &y);
 	if (mb_type == P_8x8 || mb_type == P_8x8ref0)
-		inverse_4x4_luma_block_scanning_process(subMbPartIdx, &xS, &yS);
+	{
+		xS = Intra4x4ScanOrder[subMbPartIdx][0];
+		yS = Intra4x4ScanOrder[subMbPartIdx][1];
+	}
 
 	predPartWidth = 16;
 	if (mb_type == P_8x8 || mb_type == P_8x8ref0)

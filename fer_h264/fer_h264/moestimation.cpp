@@ -100,7 +100,6 @@ void FillInterpolatedRefFrame()
 				}
 		}
 	}
-	//TestKar(refFrameKar, refFrameInterpolated);
 	for (int i = 0; i < 16; i++)
 	{
 		for (int tx = frame.Lwidth; tx < frame.Lwidth+8; tx++)

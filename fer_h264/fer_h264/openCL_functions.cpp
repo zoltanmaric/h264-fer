@@ -188,7 +188,7 @@ void subtractFramesCL(unsigned char *dpb, unsigned char *result)
 	cl_event event_wait_list[3];
 	cl_uint num_events = 0;
 
-	err = clEnqueueWriteBuffer(cmd_queue, frame_mem, CL_FALSE, 0, buffer_size,		// TEST: currently non-blocking, may cause errors
+	err = clEnqueueWriteBuffer(cmd_queue, frame_mem, CL_FALSE, 0, buffer_size,
 							   (void*)frame.L, 0, NULL, &event_wait_list[num_events++]);
 	
 	err |= clEnqueueWriteBuffer(cmd_queue, dpb_mem, CL_FALSE, 0, buffer_size,

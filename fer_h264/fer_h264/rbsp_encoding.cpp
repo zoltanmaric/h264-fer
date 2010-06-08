@@ -174,8 +174,6 @@ void RBSP_encode(NALunit &nal_unit)
 
 		for (CurrMbAddr = 0; CurrMbAddr < shd.PicSizeInMbs; CurrMbAddr++)
 		{
-			// TODO: Try avoiding this.
-			clear_residual_structures();
 			if ((shd.slice_type != I_SLICE) && (shd.slice_type != SI_SLICE))
 			{
 				interEncoding(predL, predCr, predCb);

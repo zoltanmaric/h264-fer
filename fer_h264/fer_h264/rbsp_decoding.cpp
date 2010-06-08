@@ -50,13 +50,6 @@ void RBSP_decode(NALunit nal_unit)
 	else if ((nal_unit.nal_unit_type==NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type==NAL_UNIT_TYPE_NOT_IDR))
 	{
 		frameCount++;
-		// TEST: tu postavi frejm od kojeg želiš poèet ispisivanje
-		// u ppm ili yuv. Indeksi su isti ko u h264visi.
-		//if (frameCount < 399)
-		//{	
-		//	//frameCount++;
-		//	return;
-		//}
 		
 		//Read slice header
 		fill_shd(&nal_unit);
