@@ -229,25 +229,6 @@ int mvd_l0[4][4][2];
 
 int init_h264_structures()
 {
-	TotalCoeff_luma_array = new int*[sps.PicWidthInMbs];
-	for (int i=0;i<sps.PicWidthInMbs;i++)
-	{
-		TotalCoeff_luma_array[i] = new int [sps.FrameHeightInMbs];
-	}
-
-	TotalCoeff_chroma_array = new int**[2];
-	for (int cbcr=0;cbcr<2;cbcr++)
-	{
-		TotalCoeff_chroma_array[cbcr] = new int* [sps.FrameHeightInMbs];
-
-		for (int i=0;i<sps.FrameHeightInMbs;i++)
-		{
-				TotalCoeff_chroma_array[cbcr][i] = new int [sps.PicWidthInMbs];
-		}
-	}
-
-	//mb_type_array=new int[sps.PicWidthInMbs*sps.FrameHeightInMbs];
-
 	init_cavlc_tables();
 
 	//TODO: init frame
@@ -282,10 +263,6 @@ int init_h264_structures()
 	for (int i=0;i<sps.FrameHeightInMbs*4;i++)
 	{
 		TotalCoeff_luma_array[i]=new int[sps.PicWidthInMbs*4];
-		for (int j=0;j<sps.PicWidthInMbs*4;j++)
-		{
-			TotalCoeff_luma_array[i][j]=0;
-		}
 	}
 
 	TotalCoeff_chroma_array[0]=new int*[sps.FrameHeightInMbs*4];
@@ -295,11 +272,6 @@ int init_h264_structures()
 	{
 		TotalCoeff_chroma_array[0][i]=new int[sps.PicWidthInMbs*4];
 		TotalCoeff_chroma_array[1][i]=new int[sps.PicWidthInMbs*4];
-		for (int j=0;j<sps.PicWidthInMbs*4;j++)
-		{
-			TotalCoeff_chroma_array[0][i][j]=0;
-			TotalCoeff_chroma_array[1][i][j]=0;
-		}
 	}	
 
 	// These variables are stored for the reference picture

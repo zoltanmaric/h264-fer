@@ -54,25 +54,20 @@ void decodePictureNumbers()
 
 void initialisationProcess()
 {
-	dpb.Lheight=frame.Lheight;
-	dpb.Lwidth=frame.Lwidth;
-	dpb.Cheight=frame.Cheight;
-	dpb.Cwidth=frame.Cwidth;
+	static bool firstTime = true;
+	if (firstTime)
+	{
+		firstTime = false;
+		dpb.Lheight=frame.Lheight;
+		dpb.Lwidth=frame.Lwidth;
+		dpb.Cheight=frame.Cheight;
+		dpb.Cwidth=frame.Cwidth;
 
-	dpb.L = new unsigned char[frame.Lheight*frame.Lwidth];
-	//for (int i = 0; i < frame.Lheight; i++)
-	//{
-	//	dpb.L[i] = new unsigned char[frame.Lwidth];
-	//}
+		dpb.L = new unsigned char[frame.Lheight*frame.Lwidth];
 
-	dpb.C[0] = new unsigned char[frame.Cheight*frame.Cwidth];
-	dpb.C[1] = new unsigned char[frame.Cheight*frame.Cwidth];
-
-	//for (int i = 0; i < frame.Cheight; i++)
-	//{
-	//	dpb.C[0][i] = new unsigned char[frame.Cwidth];
-	//	dpb.C[1][i] = new unsigned char[frame.Cwidth];
-	//}
+		dpb.C[0] = new unsigned char[frame.Cheight*frame.Cwidth];
+		dpb.C[1] = new unsigned char[frame.Cheight*frame.Cwidth];
+	}
 
 	for (int refPicIdx = 0; refPicIdx < shd.num_ref_idx_l0_active_minus1+1; refPicIdx++)
 	{
