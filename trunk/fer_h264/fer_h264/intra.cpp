@@ -962,9 +962,7 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	{
 		if (CurrMbAddr == 0)
 		{
-			int start = clock();
-			WaitIntraCL(true);
-			printf("Waiting for OpenCL to finish: %dms\n", (clock()-start)*1000/CLOCKS_PER_SEC);
+			WaitIntraCL(16);
 		}
 
 		Intra16x16PredMode = predModes16x16[CurrMbAddr];
@@ -1058,7 +1056,8 @@ int intraPredictionEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8
 	mb_type_array[CurrMbAddr] = 0;
 	if (OpenCLEnabled == true && CurrMbAddr == 0)
 	{
-		WaitIntraCL(false);
+		WaitIntraCL(4);
+		Intra4x4PredMode = predModes4x4;
 	}
 	for (int luma4x4BlkIdx = 0; luma4x4BlkIdx < 16; luma4x4BlkIdx++)
 	{
