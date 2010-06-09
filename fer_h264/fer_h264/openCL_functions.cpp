@@ -271,13 +271,14 @@ void IntraCL()
 
 	size_t predMode4BufferSize = (frame.Lwidth >> 2)*(frame.Lheight >> 2) * sizeof(int);
 	err |= clEnqueueReadBuffer(cmd_queue, predModes4x4_mem, CL_FALSE, 0, predMode4BufferSize,
-							Intra4x4PredMode, 1, &eventIntra4, &eventReadPredModes4x4);
+							predModes4x4, 1, &eventIntra4, &eventReadPredModes4x4);
+	clFlush(cmd_queue);
 	assert(err == CL_SUCCESS);
 }
 
-void WaitIntraCL(bool Intra16x16)
+void WaitIntraCL(int subMbSize)
 {
-	if (Intra16x16 == true)
+	if (subMbSize == 16)
 	{
 		clWaitForEvents(1, &eventReadPredModes16x16);
 	}

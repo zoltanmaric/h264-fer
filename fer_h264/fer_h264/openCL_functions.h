@@ -16,5 +16,5 @@ void CloseCL();
 void AllocateFrameBuffersCL();
 
 void IntraCL();
-void WaitIntraCL(bool Intra16x16);
+void WaitIntraCL(int subMbSize);
 void subtractFramesCL(unsigned char *dpb, unsigned char *result);
