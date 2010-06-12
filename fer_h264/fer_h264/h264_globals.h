@@ -165,6 +165,9 @@ extern int *Intra4x4PredMode;
 extern	int mb_pos_x;
 extern	int mb_pos_y;
 
+extern int brojTipova[5];	
+extern int vrijeme;
+
 extern int mb_qp_delta;
 extern int QPy;
 
@@ -179,3 +182,5 @@ extern int totalcoeff_array_chroma[2][10000][4];
 
 extern int invoked_for_Intra16x16DCLevel, invoked_for_Intra16x16ACLevel, invoked_for_LumaLevel, invoked_for_ChromaACLevel, invoked_for_ChromaDCLevel;
 extern bool OpenCLEnabled;
+
+extern int _qParameter;
