@@ -138,7 +138,7 @@ void RBSP_encode(NALunit &nal_unit)
 	}
 	else if ((nal_unit.nal_unit_type == NAL_UNIT_TYPE_IDR) || (nal_unit.nal_unit_type == NAL_UNIT_TYPE_NOT_IDR))
 	{
-		printf("Clock count: %d - CPS=%d....\n", clock(), CLOCKS_PER_SEC);
+		int trenVrijeme = clock();
 		if (nal_unit.nal_unit_type == NAL_UNIT_TYPE_IDR)
 		{
 			IntraCL();		// Start the intra mode selection on the GPU
@@ -303,7 +303,8 @@ void RBSP_encode(NALunit &nal_unit)
 				clear_residual_structures();
 			}
 		}	
-		//printf("%d - CPS=%d....\n", clock(), CLOCKS_PER_SEC);
+
+		vrijeme = clock() - trenVrijeme;
 
 		if (mb_skip_run > 0)
 		{

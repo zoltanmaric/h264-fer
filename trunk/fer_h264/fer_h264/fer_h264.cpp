@@ -1,6 +1,7 @@
 // fer_h264.cpp : Defines the entry point for the console application.
 //
 
+#include <string>
 #include "stdafx.h"
 #include "nal.h"
 #include "fileIO.h"
@@ -15,8 +16,13 @@
 
 #include "fer_h264.h"
 
+using namespace std;
+
 int startFrame;
 int endFrame;
+int trenBytes;
+std::string ulaznaDatoteka;
+NALunit nu;
 
 void decode()
 {
@@ -47,10 +53,36 @@ void decode()
 	fclose(yuvoutput);
 }
 
+void NastaviEncode()
+{
+	if (frameCount == endFrame) return;
+	if (ReadFromY4M() != -1) 
+	{
+		frameCount++;
+		
+		printf("Frame #%d\n", frameCount);
+		writeToYUV();
+
+		nu.nal_unit_type = selectNALUnitType();
+		RBSP_encode(nu);
+		
+		trenBytes = nu.NumBytesInRBSP;
+		writeNAL(nu);
+
+		if (frameCount != endFrame) return;
+	}
+
+	CloseCL();
+	CloseNAL();
+	fclose(stream);
+	fclose(yuvinput);
+	fclose(yuvoutput);
+}
+
 void encode()
 {
 	stream = fopen("big_buck_bunny.264", "wb");
-	yuvinput = fopen("big_buck_bunny.y4m", "rb");
+	yuvinput = fopen(ulaznaDatoteka.c_str(), "rb");
 	yuvoutput = fopen("big_buck_bunny.yuv","wb");
 
 	generate_residual_level_tables();
@@ -59,7 +91,6 @@ void encode()
 	InitCL();
 
 	frameCount = 0;
-	NALunit nu;
 	nu.rbsp_byte = new unsigned char[500000];
 
 	nu.forbidden_zero_bit = 0;
@@ -82,18 +113,19 @@ void encode()
 	while (ReadFromY4M() != -1)
 	{		
 		frameCount++;
-		if (frameCount < startFrame) continue;
-
-		printf("Frame #%d\n", frameCount);
-		writeToYUV();
-
-		nu.nal_unit_type = selectNALUnitType();
-		RBSP_encode(nu);
-
-		writeNAL(nu);
-
-		if (frameCount == endFrame) break;
+		if (frameCount == startFrame) break;
 	}
+
+	printf("Frame #%d\n", frameCount);
+	writeToYUV();
+
+	nu.nal_unit_type = selectNALUnitType();
+	RBSP_encode(nu);
+	
+	trenBytes = nu.NumBytesInRBSP;
+	writeNAL(nu);
+
+	if (frameCount != endFrame) return;
 
 	CloseCL();
 	CloseNAL();
@@ -113,15 +145,41 @@ int _tmain(int argc, _TCHAR* argv[])
 namespace fer_h264
 {
 
-	void Starter::PostaviInterval(int FrameStart, int FrameEnd)
+	void Starter::PostaviInterval(int FrameStart, int FrameEnd, int qp)
 	{
 		startFrame = FrameStart;
 		endFrame = FrameEnd;
+		_qParameter = qp;
+	}
+
+	void Starter::PostaviUlaz(String ^% ulaz)
+	{
+		ulaznaDatoteka = ToStdString(ulaz);
+		ulaz = "Bubamara";
 	}
 
 	void Starter::PokreniKoder() 
 	{
+		for (int i = 0; i < 5; i++) brojTipova[i] = 0;
 		encode();
+
+	}
+
+	void Starter::NastaviKoder() 
+	{
+		for (int i = 0; i < 5; i++) brojTipova[i] = 0;
+		NastaviEncode();
+	}
+
+	void Starter::DohvatiKarakteristike(int % brojTipova1, int % brojTipova2, int % brojTipova3, int % brojTipova4, int % brojTipova5, int % velicina, int % trajanje) 
+	{
+		brojTipova1 = brojTipova[0];
+		brojTipova2 = brojTipova[1];
+		brojTipova3 = brojTipova[2];
+		brojTipova4 = brojTipova[3];
+		brojTipova5 = brojTipova[4];
+		velicina = trenBytes;
+		trajanje = vrijeme;
 	}
 
 	void Starter::PokreniDekoder() 

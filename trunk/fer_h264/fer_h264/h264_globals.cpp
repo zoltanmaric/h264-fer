@@ -214,7 +214,7 @@ int Intra4x4ScanOrder[16][2]={
 };
 
 unsigned long frameCount = 0;
-
+int _qParameter = 12;
 frame_type frame;
 
 // Inter prediction globals
@@ -295,6 +295,9 @@ int init_h264_structures_encoder()
 
 	return 0;
 }
+
+int brojTipova[5];	
+int vrijeme = 0;
 
 //frame/4 dimenzije
 int *Intra4x4PredMode;

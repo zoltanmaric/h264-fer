@@ -309,6 +309,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 	if (MAXDIFF < 3) MAXDIFF = 3;
 	if (ExactPixels(predL) == 256) 
 	{
+		brojTipova[0]++;
 		PopraviPSkip(predL);
 		return;
 	}
@@ -357,7 +358,7 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			}
 			MEstimation(relx+xp, rely+yp, 1, 1, 1, genx, geny, genx, geny);
 			bmin = 2000000000;
-			for (int j = 0; j <= 32; j++)
+			for (int j = 0; j <= 16; j++)
 			if (bxs[j] < 100000000 && bys[j] < 100000000) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
 				if (bmins[j]+(ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
@@ -391,9 +392,9 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 						MEstimation(relx+xp, rely+yp, 0, 1, 16, genx, geny, sortedSuma0[2][k]-relx-xp, sortedSuma0[1][k]-rely-yp);
 					}
 				}
-				if (tren > 1024) break;
+				if (tren > 128) break;
 			}
-			for (int j = 0; j <= 64; j++)
+			for (int j = 0; j <= 32; j++)
 			if (bmins[j] < 100000000 && bxs[j] < 100000000 && bys[j] < 100000000) {
 				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
 				if (bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
@@ -423,11 +424,12 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 			mvd_l0[i][0][0] = mvdL0[i][0] = bx;
 			mvd_l0[i][0][1] = mvdL0[i][1] = by;
 		}
-
+		brojTipova[4]++;
 		if (mvx[0] == mvx[1] && mvx[0] == mvx[2] && mvx[0] == mvx[3] &&
 			mvy[0] == mvy[1] && mvy[0] == mvy[2] && mvy[0] == mvy[3] )
 		{
 			mb_type = mb_type_array[CurrMbAddr] = P_L0_16x16;
+			brojTipova[1]++; brojTipova[4]--;
 		} else {
 			if (mvx[0] == mvx[1] && mvx[2] == mvx[3] &&
 				mvy[0] == mvy[1] && mvy[2] == mvy[3] )
@@ -435,11 +437,13 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 				mb_type = mb_type_array[CurrMbAddr] = P_L0_L0_16x8;
 				mvx[1] = mvx[2];
 				mvy[1] = mvy[2];
+				brojTipova[2]++; brojTipova[4]--;
 			} else {
 				if (mvx[0] == mvx[2] && mvx[1] == mvx[3] &&
 					mvy[0] == mvy[2] && mvy[1] == mvy[3] )
 				{
 					mb_type = mb_type_array[CurrMbAddr] = P_L0_L0_8x16;
+					brojTipova[3]++; brojTipova[4]--;
 				}
 			}
 		}
@@ -463,17 +467,17 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 		}
 		Decode(predL, predCr, predCb);
 		for (int i = 0; i < 4; i++){
-				for (int tx = (i&1)*8; tx < 8+(i&1)*8; tx++)
-					for (int ty = (i&2)*4; ty < 8+(i&2)*4; ty++)
-						if (ABS(frame.L[(yp+ty)*frame.Lwidth+xp+tx] - predL[ty][tx]) < 3)
-							frame.L[(yp+ty)*frame.Lwidth+xp+tx] = predL[ty][tx];
-				for (int tx = (i&1)*4; tx < 8-(i&1)*4; tx++)
-					for (int ty = (i&2)*2; ty < 8-(i&2)*2; ty++)
-					{
-						if (ABS(frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx]-predCb[ty][tx]) <= 3) 
-							frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCb[ty][tx];
-						if (ABS(frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx]-predCr[ty][tx]) <= 3) 
-							frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCr[ty][tx];
-					}
+				//for (int tx = (i&1)*8; tx < 8+(i&1)*8; tx++)
+				//	for (int ty = (i&2)*4; ty < 8+(i&2)*4; ty++)
+				//		if (ABS(frame.L[(yp+ty)*frame.Lwidth+xp+tx] - predL[ty][tx]) < 3)
+				//			frame.L[(yp+ty)*frame.Lwidth+xp+tx] = predL[ty][tx];
+				//for (int tx = (i&1)*4; tx < 8-(i&1)*4; tx++)
+				//	for (int ty = (i&2)*2; ty < 8-(i&2)*2; ty++)
+				//	{
+				//		if (ABS(frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx]-predCb[ty][tx]) <= 3) 
+				//			frame.C[0][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCb[ty][tx];
+				//		if (ABS(frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx]-predCr[ty][tx]) <= 3) 
+				//			frame.C[1][(yp/2+ty)*frame.Cwidth+xp/2+tx] = predCr[ty][tx];
+				//	}
 		}
 }
