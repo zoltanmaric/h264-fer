@@ -142,14 +142,39 @@ int _tmain(int argc, _TCHAR* argv[])
 	return 0;
 }
 
+inline 
+String ^ ToManagedString(const char * pString) { 
+ return Marshal::PtrToStringAnsi(IntPtr((char *) pString)); 
+} 
+ 
+inline 
+const std::string ToStdString(String ^ strString) { 
+ IntPtr ptrString = IntPtr::Zero; 
+ std::string strStdString; 
+ try { 
+  ptrString = Marshal::StringToHGlobalAnsi(strString); 
+  strStdString = (char *) ptrString.ToPointer(); 
+ } 
+ finally { 
+  if (ptrString != IntPtr::Zero) { 
+   Marshal::FreeHGlobal(ptrString); 
+  } 
+ } 
+ return strStdString; 
+} 
+
+
 namespace fer_h264
 {
 
-	void Starter::PostaviInterval(int FrameStart, int FrameEnd, int qp)
+	void Starter::PostaviParametre(int FrameStart, int FrameEnd, int qp, int OsnovnoPredvidanje, int VelicinaProzora, int ToleriranaGreska)
 	{
 		startFrame = FrameStart;
 		endFrame = FrameEnd;
 		_qParameter = qp;
+		BasicInterEncoding = OsnovnoPredvidanje;
+		WindowSize = VelicinaProzora;
+		MAXDIFF_SET = ToleriranaGreska;
 	}
 
 	void Starter::PostaviUlaz(String ^% ulaz)
@@ -171,7 +196,7 @@ namespace fer_h264
 		NastaviEncode();
 	}
 
-	void Starter::DohvatiKarakteristike(int % brojTipova1, int % brojTipova2, int % brojTipova3, int % brojTipova4, int % brojTipova5, int % velicina, int % trajanje) 
+	void Starter::DohvatiStatistiku(int % brojTipova1, int % brojTipova2, int % brojTipova3, int % brojTipova4, int % brojTipova5, int % velicina, int % trajanje) 
 	{
 		brojTipova1 = brojTipova[0];
 		brojTipova2 = brojTipova[1];

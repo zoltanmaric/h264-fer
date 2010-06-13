@@ -40,15 +40,22 @@
             this._qp = new System.Windows.Forms.NumericUpDown();
             this._podaci = new System.Windows.Forms.DataGridView();
             this.button1 = new System.Windows.Forms.Button();
+            this._velicinaProzora = new System.Windows.Forms.NumericUpDown();
+            this.label5 = new System.Windows.Forms.Label();
+            this._toleriranaGreska = new System.Windows.Forms.NumericUpDown();
+            this.label6 = new System.Windows.Forms.Label();
+            this._osnovnoInter = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.FrameStart)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.FrameEnd)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this._qp)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this._podaci)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this._velicinaProzora)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this._toleriranaGreska)).BeginInit();
             this.SuspendLayout();
             // 
             // FrameStart
             // 
-            this.FrameStart.Location = new System.Drawing.Point(141, 78);
+            this.FrameStart.Location = new System.Drawing.Point(139, 168);
             this.FrameStart.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -71,7 +78,7 @@
             // 
             // FrameEnd
             // 
-            this.FrameEnd.Location = new System.Drawing.Point(141, 114);
+            this.FrameEnd.Location = new System.Drawing.Point(139, 204);
             this.FrameEnd.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -94,7 +101,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(42, 80);
+            this.label1.Location = new System.Drawing.Point(27, 170);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(68, 13);
             this.label1.TabIndex = 2;
@@ -103,7 +110,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(43, 116);
+            this.label2.Location = new System.Drawing.Point(28, 206);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(67, 13);
             this.label2.TabIndex = 3;
@@ -112,7 +119,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(42, 183);
+            this.label3.Location = new System.Drawing.Point(40, 273);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(40, 13);
             this.label3.TabIndex = 4;
@@ -121,7 +128,7 @@
             // _textStatus
             // 
             this._textStatus.AutoSize = true;
-            this._textStatus.Location = new System.Drawing.Point(89, 183);
+            this._textStatus.Location = new System.Drawing.Point(87, 273);
             this._textStatus.Name = "_textStatus";
             this._textStatus.Size = new System.Drawing.Size(46, 13);
             this._textStatus.TabIndex = 5;
@@ -129,9 +136,9 @@
             // 
             // Kodiraj
             // 
-            this.Kodiraj.Location = new System.Drawing.Point(106, 140);
+            this.Kodiraj.Location = new System.Drawing.Point(125, 230);
             this.Kodiraj.Name = "Kodiraj";
-            this.Kodiraj.Size = new System.Drawing.Size(87, 30);
+            this.Kodiraj.Size = new System.Drawing.Size(84, 30);
             this.Kodiraj.TabIndex = 6;
             this.Kodiraj.Text = "Pokreni koder";
             this.Kodiraj.UseVisualStyleBackColor = true;
@@ -144,7 +151,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(43, 49);
+            this.label4.Location = new System.Drawing.Point(28, 139);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(22, 13);
             this.label4.TabIndex = 8;
@@ -152,7 +159,7 @@
             // 
             // _qp
             // 
-            this._qp.Location = new System.Drawing.Point(141, 47);
+            this._qp.Location = new System.Drawing.Point(139, 137);
             this._qp.Maximum = new decimal(new int[] {
             30,
             0,
@@ -182,7 +189,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(72, 11);
+            this.button1.Location = new System.Drawing.Point(21, 230);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(87, 30);
             this.button1.TabIndex = 11;
@@ -190,11 +197,88 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // _velicinaProzora
+            // 
+            this._velicinaProzora.Location = new System.Drawing.Point(139, 107);
+            this._velicinaProzora.Maximum = new decimal(new int[] {
+            256,
+            0,
+            0,
+            0});
+            this._velicinaProzora.Minimum = new decimal(new int[] {
+            8,
+            0,
+            0,
+            0});
+            this._velicinaProzora.Name = "_velicinaProzora";
+            this._velicinaProzora.Size = new System.Drawing.Size(52, 20);
+            this._velicinaProzora.TabIndex = 13;
+            this._velicinaProzora.Value = new decimal(new int[] {
+            16,
+            0,
+            0,
+            0});
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(28, 109);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(82, 13);
+            this.label5.TabIndex = 12;
+            this.label5.Text = "Veličina prozora";
+            // 
+            // _toleriranaGreska
+            // 
+            this._toleriranaGreska.Location = new System.Drawing.Point(139, 78);
+            this._toleriranaGreska.Maximum = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this._toleriranaGreska.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
+            this._toleriranaGreska.Name = "_toleriranaGreska";
+            this._toleriranaGreska.Size = new System.Drawing.Size(52, 20);
+            this._toleriranaGreska.TabIndex = 15;
+            this._toleriranaGreska.Value = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(28, 80);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(89, 13);
+            this.label6.TabIndex = 14;
+            this.label6.Text = "Tolerirana greška";
+            // 
+            // _osnovnoInter
+            // 
+            this._osnovnoInter.AutoSize = true;
+            this._osnovnoInter.Location = new System.Drawing.Point(31, 46);
+            this._osnovnoInter.Name = "_osnovnoInter";
+            this._osnovnoInter.Size = new System.Drawing.Size(152, 17);
+            this._osnovnoInter.TabIndex = 16;
+            this._osnovnoInter.Text = "Osnovno Inter predviđanje";
+            this._osnovnoInter.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(907, 410);
+            this.Controls.Add(this._osnovnoInter);
+            this.Controls.Add(this._toleriranaGreska);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this._velicinaProzora);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.button1);
             this.Controls.Add(this._podaci);
             this.Controls.Add(this._qp);
@@ -212,6 +296,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.FrameEnd)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this._qp)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this._podaci)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this._velicinaProzora)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this._toleriranaGreska)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -231,6 +317,11 @@
         private System.Windows.Forms.NumericUpDown _qp;
         private System.Windows.Forms.DataGridView _podaci;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.NumericUpDown _velicinaProzora;
+        public System.Windows.Forms.Label label5;
+        private System.Windows.Forms.NumericUpDown _toleriranaGreska;
+        public System.Windows.Forms.Label label6;
+        private System.Windows.Forms.CheckBox _osnovnoInter;
 
     }
 }

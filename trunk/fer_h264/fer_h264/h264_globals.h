@@ -167,6 +167,9 @@ extern	int mb_pos_y;
 
 extern int brojTipova[5];	
 extern int vrijeme;
+extern int BasicInterEncoding;
+extern int WindowSize;
+extern int MAXDIFF_SET;
 
 extern int mb_qp_delta;
 extern int QPy;
