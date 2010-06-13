@@ -316,10 +316,10 @@ void RBSP_encode(NALunit &nal_unit)
 
 		if (shd.slice_type % 5 == I_SLICE)
 		{
-			//initialisationProcess();
+			initialisationProcess();
 		}
-		//modificationProcess();		
-		//FillInterpolatedRefFrame();
+		modificationProcess();		
+		FillInterpolatedRefFrame();
 	}
 
 	flushWriteBuffer();

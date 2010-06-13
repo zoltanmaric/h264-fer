@@ -162,9 +162,9 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 	int xAl = ((mbPartIdx%PicWidthInMbs)<<4) + org_x;
 	int yAl = ((mbPartIdx/PicWidthInMbs)<<4) + org_y;
 	// Fills temp tables used in fractional interpolation (luma) and linear interpolation (chroma).
-	FillTemp_4x4_refPart(refPic, xAl + (mvx>>2) - 2, yAl + (mvy>>2) - 2, xAl/2 + (mvx>>3), yAl/2 + (mvy>>3));
+	FillTemp_4x4_refPart(refPic, xAl + (mvL0x[mbPartIdx][subMbIdx][subMbPartIdx]>>2) - 2, yAl + (mvL0y[mbPartIdx][subMbIdx][subMbPartIdx]>>2) - 2, xAl/2 + (mvL0x[mbPartIdx][subMbIdx][subMbPartIdx]>>3), yAl/2 + (mvL0y[mbPartIdx][subMbIdx][subMbPartIdx]>>3));
 
-	int frac=(mvy&3)*4+(mvx&3);
+	int frac=(mvL0y[mbPartIdx][subMbIdx][subMbPartIdx]&3)*4+(mvL0x[mbPartIdx][subMbIdx][subMbPartIdx]&3);
 	for(y=0; y<4; ++y)
 		for(x=0; x<4; ++x)
 		{
@@ -173,8 +173,8 @@ void MotionCompensateSubMBPart(int predL[16][16], int predCr[8][8], int predCb[8
 
 	org_x/=2; org_y/=2; // Chroma resolution is halved luma resolution.
     
-	int xLinear = mvx&7;
-	int yLinear = mvy&7;
+	int xLinear = mvL0x[mbPartIdx][subMbIdx][subMbPartIdx]&7;
+	int yLinear = mvL0y[mbPartIdx][subMbIdx][subMbPartIdx]&7;
 	// CB component - iCbCr=0
 	for(y=0; y<2; ++y)
 		for(x=0; x<2; ++x)

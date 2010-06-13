@@ -35,7 +35,9 @@ namespace h264_Sucelje
             //Bitmap bitmap = new Bitmap("d:\\slika.bmp");
             //pictureBox1.Image = bitmap;//.GetThumbnailImage(80, 44, null, System.IntPtr.Zero);
             //pictureBox1.Refresh();
-            pokretac.PostaviInterval((int)FrameStart.Value, (int)FrameEnd.Value, (int)_qp.Value);
+            int osnovnoInterPredvidanje = 0; 
+            if (_osnovnoInter.Checked) osnovnoInterPredvidanje = 1;
+            pokretac.PostaviParametre((int)FrameStart.Value, (int)FrameEnd.Value, (int)_qp.Value, osnovnoInterPredvidanje, (int)_velicinaProzora.Value, (int)_toleriranaGreska.Value);
             _textStatus.Text = "Pokrećem koder";
             _textStatus.Refresh();
             //t.Start();
@@ -49,7 +51,7 @@ namespace h264_Sucelje
             List<int> broj8x8 = new List<int>();
             List<int> vrijeme = new List<int>();
             int p1 = 0, p2 = 0, p3 = 0, p4 = 0, p5 = 0, p6 = 0, p7 = 0;
-            pokretac.DohvatiKarakteristike(ref p1, ref p2, ref p3, ref p4, ref p5, ref p6, ref p7);
+            pokretac.DohvatiStatistiku(ref p1, ref p2, ref p3, ref p4, ref p5, ref p6, ref p7);
             brojPSkip.Add(p1); broj16x16.Add(p2); broj16x8.Add(p3); broj8x16.Add(p4); broj8x8.Add(p5);
             velicine.Add(p6); vrijeme.Add(p7);
             
@@ -58,7 +60,7 @@ namespace h264_Sucelje
                 _textStatus.Text = String.Format("Završio #{0} frame", i.ToString());
                 _textStatus.Refresh();
                 pokretac.NastaviKoder();
-                pokretac.DohvatiKarakteristike(ref p1, ref p2, ref p3, ref p4, ref p5, ref p6, ref p7);
+                pokretac.DohvatiStatistiku(ref p1, ref p2, ref p3, ref p4, ref p5, ref p6, ref p7);
                 brojPSkip.Add(p1); broj16x16.Add(p2); broj16x8.Add(p3); broj8x16.Add(p4); broj8x8.Add(p5);
                 velicine.Add(p6); vrijeme.Add(p7);
             }

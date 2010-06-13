@@ -298,6 +298,9 @@ int init_h264_structures_encoder()
 
 int brojTipova[5];	
 int vrijeme = 0;
+int BasicInterEncoding = false;
+int WindowSize = 16;
+int MAXDIFF_SET = -1;
 
 //frame/4 dimenzije
 int *Intra4x4PredMode;
