@@ -22,12 +22,13 @@ int startFrame;
 int endFrame;
 int trenBytes;
 std::string ulaznaDatoteka;
+std::string izlaznaDatoteka;
 NALunit nu;
 
 void decode()
 {
-	stream=fopen("big_buck_bunny.264","rb");
-	yuvoutput = fopen("Bourne.y4m","wb");
+	stream=fopen(ulaznaDatoteka.c_str(),"rb");
+	yuvoutput = fopen(izlaznaDatoteka.c_str(),"wb");
 
 	generate_residual_level_tables();
 	InitNAL();
@@ -81,7 +82,7 @@ void NastaviEncode()
 
 void encode()
 {
-	stream = fopen("big_buck_bunny.264", "wb");
+	stream = fopen(izlaznaDatoteka.c_str(), "wb");
 	yuvinput = fopen(ulaznaDatoteka.c_str(), "rb");
 	yuvoutput = fopen("big_buck_bunny.yuv","wb");
 
@@ -177,10 +178,10 @@ namespace fer_h264
 		MAXDIFF_SET = ToleriranaGreska;
 	}
 
-	void Starter::PostaviUlaz(String ^% ulaz)
+	void Starter::PostaviUlazIzlaz(String ^% ulaz, String ^% izlaz)
 	{
 		ulaznaDatoteka = ToStdString(ulaz);
-		ulaz = "Bubamara";
+		izlaznaDatoteka = ToStdString(izlaz);
 	}
 
 	void Starter::PokreniKoder() 

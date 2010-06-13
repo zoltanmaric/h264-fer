@@ -21,6 +21,6 @@ namespace fer_h264
 		public: void PokreniDekoder();
 		public: void DohvatiStatistiku(int % brojTipova1, int % brojTipova2, int % brojTipova3, int % brojTipova4, int % brojTipova5, int % velicina, int % trajanje);
 		public: void PostaviParametre(int FrameStart, int FrameEnd, int qp, int OsnovnoPredvidanje, int VelicinaProzora, int ToleriranaGreska);
-		public: void PostaviUlaz(String ^% ulaz);
+		public: void PostaviUlazIzlaz(String ^% ulaz, String ^% izlaz);
 	};
 }

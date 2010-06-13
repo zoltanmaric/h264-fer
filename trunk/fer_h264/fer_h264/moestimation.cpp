@@ -28,7 +28,7 @@ int bxs[85], bys[85], bmins[85], bsuma[85], suma[5];
 
 void InitializeInterpolatedRefFrame()
 {
-	if (BasicInterEncoding) return;
+	//if (BasicInterEncoding) return;
 	for (int i = 0; i < 5; i++)
 	{
 		sortedSuma0[i] = new int[frame.Lheight*frame.Lwidth];
@@ -73,7 +73,7 @@ int diffTransformedLuma(int a, int b)
 
 void FillInterpolatedRefFrame()
 {	
-	if (BasicInterEncoding) return;
+	//if (BasicInterEncoding) return;
 	frame_type * refPic = RefPicList0[0].frame;
 	int predL[16][16], predCr[8][8], predCb[8][8];
 	for (int frac = 0; frac < 16; frac++)
@@ -168,7 +168,7 @@ void FillInterpolatedRefFrame()
 			sortedSuma0[4][b1] = sortedSuma0Temp[4][b];
 			sortedSuma0[2][b1] = sortedSuma0Temp[2][b++];
 		}
-	for (int i = 16384; i > 0; i--)	koliko[i] = koliko[i-1];
+	for (int i = 16383; i > 0; i--)	koliko[i] = koliko[i-1];
 	koliko[0] = 0;
 }
 
@@ -374,18 +374,17 @@ void basicInterEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 		}
 	}
 	for (int i = 0; i < NumMbPart(mb_type); i++)
-	{
 		mvd_l0[i][0][0] = mvd_l0[i][0][1] = 0;
-		DeriveMVs();
-		if (i == 1 && mb_type == P_L0_L0_16x8)
-		{
-			mvd_l0[i][0][0] = currmvx[i] - mvL0x[CurrMbAddr][2][0];
-			mvd_l0[i][0][1] = currmvy[i] - mvL0y[CurrMbAddr][2][0];
-		} else {
-			mvd_l0[i][0][0] = currmvx[i] - mvL0x[CurrMbAddr][i][0];
-			mvd_l0[i][0][1] = currmvy[i] - mvL0y[CurrMbAddr][i][0];
-		}
-	}
+	//	DeriveMVs();
+	//	if (i == 1 && mb_type == P_L0_L0_16x8)
+	//	{
+	//		mvd_l0[i][0][0] = currmvx[i] - mvL0x[CurrMbAddr][2][0];
+	//		mvd_l0[i][0][1] = currmvy[i] - mvL0y[CurrMbAddr][2][0];
+	//	} else {
+	//		mvd_l0[i][0][0] = currmvx[i] - mvL0x[CurrMbAddr][i][0];
+	//		mvd_l0[i][0][1] = currmvy[i] - mvL0y[CurrMbAddr][i][0];
+	//	}
+	//}
 	DeriveMVs();
 	Decode(predL, predCr, predCb);
 }
@@ -395,7 +394,6 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 	if (BasicInterEncoding == true)
 	{
 		basicInterEncoding(predL, predCr, predCb);
-		return;
 	}
 	int xp = ((CurrMbAddr%PicWidthInMbs)<<4);
 	int yp = ((CurrMbAddr/PicWidthInMbs)<<4);
@@ -469,56 +467,59 @@ void interEncoding(int predL[16][16], int predCr[8][8], int predCb[8][8])
 					by = bys[j];
 				}
 			}
-			int tren = 0;
-			for (int j = 0; j < 85; j++) bmins[j] = 1000000000;
-			for (int j = 0; j <= 180; j++)
+			if (BasicInterEncoding == false)
 			{
-				int a = suma[0] - j;
-				if (a >= 0 && a < 16384)
+				int tren = 0;
+				for (int j = 0; j < 85; j++) bmins[j] = 1000000000;
+				for (int j = 0; j <= 180; j++)
 				{
-					//tren += koliko[a+1] - koliko[a];
-					for (int k = koliko[a]; k < koliko[a+1]; k++)
-					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) < 100 && ABS(sortedSuma0[4][k]-suma[2]) < 100) {
-						tren++;
-						MEstimation(relx+xp, rely+yp, 0, 1, 16, genx, geny, sortedSuma0[2][k]-relx-xp, sortedSuma0[1][k]-rely-yp);
+					int a = suma[0] - j;
+					if (a >= 0 && a < 16384)
+					{
+						//tren += koliko[a+1] - koliko[a];
+						for (int k = koliko[a]; k < koliko[a+1]; k++)
+						if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) < 100 && ABS(sortedSuma0[4][k]-suma[2]) < 100) {
+							tren++;
+							MEstimation(relx+xp, rely+yp, 0, 1, 16, genx, geny, sortedSuma0[2][k]-relx-xp, sortedSuma0[1][k]-rely-yp);
+						}
+					}
+					a = suma[0] + j;
+					if (a >= 0 && a < 16384)
+					{
+						//tren += koliko[a+1] - koliko[a];
+						for (int k = koliko[a]; k < koliko[a+1]; k++)
+						if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) < 100 && ABS(sortedSuma0[4][k]-suma[2]) < 100) {
+							tren++;
+							MEstimation(relx+xp, rely+yp, 0, 1, 16, genx, geny, sortedSuma0[2][k]-relx-xp, sortedSuma0[1][k]-rely-yp);
+						}
+					}
+					if (tren > 128) break;
+				}
+				for (int j = 0; j <= 32; j++)
+				if (bmins[j] < 100000000 && bxs[j] < 100000000 && bys[j] < 100000000) {
+					bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
+					if (bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
+					{
+						bmin = bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy));
+						bx = bxs[j];
+						by = bys[j];
 					}
 				}
-				a = suma[0] + j;
-				if (a >= 0 && a < 16384)
-				{
-					//tren += koliko[a+1] - koliko[a];
-					for (int k = koliko[a]; k < koliko[a+1]; k++)
-					if (ABS(sortedSuma0[2][k]-relx-xp)+ABS(sortedSuma0[1][k]-rely-yp) < 280 && ABS(sortedSuma0[3][k]-suma[1]) < 100 && ABS(sortedSuma0[4][k]-suma[2]) < 100) {
-						tren++;
-						MEstimation(relx+xp, rely+yp, 0, 1, 16, genx, geny, sortedSuma0[2][k]-relx-xp, sortedSuma0[1][k]-rely-yp);
+				for (int j = 0; j < 85; j++) bmins[j] = 1000000000;
+				MEstimation(relx+xp, rely+yp, WindowSize/2, 1, 16, 0, 0, 0, 0);
+				MEstimation(relx+xp, rely+yp, WindowSize/16, 1, 1, 0, 0, 0, 0);
+				for (int j = 0; j <= 32; j++)
+				if (bmins[j] < 100000000 && bxs[j] < 100000000 && bys[j] < 100000000) {
+					bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
+					if (bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
+					{
+						bmin = bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy));
+						bx = bxs[j];
+						by = bys[j];
 					}
 				}
-				if (tren > 128) break;
+				if (bmin == 0) prazanResidual[i] = 1;
 			}
-			for (int j = 0; j <= 32; j++)
-			if (bmins[j] < 100000000 && bxs[j] < 100000000 && bys[j] < 100000000) {
-				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
-				if (bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
-				{
-					bmin = bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy));
-					bx = bxs[j];
-					by = bys[j];
-				}
-			}
-			for (int j = 0; j < 85; j++) bmins[j] = 1000000000;
-			MEstimation(relx+xp, rely+yp, WindowSize/2, 1, 16, 0, 0, 0, 0);
-			MEstimation(relx+xp, rely+yp, WindowSize/16, 1, 1, 0, 0, 0, 0);
-			for (int j = 0; j <= 32; j++)
-			if (bmins[j] < 100000000 && bxs[j] < 100000000 && bys[j] < 100000000) {
-				bmins[j] = sadLumaMVs(bxs[j], bys[j], i);
-				if (bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy)) < bmin)
-				{
-					bmin = bmins[j] + (ABS(bxs[j]-mvpx)+ABS(bys[j]-mvpy));
-					bx = bxs[j];
-					by = bys[j];
-				}
-			}
-			if (bmin == 0) prazanResidual[i] = 1;
 			mvx[i] = bx; mvy[i] = by;
 			bx -= mvL0x[CurrMbAddr][i][0];
 			by -= mvL0y[CurrMbAddr][i][0];
