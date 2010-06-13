@@ -233,8 +233,8 @@ void getNAL(unsigned long *fPtr, NALunit &nu)
 	{
 		printf("\n\n====================================================\n");
 		printf("End of stream found.\n");
-		system("pause");
-		exit(0);	// the 0 error code indicates that this is not an error
+		nu.NumBytesInRBSP = 0;
+		return;
 	}
 
 	unsigned long endPtr = findNALend(startPtr);
