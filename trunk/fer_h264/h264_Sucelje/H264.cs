@@ -19,6 +19,13 @@ namespace h264_Sucelje
             Kodiraj.Enabled = false;
         }
 
+        int mozeKodirati;
+        int mozeDekodirati;
+        string kodirajUlaz;
+        string kodirajIzlaz;
+        string dekodirajUlaz;
+        string dekodirajIzlaz;
+
         public string Poruka
         {
             get { return label4.Text; }
@@ -28,19 +35,12 @@ namespace h264_Sucelje
         private void Kodiraj_Click(object sender, EventArgs e)
         {
             Starter pokretac = new Starter();
-            //Thread t = new Thread(new ThreadStart(h264_Sucelje.Program.Radi));
-            String bla = openFileDialog1.FileName;
-            pokretac.PostaviUlaz(ref bla);
-            //MessageBox.Show(bla);
-            //Bitmap bitmap = new Bitmap("d:\\slika.bmp");
-            //pictureBox1.Image = bitmap;//.GetThumbnailImage(80, 44, null, System.IntPtr.Zero);
-            //pictureBox1.Refresh();
+            pokretac.PostaviUlazIzlaz(ref kodirajUlaz, ref kodirajIzlaz);
             int osnovnoInterPredvidanje = 0; 
             if (_osnovnoInter.Checked) osnovnoInterPredvidanje = 1;
             pokretac.PostaviParametre((int)FrameStart.Value, (int)FrameEnd.Value, (int)_qp.Value, osnovnoInterPredvidanje, (int)_velicinaProzora.Value, (int)_toleriranaGreska.Value);
             _textStatus.Text = "Pokrećem koder";
             _textStatus.Refresh();
-            //t.Start();
             pokretac.PokreniKoder();
             
             List<int> velicine = new List<int>();
@@ -88,7 +88,6 @@ namespace h264_Sucelje
                 tablica.Rows[i - (int)FrameStart.Value]["Broj P_L0_8x8 predikcija"] = broj8x8[i - (int)FrameStart.Value];
             }
             _podaci.DataSource = tablica.DefaultView;
-            //t.Abort();
             _textStatus.Text = "Koder završio s radom";
         }
 
@@ -100,11 +99,76 @@ namespace h264_Sucelje
         private void button1_Click(object sender, EventArgs e)
         {
             Kodiraj.Enabled = false;
+            openFileDialog1.CheckFileExists = true;
             openFileDialog1.Filter = "Y4M datoteke (*.y4m)|*.y4m";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                Kodiraj.Enabled = true;
+                kodirajUlaz = openFileDialog1.FileName;
+                mozeKodirati |= 2;
+                if (mozeKodirati == 3)
+                {
+                    Kodiraj.Enabled = true;
+                }
             }
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            Dekodiraj.Enabled = false;
+            openFileDialog1.CheckFileExists = false;
+            openFileDialog1.Filter = "Y4M datoteke (*.y4m)|*.y4m";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                dekodirajIzlaz = openFileDialog1.FileName;
+                mozeDekodirati |= 2;
+                if (mozeDekodirati == 3)
+                {
+                    Dekodiraj.Enabled = true;
+                }
+            }  
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Dekodiraj.Enabled = false;
+            openFileDialog1.CheckFileExists = true;
+            openFileDialog1.Filter = "264 datoteke (*.264)|*.264";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                dekodirajUlaz = openFileDialog1.FileName;
+                mozeDekodirati |= 1;
+                if (mozeDekodirati == 3)
+                {
+                    Dekodiraj.Enabled = true;
+                }
+            }  
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            Kodiraj.Enabled = false;
+            openFileDialog1.CheckFileExists = false;
+            openFileDialog1.Filter = "264 datoteke (*.264)|*.264";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                kodirajIzlaz = openFileDialog1.FileName;
+                mozeKodirati |= 1;
+                if (mozeKodirati == 3)
+                {
+                    Kodiraj.Enabled = true;
+                }
+            } 
+        }
+
+        private void Dekodiraj_Click(object sender, EventArgs e)
+        {
+            Starter pokretac = new Starter();
+            MessageBox.Show(dekodirajUlaz);
+            MessageBox.Show(dekodirajIzlaz);
+            pokretac.PostaviUlazIzlaz(ref dekodirajUlaz, ref dekodirajIzlaz);
+            statusDekoder.Text = "Dekoder radi";
+            pokretac.PokreniDekoder();
+            statusDekoder.Text = "Dekoder završio s radom";
         }
     }
 }
