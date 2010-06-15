@@ -43,7 +43,7 @@ namespace h264_Sucelje
             int osnovnoInterPredvidanje = 0; 
             if (_osnovnoInter.Checked) osnovnoInterPredvidanje = 1;
             // Postavljanje parametara za koder.
-            pokretac.PostaviParametre((int)FrameStart.Value, (int)FrameEnd.Value, (int)_qp.Value, osnovnoInterPredvidanje, (int)_velicinaProzora.Value, (int)_toleriranaGreska.Value, (int)_intra.Value);
+            pokretac.PostaviParametre(((int)FrameStart.Value)+1, ((int)FrameEnd.Value)+1, (int)_qp.Value, osnovnoInterPredvidanje, (int)_velicinaProzora.Value, (int)_toleriranaGreska.Value, (int)_intra.Value);
             _textStatus.Text = "Pokrećem koder";
             _textStatus.Refresh();
             pokretac.PokreniKoder();
