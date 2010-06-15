@@ -180,13 +180,13 @@ void writeToY4M()
 void initStreamBuffer()
 {
 	streamBufferSize = BUFFER_SIZE;
-	streamBufferPos = 0;
 	streamBuffer = new char[streamBufferSize];
 	while (streamBuffer == NULL)
 	{
 		streamBufferSize >>= 1;
 		streamBuffer = new char[streamBufferSize];
 	}
+	streamBufferPos = streamBufferSize;
 }
 
 // Returns the offset of the start of the
