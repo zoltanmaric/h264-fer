@@ -17,8 +17,8 @@ int zigZagIdx[16][2] = {{0, 0}, {1, 0}, {0, 1}, {0, 2},
 				  {3, 1}, {3, 2}, {2, 3}, {3, 3}};
 int tmpVar[16];
 bool bio[128][128];
-frame_type refFrameInterpolated[16];
 
+frame_type refFrameInterpolated[16];
 int MAXDIFF = 2;
 int **refFrameKar[6][16];
 int *sortedSuma0[5];

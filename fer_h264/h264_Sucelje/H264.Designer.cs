@@ -49,10 +49,6 @@
             this.label7 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.button2 = new System.Windows.Forms.Button();
-            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
-            this.numericUpDown2 = new System.Windows.Forms.NumericUpDown();
-            this.label8 = new System.Windows.Forms.Label();
-            this.label9 = new System.Windows.Forms.Label();
             this.Dekodiraj = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
@@ -66,8 +62,6 @@
             ((System.ComponentModel.ISupportInitialize)(this._toleriranaGreska)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).BeginInit();
             this.SuspendLayout();
             // 
             // FrameStart
@@ -201,7 +195,7 @@
             this._podaci.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this._podaci.Location = new System.Drawing.Point(241, 43);
             this._podaci.Name = "_podaci";
-            this._podaci.Size = new System.Drawing.Size(654, 355);
+            this._podaci.Size = new System.Drawing.Size(654, 375);
             this._podaci.TabIndex = 3;
             // 
             // button1
@@ -304,7 +298,7 @@
             this.groupBox1.Controls.Add(this.Kodiraj);
             this.groupBox1.Controls.Add(this._qp);
             this.groupBox1.Controls.Add(this.label4);
-            this.groupBox1.Location = new System.Drawing.Point(22, 171);
+            this.groupBox1.Location = new System.Drawing.Point(22, 125);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(203, 293);
             this.groupBox1.TabIndex = 2;
@@ -326,93 +320,27 @@
             this.groupBox2.Controls.Add(this.statusDekoder);
             this.groupBox2.Controls.Add(this.button5);
             this.groupBox2.Controls.Add(this.Dekodiraj);
-            this.groupBox2.Controls.Add(this.numericUpDown1);
-            this.groupBox2.Controls.Add(this.numericUpDown2);
-            this.groupBox2.Controls.Add(this.label8);
-            this.groupBox2.Controls.Add(this.label9);
             this.groupBox2.Controls.Add(this.button2);
             this.groupBox2.Location = new System.Drawing.Point(22, 18);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(203, 147);
+            this.groupBox2.Size = new System.Drawing.Size(203, 101);
             this.groupBox2.TabIndex = 0;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Dekoder";
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(6, 63);
+            this.button2.Location = new System.Drawing.Point(6, 19);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(95, 26);
             this.button2.TabIndex = 4;
-            this.button2.Text = "Učitaj YUV";
+            this.button2.Text = "Učitaj H.264";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // numericUpDown1
-            // 
-            this.numericUpDown1.Location = new System.Drawing.Point(132, 14);
-            this.numericUpDown1.Maximum = new decimal(new int[] {
-            5000,
-            0,
-            0,
-            0});
-            this.numericUpDown1.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numericUpDown1.Name = "numericUpDown1";
-            this.numericUpDown1.Size = new System.Drawing.Size(52, 20);
-            this.numericUpDown1.TabIndex = 1;
-            this.numericUpDown1.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            // 
-            // numericUpDown2
-            // 
-            this.numericUpDown2.Location = new System.Drawing.Point(132, 38);
-            this.numericUpDown2.Maximum = new decimal(new int[] {
-            5000,
-            0,
-            0,
-            0});
-            this.numericUpDown2.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numericUpDown2.Name = "numericUpDown2";
-            this.numericUpDown2.Size = new System.Drawing.Size(52, 20);
-            this.numericUpDown2.TabIndex = 3;
-            this.numericUpDown2.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(20, 18);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(68, 13);
-            this.label8.TabIndex = 0;
-            this.label8.Text = "Početni frejm";
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(20, 42);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(67, 13);
-            this.label9.TabIndex = 2;
-            this.label9.Text = "Završni frejm";
-            // 
             // Dekodiraj
             // 
-            this.Dekodiraj.Location = new System.Drawing.Point(6, 94);
+            this.Dekodiraj.Location = new System.Drawing.Point(6, 50);
             this.Dekodiraj.Name = "Dekodiraj";
             this.Dekodiraj.Size = new System.Drawing.Size(192, 24);
             this.Dekodiraj.TabIndex = 5;
@@ -432,7 +360,7 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(107, 63);
+            this.button5.Location = new System.Drawing.Point(107, 19);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(91, 26);
             this.button5.TabIndex = 16;
@@ -443,7 +371,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(20, 125);
+            this.label10.Location = new System.Drawing.Point(20, 81);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(40, 13);
             this.label10.TabIndex = 16;
@@ -452,7 +380,7 @@
             // statusDekoder
             // 
             this.statusDekoder.AutoSize = true;
-            this.statusDekoder.Location = new System.Drawing.Point(67, 125);
+            this.statusDekoder.Location = new System.Drawing.Point(67, 81);
             this.statusDekoder.Name = "statusDekoder";
             this.statusDekoder.Size = new System.Drawing.Size(46, 13);
             this.statusDekoder.TabIndex = 17;
@@ -479,8 +407,6 @@
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -509,10 +435,6 @@
         public System.Windows.Forms.Label label7;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button Dekodiraj;
-        private System.Windows.Forms.NumericUpDown numericUpDown1;
-        private System.Windows.Forms.NumericUpDown numericUpDown2;
-        private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button5;
