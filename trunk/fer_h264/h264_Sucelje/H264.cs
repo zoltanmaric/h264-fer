@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using fer_h264;
+using System.Diagnostics;
 
 namespace h264_Sucelje
 {
@@ -42,7 +43,7 @@ namespace h264_Sucelje
             int osnovnoInterPredvidanje = 0; 
             if (_osnovnoInter.Checked) osnovnoInterPredvidanje = 1;
             // Postavljanje parametara za koder.
-            pokretac.PostaviParametre((int)FrameStart.Value, (int)FrameEnd.Value, (int)_qp.Value, osnovnoInterPredvidanje, (int)_velicinaProzora.Value, (int)_toleriranaGreska.Value);
+            pokretac.PostaviParametre((int)FrameStart.Value, (int)FrameEnd.Value, (int)_qp.Value, osnovnoInterPredvidanje, (int)_velicinaProzora.Value, (int)_toleriranaGreska.Value, (int)_intra.Value);
             _textStatus.Text = "Pokrećem koder";
             _textStatus.Refresh();
             pokretac.PokreniKoder();
@@ -176,6 +177,30 @@ namespace h264_Sucelje
             statusDekoder.Text = "Dekoder radi";
             pokretac.PokreniDekoder();
             statusDekoder.Text = "Dekoder završio s radom";
+        }
+
+        private void _pretvoriMKV_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.Title = "Odaberite ulaznu .264 datoteku";
+            openFileDialog1.Filter = "264 datoteke (*.264)|*.264";
+            if (openFileDialog1.ShowDialog() != DialogResult.OK)
+                return;
+            kodirajUlaz = openFileDialog1.FileName;
+            openFileDialog1.Title = "Odaberite ulaznu .264 datoteku";
+            openFileDialog1.Filter = "MKV datoteke (*.mkv)|*.mkv";
+            if (openFileDialog1.ShowDialog() != DialogResult.OK)
+                return;
+            kodirajIzlaz = openFileDialog1.FileName;
+            ProcessStartInfo startInfo = new ProcessStartInfo("mkvmerge.exe", String.Format("-o {0} -A {1}", kodirajIzlaz, kodirajUlaz));
+            startInfo.CreateNoWindow = true;
+            startInfo.UseShellExecute = false;
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            Process.Start(startInfo);
+            startInfo = new ProcessStartInfo(kodirajIzlaz);
+            //startInfo.CreateNoWindow = true;
+            //startInfo.UseShellExecute = false;
+            //startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            Process.Start(startInfo);
         }
     }
 }
