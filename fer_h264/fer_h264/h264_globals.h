@@ -172,6 +172,8 @@ extern int WindowSize;
 extern int MAXDIFF_SET;
 extern int startFrame;
 extern int endFrame;
+extern int IntraEvery;
+extern int currFrameCount;
 
 extern int mb_qp_delta;
 extern int QPy;

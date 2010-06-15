@@ -303,6 +303,8 @@ int WindowSize = 16;
 int MAXDIFF_SET = -1;
 int startFrame;
 int endFrame;
+int IntraEvery;
+int currFrameCount;
 
 //frame/4 dimenzije
 int *Intra4x4PredMode;

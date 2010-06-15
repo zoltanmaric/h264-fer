@@ -188,7 +188,7 @@ int selectNALUnitType()
 	unsigned long picSizeInMBs = PicWidthInMbs * PicHeightInMbs;
 	static unsigned int pFrameRun = 0;
 
-	if (dpb.L == NULL)
+	if (dpb.L == NULL || currFrameCount%IntraEvery == 0)
 	{
 		return NAL_UNIT_TYPE_IDR;
 	}

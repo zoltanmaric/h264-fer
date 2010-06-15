@@ -46,14 +46,18 @@
             this.label6 = new System.Windows.Forms.Label();
             this._osnovnoInter = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.button4 = new System.Windows.Forms.Button();
             this.label7 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.button2 = new System.Windows.Forms.Button();
-            this.Dekodiraj = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
-            this.button5 = new System.Windows.Forms.Button();
             this.label10 = new System.Windows.Forms.Label();
             this.statusDekoder = new System.Windows.Forms.Label();
+            this.button5 = new System.Windows.Forms.Button();
+            this.Dekodiraj = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this._pretvoriMKV = new System.Windows.Forms.Button();
+            this._intra = new System.Windows.Forms.NumericUpDown();
+            this.label8 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.FrameStart)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.FrameEnd)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this._qp)).BeginInit();
@@ -62,11 +66,12 @@
             ((System.ComponentModel.ISupportInitialize)(this._toleriranaGreska)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._intra)).BeginInit();
             this.SuspendLayout();
             // 
             // FrameStart
             // 
-            this.FrameStart.Location = new System.Drawing.Point(132, 150);
+            this.FrameStart.Location = new System.Drawing.Point(132, 178);
             this.FrameStart.Maximum = new decimal(new int[] {
             5000,
             0,
@@ -79,7 +84,7 @@
             0});
             this.FrameStart.Name = "FrameStart";
             this.FrameStart.Size = new System.Drawing.Size(52, 20);
-            this.FrameStart.TabIndex = 7;
+            this.FrameStart.TabIndex = 11;
             this.FrameStart.Value = new decimal(new int[] {
             1,
             0,
@@ -89,7 +94,7 @@
             // 
             // FrameEnd
             // 
-            this.FrameEnd.Location = new System.Drawing.Point(132, 186);
+            this.FrameEnd.Location = new System.Drawing.Point(132, 214);
             this.FrameEnd.Maximum = new decimal(new int[] {
             5000,
             0,
@@ -102,7 +107,7 @@
             0});
             this.FrameEnd.Name = "FrameEnd";
             this.FrameEnd.Size = new System.Drawing.Size(52, 20);
-            this.FrameEnd.TabIndex = 9;
+            this.FrameEnd.TabIndex = 13;
             this.FrameEnd.Value = new decimal(new int[] {
             1,
             0,
@@ -112,25 +117,25 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(20, 152);
+            this.label1.Location = new System.Drawing.Point(20, 180);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(68, 13);
-            this.label1.TabIndex = 14;
+            this.label1.TabIndex = 10;
             this.label1.Text = "Početni frejm";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(21, 188);
+            this.label2.Location = new System.Drawing.Point(21, 216);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(67, 13);
-            this.label2.TabIndex = 8;
+            this.label2.TabIndex = 12;
             this.label2.Text = "Završni frejm";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(20, 276);
+            this.label3.Location = new System.Drawing.Point(20, 341);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(40, 13);
             this.label3.TabIndex = 12;
@@ -139,7 +144,7 @@
             // _textStatus
             // 
             this._textStatus.AutoSize = true;
-            this._textStatus.Location = new System.Drawing.Point(67, 276);
+            this._textStatus.Location = new System.Drawing.Point(67, 341);
             this._textStatus.Name = "_textStatus";
             this._textStatus.Size = new System.Drawing.Size(46, 13);
             this._textStatus.TabIndex = 13;
@@ -147,10 +152,10 @@
             // 
             // Kodiraj
             // 
-            this.Kodiraj.Location = new System.Drawing.Point(6, 245);
+            this.Kodiraj.Location = new System.Drawing.Point(6, 273);
             this.Kodiraj.Name = "Kodiraj";
             this.Kodiraj.Size = new System.Drawing.Size(192, 26);
-            this.Kodiraj.TabIndex = 11;
+            this.Kodiraj.TabIndex = 16;
             this.Kodiraj.Text = "Pokreni koder";
             this.Kodiraj.UseVisualStyleBackColor = true;
             this.Kodiraj.Click += new System.EventHandler(this.Kodiraj_Click);
@@ -200,10 +205,10 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(6, 213);
+            this.button1.Location = new System.Drawing.Point(6, 241);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(95, 26);
-            this.button1.TabIndex = 10;
+            this.button1.TabIndex = 14;
             this.button1.Text = "Učitaj Y4M";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
@@ -282,6 +287,10 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.label9);
+            this.groupBox1.Controls.Add(this._intra);
+            this.groupBox1.Controls.Add(this.label8);
+            this.groupBox1.Controls.Add(this._pretvoriMKV);
             this.groupBox1.Controls.Add(this.button4);
             this.groupBox1.Controls.Add(this._osnovnoInter);
             this.groupBox1.Controls.Add(this.FrameStart);
@@ -300,10 +309,20 @@
             this.groupBox1.Controls.Add(this.label4);
             this.groupBox1.Location = new System.Drawing.Point(22, 125);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(203, 293);
+            this.groupBox1.Size = new System.Drawing.Size(203, 362);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Koder";
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(107, 241);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(91, 26);
+            this.button4.TabIndex = 15;
+            this.button4.Text = "Odaberi izlaz";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // label7
             // 
@@ -328,46 +347,6 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Dekoder";
             // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(6, 19);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(95, 26);
-            this.button2.TabIndex = 4;
-            this.button2.Text = "Učitaj H.264";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // Dekodiraj
-            // 
-            this.Dekodiraj.Location = new System.Drawing.Point(6, 50);
-            this.Dekodiraj.Name = "Dekodiraj";
-            this.Dekodiraj.Size = new System.Drawing.Size(192, 24);
-            this.Dekodiraj.TabIndex = 5;
-            this.Dekodiraj.Text = "Pokreni dekoder";
-            this.Dekodiraj.UseVisualStyleBackColor = true;
-            this.Dekodiraj.Click += new System.EventHandler(this.Dekodiraj_Click);
-            // 
-            // button4
-            // 
-            this.button4.Location = new System.Drawing.Point(107, 213);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(91, 26);
-            this.button4.TabIndex = 15;
-            this.button4.Text = "Odaberi izlaz";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
-            // 
-            // button5
-            // 
-            this.button5.Location = new System.Drawing.Point(107, 19);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(91, 26);
-            this.button5.TabIndex = 16;
-            this.button5.Text = "Odaberi izlaz";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
-            // 
             // label10
             // 
             this.label10.AutoSize = true;
@@ -386,11 +365,91 @@
             this.statusDekoder.TabIndex = 17;
             this.statusDekoder.Text = "Čekanje";
             // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(107, 19);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(91, 26);
+            this.button5.TabIndex = 16;
+            this.button5.Text = "Odaberi izlaz";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
+            // Dekodiraj
+            // 
+            this.Dekodiraj.Location = new System.Drawing.Point(6, 50);
+            this.Dekodiraj.Name = "Dekodiraj";
+            this.Dekodiraj.Size = new System.Drawing.Size(192, 24);
+            this.Dekodiraj.TabIndex = 5;
+            this.Dekodiraj.Text = "Pokreni dekoder";
+            this.Dekodiraj.UseVisualStyleBackColor = true;
+            this.Dekodiraj.Click += new System.EventHandler(this.Dekodiraj_Click);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(6, 19);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(95, 26);
+            this.button2.TabIndex = 4;
+            this.button2.Text = "Učitaj H.264";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // _pretvoriMKV
+            // 
+            this._pretvoriMKV.Location = new System.Drawing.Point(6, 305);
+            this._pretvoriMKV.Name = "_pretvoriMKV";
+            this._pretvoriMKV.Size = new System.Drawing.Size(192, 26);
+            this._pretvoriMKV.TabIndex = 16;
+            this._pretvoriMKV.Text = "Pakiraj u MKV i prikaži";
+            this._pretvoriMKV.UseVisualStyleBackColor = true;
+            this._pretvoriMKV.Click += new System.EventHandler(this._pretvoriMKV_Click);
+            // 
+            // _intra
+            // 
+            this._intra.Location = new System.Drawing.Point(78, 148);
+            this._intra.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this._intra.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this._intra.Name = "_intra";
+            this._intra.Size = new System.Drawing.Size(65, 20);
+            this._intra.TabIndex = 8;
+            this._intra.Value = new decimal(new int[] {
+            30,
+            0,
+            0,
+            0});
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(21, 150);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(56, 13);
+            this.label8.TabIndex = 7;
+            this.label8.Text = "Intra svaki";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(147, 150);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(36, 13);
+            this.label9.TabIndex = 9;
+            this.label9.Text = "frame.";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(907, 476);
+            this.ClientSize = new System.Drawing.Size(907, 494);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.groupBox1);
@@ -407,6 +466,7 @@
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._intra)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -440,6 +500,10 @@
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label statusDekoder;
+        private System.Windows.Forms.Button _pretvoriMKV;
+        public System.Windows.Forms.Label label9;
+        private System.Windows.Forms.NumericUpDown _intra;
+        public System.Windows.Forms.Label label8;
 
     }
 }

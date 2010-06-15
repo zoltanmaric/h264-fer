@@ -166,7 +166,7 @@ const std::string ToStdString(String ^ strString) {
 namespace fer_h264
 {
 
-	void Starter::PostaviParametre(int FrameStart, int FrameEnd, int qp, int OsnovnoPredvidanje, int VelicinaProzora, int ToleriranaGreska)
+	void Starter::PostaviParametre(int FrameStart, int FrameEnd, int qp, int OsnovnoPredvidanje, int VelicinaProzora, int ToleriranaGreska, int IntraSvakih)
 	{
 		startFrame = FrameStart;
 		endFrame = FrameEnd;
@@ -174,6 +174,7 @@ namespace fer_h264
 		BasicInterEncoding = OsnovnoPredvidanje;
 		WindowSize = VelicinaProzora;
 		MAXDIFF_SET = ToleriranaGreska;
+		IntraEvery = IntraSvakih;
 	}
 
 	void Starter::PostaviUlazIzlaz(String ^% ulaz, String ^% izlaz)
@@ -184,6 +185,7 @@ namespace fer_h264
 
 	void Starter::PokreniKoder() 
 	{
+		currFrameCount = 0;
 		for (int i = 0; i < 5; i++) brojTipova[i] = 0;
 		encode();
 
@@ -191,6 +193,7 @@ namespace fer_h264
 
 	void Starter::NastaviKoder() 
 	{
+		currFrameCount++;
 		for (int i = 0; i < 5; i++) brojTipova[i] = 0;
 		NastaviEncode();
 	}
