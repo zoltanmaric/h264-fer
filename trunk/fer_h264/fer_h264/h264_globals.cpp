@@ -301,6 +301,8 @@ int vrijeme = 0;
 int BasicInterEncoding = false;
 int WindowSize = 16;
 int MAXDIFF_SET = -1;
+int startFrame;
+int endFrame;
 
 //frame/4 dimenzije
 int *Intra4x4PredMode;

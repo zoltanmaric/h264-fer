@@ -17,6 +17,7 @@ namespace h264_Sucelje
         {
             InitializeComponent();
             Kodiraj.Enabled = false;
+            Dekodiraj.Enabled = false;
         }
 
         int mozeKodirati;
@@ -35,14 +36,18 @@ namespace h264_Sucelje
         private void Kodiraj_Click(object sender, EventArgs e)
         {
             Starter pokretac = new Starter();
+            
+            // Postavljanje odabranog ulazne i izlazne datoteke.
             pokretac.PostaviUlazIzlaz(ref kodirajUlaz, ref kodirajIzlaz);
             int osnovnoInterPredvidanje = 0; 
             if (_osnovnoInter.Checked) osnovnoInterPredvidanje = 1;
+            // Postavljanje parametara za koder.
             pokretac.PostaviParametre((int)FrameStart.Value, (int)FrameEnd.Value, (int)_qp.Value, osnovnoInterPredvidanje, (int)_velicinaProzora.Value, (int)_toleriranaGreska.Value);
             _textStatus.Text = "Pokrećem koder";
             _textStatus.Refresh();
             pokretac.PokreniKoder();
             
+            // Definicija podataka koji se prikazuju u statistici po završetku kodera.
             List<int> velicine = new List<int>();
             List<int> brojPSkip = new List<int>();
             List<int> broj16x16 = new List<int>();
@@ -64,6 +69,8 @@ namespace h264_Sucelje
                 brojPSkip.Add(p1); broj16x16.Add(p2); broj16x8.Add(p3); broj8x16.Add(p4); broj8x8.Add(p5);
                 velicine.Add(p6); vrijeme.Add(p7);
             }
+
+            //Inicijalizacija tablice statistike.
             DataTable tablica = new DataTable("Podaci o frame-ovima");
             tablica.Columns.Add("Frame #", typeof(int));
             tablica.Columns.Add("Veličina (B)", typeof(int));
@@ -87,6 +94,8 @@ namespace h264_Sucelje
                 tablica.Rows[i - (int)FrameStart.Value]["Broj P_L0_8x16 predikcija"] = broj8x16[i - (int)FrameStart.Value];
                 tablica.Rows[i - (int)FrameStart.Value]["Broj P_L0_8x8 predikcija"] = broj8x8[i - (int)FrameStart.Value];
             }
+
+            // Prikaz statistike i postavljanje trenutnog statusa koda u završeno.
             _podaci.DataSource = tablica.DefaultView;
             _textStatus.Text = "Koder završio s radom";
         }
@@ -163,8 +172,6 @@ namespace h264_Sucelje
         private void Dekodiraj_Click(object sender, EventArgs e)
         {
             Starter pokretac = new Starter();
-            MessageBox.Show(dekodirajUlaz);
-            MessageBox.Show(dekodirajIzlaz);
             pokretac.PostaviUlazIzlaz(ref dekodirajUlaz, ref dekodirajIzlaz);
             statusDekoder.Text = "Dekoder radi";
             pokretac.PokreniDekoder();

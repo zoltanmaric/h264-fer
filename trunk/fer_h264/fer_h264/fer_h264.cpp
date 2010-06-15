@@ -18,8 +18,6 @@
 
 using namespace std;
 
-int startFrame;
-int endFrame;
 int trenBytes;
 std::string ulaznaDatoteka;
 std::string izlaznaDatoteka;
@@ -84,7 +82,7 @@ void encode()
 {
 	stream = fopen(izlaznaDatoteka.c_str(), "wb");
 	yuvinput = fopen(ulaznaDatoteka.c_str(), "rb");
-	yuvoutput = fopen("big_buck_bunny.yuv","wb");
+	yuvoutput = fopen((izlaznaDatoteka+".yuv").c_str(),"wb");
 
 	generate_residual_level_tables();
 	init_expgolomb_UC_codes();
