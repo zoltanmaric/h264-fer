@@ -132,9 +132,6 @@ void InitCL()
 	kernelAbsDiff= clCreateKernel(programGeneral, "AbsDiff", &err);
 	assert(err == CL_SUCCESS);
 
-	kernelCharToInt = clCreateKernel(programGeneral, "CharToInt", &err);
-	assert(err == CL_SUCCESS);
-
 	kernelIntra16 = clCreateKernel(programIntra, "GetIntra16x16PredModes", &err);
 	assert(err == CL_SUCCESS);
 
